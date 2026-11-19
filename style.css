@@ -221,7 +221,7 @@ main {
 .kachel-ring .spur { stroke: rgba(255,255,255,0.1); }
 .kachel-ring .fuell { stroke: rgba(var(--m-rgb), 0.95); stroke-linecap: round; stroke-dasharray: 176; stroke-dashoffset: 176; }
 .kachel.drueckt .kachel-ring { opacity: 1; }
-.kachel.drueckt .kachel-ring .fuell { stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
+.kachel.drueckt .kachel-ring .fuell { stroke-dashoffset: 0; transition: stroke-dashoffset 0.6s linear; }
 
 /* Schlaf-Wahl in der Kachel */
 .schlaf-wahl { position: relative; display: flex; gap: 0.3rem; flex-wrap: wrap; }
@@ -295,6 +295,20 @@ main {
 }
 .moment-zeile:last-child { border-bottom: 0; }
 .verw-gruppe { display: flex; flex-direction: column; }
+/* Reihenfolge ändern */
+.btn-klein {
+  height: 28px; padding: 0 0.7rem; border-radius: 14px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-dim);
+  font-size: 0.72rem; font-weight: 600;
+}
+.btn-klein.an { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); color: var(--text); }
+.sortieren { cursor: default; }
+.sort-pfeile { display: flex; gap: 0.35rem; }
+.sort-pfeile button {
+  width: 36px; height: 36px; border-radius: 10px; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); font-size: 1rem;
+}
+.sort-pfeile button:disabled { opacity: 0.25; cursor: default; }
 .gruppen-liste { display: flex; flex-direction: column; margin-bottom: 0.8rem; }
 .gruppen-liste .verw-gruppe + .verw-gruppe { margin-top: 0; }
 .gruppe-knopf {
@@ -427,6 +441,18 @@ body.modus-einfach .nav-item span { font-size: 0.72rem; text-transform: none; le
 .nav-item span { position: relative; }
 .nav-item.active { color: var(--text); }
 .nav-item.active::before { content: ''; position: absolute; inset: 6px; background: rgba(255,255,255,0.06); border-radius: 16px; }
+
+/* Hinweis „Neue Version verfügbar“ (wie MemoFix) */
+.update-hinweis {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 300;
+  bottom: calc(96px + max(env(safe-area-inset-bottom), 12px));
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.6rem 0.5rem 0.95rem; border-radius: 999px;
+  background: rgba(20,20,26,0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(98,213,255,0.55); color: var(--text); font-size: 0.85rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5); max-width: calc(100vw - 24px); white-space: nowrap;
+}
+.update-hinweis button { border: 0; border-radius: 999px; padding: 0.35rem 0.8rem; font: inherit; font-weight: 700; cursor: pointer; background: var(--mf-blau); color: #04141c; }
+.update-hinweis button[data-u="zu"] { background: transparent; color: var(--text-dim); padding: 0.35rem 0.5rem; }
 
 /* ── TOAST ──────────────────────────────────────────── */
 .toast {

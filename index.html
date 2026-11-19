@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body class="modus-einfach">
 
@@ -55,24 +55,25 @@
     <!-- ── VERWALTUNG ────────────────────────────────── -->
     <section id="view-verwaltung" class="view hidden">
       <div class="card">
-        <div class="card-header"><h2>Momente</h2><span class="badge" id="momente-anzahl"></span></div>
+        <div class="card-header"><h2>Momente</h2><span class="badge" id="momente-anzahl"></span><button class="btn-klein rechts" id="btn-sort-momente" type="button">Reihenfolge ändern</button></div>
+        <p class="card-text hidden" id="sort-momente-hinweis">Mit den Pfeilen verschiebst du einen Moment innerhalb seiner Gruppe. So stehen die Kacheln auch auf Heute.</p>
         <div id="momente-liste" class="momente-liste"></div>
         <button class="btn-secondary" id="btn-moment-neu" type="button">+ Neuer Moment</button>
       </div>
 
       <div class="card">
-        <div class="card-header"><h2>Gruppen</h2></div>
-        <p class="card-text">Gruppen ordnen die Momente. Ob etwas aktiv oder erholsam ist, legt der Moment selbst fest.</p>
+        <div class="card-header"><h2>Gruppen</h2><button class="btn-klein rechts" id="btn-sort-gruppen" type="button">Reihenfolge ändern</button></div>
+        <p class="card-text">Gruppen ordnen die Momente. Ob etwas aktiv oder erholsam ist, legt der Moment selbst fest. Untergruppen gliedern nur den Wochenblick, auf Heute bleibt alles nach Gruppen sortiert.</p>
         <div id="gruppen-liste" class="gruppen-liste"></div>
         <button class="btn-secondary" id="btn-gruppe-neu" type="button">+ Neue Gruppe</button>
       </div>
 
       <div class="card">
         <div class="card-header"><h2>Feierabend-Korridor</h2></div>
-        <p class="card-text">Ein ruhiger Bereich, in dem der Feierabend gut liegt. Er ist ein Richtwert, keine Pflicht.</p>
+        <p class="card-text">Wann soll dein Arbeitstag ungefähr enden? Also der Moment, in dem du „Arbeitstag abgeschlossen“ tippst, zum Beispiel 17:30 bis 19:00. Kein Muss: In der Woche erscheint der Korridor als weiches Band hinter deinen Feierabenden.</p>
         <div class="zeit-reihe">
-          <div class="form-group"><label for="korridor-von">von</label><input type="time" id="korridor-von"></div>
-          <div class="form-group"><label for="korridor-bis">bis</label><input type="time" id="korridor-bis"></div>
+          <div class="form-group"><label for="korridor-von">Arbeitstag endet ab</label><input type="time" id="korridor-von"></div>
+          <div class="form-group"><label for="korridor-bis">spätestens gegen</label><input type="time" id="korridor-bis"></div>
         </div>
       </div>
 
@@ -146,7 +147,7 @@
         <div class="modal-section">
           <div class="modal-section-title">Heute</div>
           <p class="hilfe-text"><strong>Tippen</strong> zählt einen Moment, mit seiner üblichen Dauer.<br>
-          <strong>Lang drücken</strong> (etwa 1 Sekunde, bis der Ring voll ist) nimmt den letzten Tipp zurück.<br>
+          <strong>Kurz halten</strong> (etwa eine halbe Sekunde, bis der Ring voll ist) nimmt den letzten Tipp zurück.<br>
           Oben stehen die beiden Rückblicke: <strong>Schlaf</strong> (morgens, nur gefühlt: erholt, mittel oder kurz) und <strong>Arbeitstag abgeschlossen</strong> (merkt sich die Uhrzeit; vergessen ist in Ordnung, später antippen und anpassen).<br>
           Darunter die Momente nach Gruppe: Family, Social, Me-Time.</p>
         </div>
@@ -162,13 +163,13 @@
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 8</p>
+        <p class="modal-meta modal-meta-build">Version 9</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

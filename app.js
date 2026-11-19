@@ -301,7 +301,7 @@ function feierabendSheet() {
 }
 
 // Tippen und langer Druck
-const DRUCK_MS = 1000;
+const DRUCK_MS = 600;   // langer Druck zum Zurücknehmen (vorher 1 s, war zu lang)
 let druck = null;
 function druckStart(e) {
   const el = e.target.closest('.kachel[data-mid], .kachel[data-sonder="feierabend"]');
@@ -451,20 +451,26 @@ function abendSVG(abende) {
 // ── VERWALTUNG ─────────────────────────────────────────
 function renderVerwaltung() {
   $('#momente-anzahl').textContent = S.momente.length;
-  // Nach Gruppe sortiert, darin erst Momente ohne Untergruppe, dann je Untergruppe
-  const zeile = m => `<button class="moment-zeile" type="button" data-edit="${esc(m.id)}">
+  // Nach Gruppe, in der Reihenfolge wie auf Heute. Die Untergruppe steht in der Infozeile.
+  const sort = sortiermodus.momente;
+  $('#btn-sort-momente').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
+  $('#btn-sort-momente').classList.toggle('an', sort);
+  $('#sort-momente-hinweis').classList.toggle('hidden', !sort);
+  const info = m => [UNTERGRUPPEN[m.unter] ? esc(UNTERGRUPPEN[m.unter].name) : '', MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : ''].filter(Boolean).join(' · ');
+  const zeile = (m, i, liste) => sort
+    ? `<div class="moment-zeile sortieren">
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
-      <span class="nm">${esc(m.name)}<span class="info" style="display:block">${MODI[m.modus]}${m.dauer ? ' · ' + fmtDauer(m.dauer) : ''}${m.etwa ? ` · etwa ${m.etwa} × pro Woche` : ''}</span></span>
+      <span class="nm">${esc(m.name)}<span class="info" style="display:block">${info(m)}</span></span>
+      ${pfeile('m', m.id, i, liste.length, m.name)}</div>`
+    : `<button class="moment-zeile" type="button" data-edit="${esc(m.id)}">
+      <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
+      <span class="nm">${esc(m.name)}<span class="info" style="display:block">${info(m)}</span></span>
       <span class="modus-punkt ${m.modus}" aria-hidden="true"></span></button>`;
   $('#momente-liste').innerHTML = [...Object.keys(GRUPPEN), ''].map(g => {
     const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
     if (!liste.length) return '';
-    const ohne = liste.filter(m => !(m.unter && UNTERGRUPPEN[m.unter]));
-    const unter = Object.keys(UNTERGRUPPEN).filter(u => liste.some(m => m.unter === u));
     return `<div class="verw-gruppe"><div class="label verw-gruppe-titel">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</div>
-      ${ohne.map(zeile).join('')}
-      ${unter.map(u => `<div class="verw-unter"><div class="verw-unter-titel">${esc(UNTERGRUPPEN[u].name)}</div>
-        ${liste.filter(m => m.unter === u).map(zeile).join('')}</div>`).join('')}</div>`;
+      ${liste.map(zeile).join('')}</div>`;
   }).join('');
   renderGruppenVerwaltung();
   $('#korridor-von').value = S.einstellungen.korridorVon;
@@ -548,14 +554,40 @@ function momentSheet(id) {
 
 // ── GRUPPEN VERWALTEN ──────────────────────────────────
 function renderGruppenVerwaltung() {
-  $('#gruppen-liste').innerHTML = S.gruppen.map(g => {
+  const sort = sortiermodus.gruppen;
+  $('#btn-sort-gruppen').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
+  $('#btn-sort-gruppen').classList.toggle('an', sort);
+  const anzahl = n => n === 1 ? '1 Moment' : n + ' Momente';
+  $('#gruppen-liste').innerHTML = S.gruppen.map((g, i) => {
     const n = S.momente.filter(m => m.gruppe === g.id).length;
     const unter = S.untergruppen.filter(u => u.gruppe === g.id);
-    return `<div class="verw-gruppe">
-      <button class="gruppe-knopf" type="button" data-gruppe="${esc(g.id)}"><span class="nm">${esc(g.name)}</span><span class="info">${n === 1 ? '1 Moment' : n + ' Momente'}</span><span class="pfeil" aria-hidden="true">›</span></button>
-      ${unter.length ? `<div class="verw-unter">${unter.map(u => `<button class="gruppe-knopf unter" type="button" data-untergruppe="${esc(u.id)}"><span class="nm">${esc(u.name)}</span><span class="info">${(n => n === 1 ? '1 Moment' : n + ' Momente')(S.momente.filter(m => m.unter === u.id).length)}</span><span class="pfeil" aria-hidden="true">›</span></button>`).join('')}</div>` : ''}
-    </div>`;
+    const kopf = sort
+      ? `<div class="gruppe-knopf sortieren"><span class="nm">${esc(g.name)}</span><span class="info">${anzahl(n)}</span>${pfeile('g', g.id, i, S.gruppen.length, g.name)}</div>`
+      : `<button class="gruppe-knopf" type="button" data-gruppe="${esc(g.id)}"><span class="nm">${esc(g.name)}</span><span class="info">${anzahl(n)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
+    const uz = unter.map((u, j) => sort
+      ? `<div class="gruppe-knopf unter sortieren"><span class="nm">${esc(u.name)}</span><span class="info">${anzahl(S.momente.filter(m => m.unter === u.id).length)}</span>${pfeile('u', u.id, j, unter.length, u.name)}</div>`
+      : `<button class="gruppe-knopf unter" type="button" data-untergruppe="${esc(u.id)}"><span class="nm">${esc(u.name)}</span><span class="info">${anzahl(S.momente.filter(m => m.unter === u.id).length)}</span><span class="pfeil" aria-hidden="true">›</span></button>`).join('');
+    return `<div class="verw-gruppe">${kopf}${unter.length ? `<div class="verw-unter">${uz}</div>` : ''}</div>`;
   }).join('');
+}
+
+// ── REIHENFOLGE ────────────────────────────────────────
+const sortiermodus = { momente: false, gruppen: false };
+function pfeile(art, id, i, n, name) {
+  return `<span class="sort-pfeile">
+    <button type="button" data-${art}-hoch="${esc(id)}" ${i === 0 ? 'disabled' : ''} aria-label="${esc(name)} nach oben">↑</button>
+    <button type="button" data-${art}-runter="${esc(id)}" ${i === n - 1 ? 'disabled' : ''} aria-label="${esc(name)} nach unten">↓</button></span>`;
+}
+// Tauscht ein Element mit seinem Nachbarn innerhalb derselben Teilliste (z. B. Momente einer Gruppe)
+function verschieben(arr, id, richtung, gleicheListe) {
+  const idx = arr.map((x, k) => k).filter(k => gleicheListe(arr[k]));
+  const pos = idx.findIndex(k => arr[k].id === id), ziel = pos + richtung;
+  if (pos < 0 || ziel < 0 || ziel >= idx.length) return;
+  const a = idx[pos], b = idx[ziel];
+  [arr[a], arr[b]] = [arr[b], arr[a]];
+  gruppenAktualisieren(); speichern(); renderVerwaltung();
+  const fokus = document.querySelector(`[data-${arr === S.momente ? 'm' : arr === S.gruppen ? 'g' : 'u'}-${richtung < 0 ? 'hoch' : 'runter'}="${CSS.escape(id)}"]`);
+  if (fokus && !fokus.disabled) fokus.focus();
 }
 
 function gruppeSheet(id) {
@@ -567,7 +599,6 @@ function gruppeSheet(id) {
     <div class="btn-reihe">
       <button class="btn-primary" id="g-ok" type="button">${neu ? 'Gruppe anlegen' : 'Speichern'}</button>
       ${neu ? '' : `<button class="btn-secondary" id="g-unter" type="button">+ Untergruppe in ${esc(g.name)}</button>
-      ${i > 0 ? '<button class="btn-leise" id="g-hoch" type="button">Weiter nach oben</button>' : ''}
       <button class="btn-leise" id="g-weg" type="button">Gruppe entfernen …</button>`}
     </div>`);
   $('#g-ok').onclick = () => {
@@ -578,7 +609,6 @@ function gruppeSheet(id) {
   };
   if (neu) return;
   $('#g-unter').onclick = () => untergruppeSheet(null, g.id);
-  if (i > 0) $('#g-hoch').onclick = () => { S.gruppen.splice(i, 1); S.gruppen.splice(i - 1, 0, g); gespeichertNeu(); sheetZu(); toast('Reihenfolge geändert'); };
   $('#g-weg').onclick = () => {
     const andere = S.gruppen.filter(x => x.id !== g.id);
     if (!andere.length) { toast('Mindestens eine Gruppe bleibt'); return; }
@@ -645,6 +675,7 @@ function toast(text, rueckgaengig) {
 let ansicht = 'heute';
 function zeige(v) {
   if (v === 'verwaltung' && S.einstellungen.modus === 'einfach') v = 'heute';
+  if (v !== 'verwaltung') { sortiermodus.momente = false; sortiermodus.gruppen = false; }
   ansicht = v;
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === v));
@@ -700,15 +731,40 @@ function verbinden() {
   $('#woche-zurueck').onclick = () => { wocheVersatz--; renderWoche(); };
   $('#woche-vor').onclick = () => { if (wocheVersatz < 0) { wocheVersatz++; renderWoche(); } };
 
-  $('#momente-liste').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) momentSheet(b.dataset.edit); });
+  $('#momente-liste').addEventListener('click', e => {
+    const h = e.target.closest('[data-m-hoch],[data-m-runter]');
+    if (h) {
+      const id = h.dataset.mHoch || h.dataset.mRunter, m = moment(id);
+      const g = GRUPPEN[m.gruppe] ? m.gruppe : null;
+      verschieben(S.momente, id, h.dataset.mHoch ? -1 : 1, x => g ? x.gruppe === g : !GRUPPEN[x.gruppe]);
+      return;
+    }
+    const b = e.target.closest('[data-edit]'); if (b) momentSheet(b.dataset.edit);
+  });
+  $('#btn-sort-momente').onclick = () => { sortiermodus.momente = !sortiermodus.momente; renderVerwaltung(); };
+  $('#btn-sort-gruppen').onclick = () => { sortiermodus.gruppen = !sortiermodus.gruppen; renderGruppenVerwaltung(); };
   $('#btn-moment-neu').onclick = () => momentSheet(null);
   $('#gruppen-liste').addEventListener('click', e => {
+    const gh = e.target.closest('[data-g-hoch],[data-g-runter]');
+    if (gh) { verschieben(S.gruppen, gh.dataset.gHoch || gh.dataset.gRunter, gh.dataset.gHoch ? -1 : 1, () => true); return; }
+    const uh = e.target.closest('[data-u-hoch],[data-u-runter]');
+    if (uh) {
+      const id = uh.dataset.uHoch || uh.dataset.uRunter, gr = S.untergruppen.find(u => u.id === id).gruppe;
+      verschieben(S.untergruppen, id, uh.dataset.uHoch ? -1 : 1, u => u.gruppe === gr); return;
+    }
     const g = e.target.closest('[data-gruppe]'), u = e.target.closest('[data-untergruppe]');
     if (u) untergruppeSheet(u.dataset.untergruppe); else if (g) gruppeSheet(g.dataset.gruppe);
   });
   $('#btn-gruppe-neu').onclick = () => gruppeSheet(null);
-  $('#korridor-von').onchange = e => { if (e.target.value) { S.einstellungen.korridorVon = e.target.value; speichern(); } };
-  $('#korridor-bis').onchange = e => { if (e.target.value) { S.einstellungen.korridorBis = e.target.value; speichern(); } };
+  const korridorNeu = () => {
+    const von = $('#korridor-von').value, bis = $('#korridor-bis').value;
+    if (!von || !bis) return;
+    S.einstellungen.korridorVon = von; S.einstellungen.korridorBis = bis;
+    if (korridorPruefen(S.einstellungen)) { $('#korridor-bis').value = S.einstellungen.korridorBis; toast(`„spätestens“ muss nach „ab“ liegen: ${S.einstellungen.korridorBis}`); }
+    speichern();
+  };
+  $('#korridor-von').onchange = korridorNeu;
+  $('#korridor-bis').onchange = korridorNeu;
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.onclick = () => { S.einstellungen.balanceStil = b.dataset.stil; speichern(); renderVerwaltung(); });
   $('#btn-alles-loeschen').onclick = () => {
     sheet('Alle Einträge löschen', `<p class="card-text">Gezählte Momente, Feierabende und Schlaf-Einträge werden von diesem Gerät gelöscht. Die Momente selbst und die Einstellungen bleiben. Das lässt sich nicht rückgängig machen.</p>
@@ -743,6 +799,14 @@ function verbinden() {
 }
 
 // Gespeicherten oder importierten Zustand auf den aktuellen Datenstand bringen
+// Korridor: „bis“ muss nach „von“ liegen (gleicher Abend). Sonst bis = von + 1 Stunde.
+function korridorPruefen(e) {
+  const v = zuMin(e.korridorVon), b = zuMin(e.korridorBis);
+  if (b > v) return false;
+  e.korridorBis = zuHHMM(Math.min(v + 60, 23 * 60 + 59));
+  return true;
+}
+
 function zustandAus(alt) {
   const z = { ...startZustand(), ...alt, einstellungen: { ...startZustand().einstellungen, ...alt.einstellungen } };
   if (!(alt.stand >= 3)) {
@@ -757,7 +821,23 @@ function zustandAus(alt) {
     z.untergruppen = Object.keys(namen).filter(k => z.momente.some(m => m.unter === k)).map(k => ({ id: k, name: namen[k], gruppe: 'social' }));
     z.stand = 4;
   }
+  korridorPruefen(z.einstellungen);
   return z;
+}
+
+// Hinweis „Neue Version verfügbar“ (wie MemoFix)
+function zeigeUpdateHinweis() {
+  if (document.getElementById('update-hinweis')) return;
+  const el = document.createElement('div');
+  el.id = 'update-hinweis'; el.className = 'update-hinweis'; el.setAttribute('role', 'status');
+  el.innerHTML = `<span>Neue Version verfügbar</span>
+    <button type="button" data-u="neu">Neu laden</button>
+    <button type="button" data-u="zu" aria-label="Später">✕</button>`;
+  el.addEventListener('click', e => {
+    const a = e.target.closest('[data-u]')?.dataset.u;
+    if (a === 'neu') location.reload(); else if (a === 'zu') el.remove();
+  });
+  document.body.appendChild(el);
 }
 
 (async function start() {
@@ -767,6 +847,11 @@ function zustandAus(alt) {
   verbinden();
   zeige('heute');
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const hatteController = !!navigator.serviceWorker.controller;   // beim allerersten Besuch kein Hinweis
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Beim Zurückkehren in die App nach einer neuen Version suchen (iPhone-Apps bleiben lange im Hintergrund)
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hatteController) zeigeUpdateHinweis(); });
   }
 })();
