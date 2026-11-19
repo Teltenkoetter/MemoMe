@@ -398,7 +398,7 @@ function renderWoche() {
         <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
         <div class="wgruppe-momente">${liste.map(zeile).join('')}</div></details>`;
     }).join('');
-    teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2></div><div class="gruppen">${gz}</div>
+    teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2><button class="btn-klein rechts btn-alle" type="button" aria-expanded="false" aria-label="Alle Zeilen öffnen"><span class="dreieck" aria-hidden="true">▸</span> Alle</button></div><div class="gruppen">${gz}</div>
       <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
@@ -419,9 +419,22 @@ function renderWoche() {
         <span class="gruppe-name">Schlaf</span><span class="rueck-kurz">${summe > 1 ? 'meist ' : ''}${SCHLAF[haeufig]}</span><span class="auf" aria-hidden="true">›</span></summary>
       <div class="wgruppe-momente"><div class="schlaf-chips">${sArten.map(s => `<span class="chip"><strong>${schlaf[s]} ×</strong>${SCHLAF[s]}</span>`).join('')}</div></div></details>`);
   }
-  if (rueck.length) teile.push(`<div class="card"><div class="card-header"><h2>Rückblick</h2></div><div class="gruppen">${rueck.join('')}</div></div>`);
+  if (rueck.length) teile.push(`<div class="card"><div class="card-header"><h2>Rückblick</h2><button class="btn-klein rechts btn-alle" type="button" aria-expanded="false" aria-label="Alle Zeilen öffnen"><span class="dreieck" aria-hidden="true">▸</span> Alle</button></div><div class="gruppen">${rueck.join('')}</div></div>`);
 
   $('#woche-inhalt').innerHTML = teile.join('');
+  // „▸ Alle“: öffnet bzw. schließt alle Zeilen einer Karte; passt sich an, wenn Zeilen einzeln geöffnet werden
+  document.querySelectorAll('#woche-inhalt .btn-alle').forEach(btn => {
+    const zeilen = [...btn.closest('.card').querySelectorAll('details.wgruppe')];
+    const anzeigen = () => {
+      const alle = zeilen.length > 0 && zeilen.every(d => d.open);
+      btn.classList.toggle('offen', alle);
+      btn.setAttribute('aria-expanded', alle);
+      btn.setAttribute('aria-label', alle ? 'Alle Zeilen schließen' : 'Alle Zeilen öffnen');
+    };
+    btn.onclick = () => { const auf = !zeilen.every(d => d.open); zeilen.forEach(d => { d.open = auf; }); anzeigen(); };
+    zeilen.forEach(d => d.addEventListener('toggle', anzeigen));
+    anzeigen();
+  });
 }
 
 function median(arr) {
