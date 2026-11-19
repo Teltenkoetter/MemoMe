@@ -177,11 +177,25 @@ main {
 .kachel:active { transform: scale(0.985); }
 
 .kachel-symbol {
-  position: absolute; right: -0.35rem; top: -0.4rem;
-  font-size: 4.6rem; line-height: 1; opacity: 0.16;
-  filter: grayscale(0.35) saturate(0.8);
+  position: absolute; right: -0.8rem; top: -0.8rem;
+  width: 5.4rem; height: 5.4rem; line-height: 1;
+  color: var(--text); opacity: 0.16;
   pointer-events: none;
 }
+.kachel-symbol .pikto { display: block; width: 100%; height: 100%; }
+.kachel-symbol .zeichen { display: block; font-size: 4.6rem; filter: grayscale(0.35) saturate(0.8); }
+.kachel.gefuellt .kachel-symbol { color: rgb(var(--m-rgb)); opacity: 0.3; }
+
+/* Rückblick (Schlaf, Feierabend): niedriger als Momente, darunter ein dünner Strich */
+.kachel.rahmen { min-height: 92px; }
+.kachel.rahmen .kachel-symbol { width: 4.2rem; height: 4.2rem; right: -0.5rem; top: -0.5rem; }
+.kachel.rahmen .kachel-zahl { font-size: 1.9rem; }
+.rahmen-strich { border: 0; border-top: 1px solid var(--border); margin: 0.15rem 0; }
+
+/* Momente nach Gruppe */
+.momente-gruppen { display: flex; flex-direction: column; gap: 0.9rem; }
+.gruppe-block { display: flex; flex-direction: column; gap: 0.5rem; }
+.gruppe-label { padding-left: 0.2rem; }
 .kachel-wert { position: relative; display: flex; align-items: baseline; gap: 0.45rem; min-height: 2.2rem; }
 .kachel-zahl { font-family: var(--serif); font-size: 2.3rem; line-height: 1; color: rgba(var(--m-rgb), 1); }
 .kachel-dauer { font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -234,7 +248,8 @@ main {
 
 .summen-liste { display: flex; flex-direction: column; gap: 0.75rem; }
 .summe { display: grid; grid-template-columns: 1.7rem 1fr auto; align-items: center; gap: 0.2rem 0.6rem; }
-.summe-symbol { font-size: 1.15rem; text-align: center; }
+.summe-symbol { font-size: 1.15rem; display: flex; justify-content: center; color: var(--text-dim); }
+.summe-symbol .pikto, .moment-zeile .sym .pikto { width: 20px; height: 20px; display: block; }
 .summe-name { font-size: 0.9rem; font-weight: 600; min-width: 0; }
 .summe-wert { font-size: 0.82rem; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
 .summe-wert strong { font-family: var(--serif); font-weight: 400; font-size: 1.15rem; color: var(--text); margin-right: 0.15rem; }
@@ -252,6 +267,10 @@ main {
 .gruppe-spur { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.04); overflow: hidden; }
 .gruppe-fuell { height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgba(var(--reg-rgb),0.45), rgba(var(--reg-rgb),0.8)); }
 .gruppe-wert { color: var(--muted); font-size: 0.76rem; font-variant-numeric: tabular-nums; min-width: 3.4rem; text-align: right; }
+/* Untergruppen: eingerückt an einer Haarlinie, ohne Balken und ohne Soll */
+.unter-liste { margin: -0.15rem 0 0.1rem 0.35rem; padding-left: 0.75rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.3rem; }
+.unter-bereich { font-size: 0.7rem; color: var(--muted); }
+.unter-zeile { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.8rem; color: var(--text-dim); }
 
 .abend-svg { display: block; width: 100%; height: auto; overflow: visible; }
 .abend-svg text { fill: var(--muted); font-size: 10px; font-family: 'Inter', sans-serif; }
@@ -271,7 +290,7 @@ main {
   background: none; border-left: 0; border-right: 0; border-top: 0; color: var(--text); text-align: left; cursor: pointer; width: 100%;
 }
 .moment-zeile:last-child { border-bottom: 0; }
-.moment-zeile .sym { font-size: 1.2rem; text-align: center; }
+.moment-zeile .sym { font-size: 1.2rem; display: flex; justify-content: center; color: var(--text-dim); }
 .moment-zeile .nm { font-size: 0.92rem; font-weight: 600; min-width: 0; }
 .moment-zeile .info { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; font-weight: 400; }
 .modus-punkt { width: 10px; height: 10px; border-radius: 50%; }
@@ -355,7 +374,10 @@ select {
 .hilfe-text { font-size: 0.86rem; color: var(--text-dim); line-height: 1.6; }
 .hilfe-text strong { color: var(--text); }
 .symbol-wahl { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
-.symbol-wahl button { width: 2.2rem; height: 2.2rem; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); font-size: 1.1rem; cursor: pointer; }
+.symbol-wahl button { width: 2.6rem; height: 2.6rem; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.symbol-wahl button .pikto { width: 22px; height: 22px; }
+.symbol-wahl button.an { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.1); color: var(--text); }
+select:disabled { opacity: 0.45; }
 
 /* ── NAV ────────────────────────────────────────────── */
 .bottom-nav {
@@ -403,7 +425,7 @@ body.modus-einfach .nav-item span { font-size: 0.72rem; text-transform: none; le
 
 @media (min-width: 560px) {
   .kachel { min-height: 124px; }
-  .kachel-symbol { font-size: 5.4rem; }
+  .kachel-symbol { width: 6.2rem; height: 6.2rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
