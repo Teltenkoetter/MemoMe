@@ -1,4 +1,4 @@
-/* MemoMe – erster Prototyp
+/* MemoMe
    Keine Leistungs-App: sammeln statt fordern, zeigen was da war, nie was fehlt. */
 'use strict';
 
