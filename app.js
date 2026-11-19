@@ -235,7 +235,7 @@ function renderHeute() {
     if (!liste.length) return '';
     const titel = g ? GRUPPEN[g] : 'Ohne Gruppe';
     return `<section class="gruppe-block" aria-label="${esc(titel)}">
-      <div class="label gruppe-label nur-erweitert">${esc(titel)}</div>
+      <div class="label gruppe-label">${esc(titel)}</div>
       <div class="kachel-raster">${liste.map(kachel).join('')}</div></section>`;
   }).join('');
 }
@@ -392,7 +392,7 @@ function renderWoche() {
       const e = pg[g], breite = Math.max(6, (e.akt + e.reg) / maxG * 100);
       const liste = S.momente.filter(m => pm[m.id] && (g ? m.gruppe === g : !GRUPPEN[m.gruppe]));
       return `<details class="wgruppe"><summary class="gruppe-zeile">
-        <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</span>
+        <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}<span class="gruppe-anzahl">${liste.length === 1 ? '1 Moment' : liste.length + ' Momente'}</span></span>
         <span class="gruppe-spur"><span class="gruppe-fuell" style="width:${breite}%" role="img" aria-label="${e.akt > e.reg ? 'eher aktiv' : e.reg > e.akt ? 'eher regenerativ' : 'ausgeglichen'}">
           <span class="teil-akt" style="flex-grow:${e.akt}"></span><span class="teil-reg" style="flex-grow:${e.reg}"></span></span></span>
         <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
@@ -402,11 +402,24 @@ function renderWoche() {
       <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
-  if (abende.length) teile.push(`<div class="card"><div class="card-header"><h2>Feierabende</h2></div>${abendSVG(abende)}
-    <p class="card-text" style="margin:0.6rem 0 0">${abende.length === 1 ? 'Ein Feierabend' : abende.length + ' Feierabende'} eingetragen${abende.length > 1 ? `, meist gegen ${median(abende.map(a => zuMin(a.z)))}` : ''}.</p></div>`);
-
-  if (Object.keys(schlaf).length) teile.push(`<div class="card"><div class="card-header"><h2>Schlaf, gefühlt</h2></div>
-    <div class="schlaf-chips">${Object.keys(SCHLAF).filter(s => schlaf[s]).map(s => `<span class="chip"><strong>${schlaf[s]} ×</strong>${SCHLAF[s]}</span>`).join('')}</div></div>`);
+  // Rückblick: Feierabend und Schlaf, je eine geschlossene Zeile mit kurzer Zusammenfassung
+  const rueck = [];
+  if (abende.length) {
+    const kurz = abende.length > 1 ? `meist gegen ${median(abende.map(a => zuMin(a.z)))}`
+      : `${abende[0].d.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '')} ${abende[0].z}`;
+    rueck.push(`<details class="wgruppe"><summary class="gruppe-zeile rueck-zeile">
+        <span class="gruppe-name">Feierabend</span><span class="rueck-kurz">${kurz}</span><span class="auf" aria-hidden="true">›</span></summary>
+      <div class="wgruppe-momente">${abendSVG(abende)}</div></details>`);
+  }
+  const sArten = Object.keys(SCHLAF).filter(s => schlaf[s]);
+  if (sArten.length) {
+    const summe = sArten.reduce((n, s) => n + schlaf[s], 0);
+    const haeufig = sArten.reduce((a, b) => schlaf[b] > schlaf[a] ? b : a);
+    rueck.push(`<details class="wgruppe"><summary class="gruppe-zeile rueck-zeile">
+        <span class="gruppe-name">Schlaf</span><span class="rueck-kurz">${summe > 1 ? 'meist ' : ''}${SCHLAF[haeufig]}</span><span class="auf" aria-hidden="true">›</span></summary>
+      <div class="wgruppe-momente"><div class="schlaf-chips">${sArten.map(s => `<span class="chip"><strong>${schlaf[s]} ×</strong>${SCHLAF[s]}</span>`).join('')}</div></div></details>`);
+  }
+  if (rueck.length) teile.push(`<div class="card"><div class="card-header"><h2>Rückblick</h2></div><div class="gruppen">${rueck.join('')}</div></div>`);
 
   $('#woche-inhalt').innerHTML = teile.join('');
 }
@@ -468,7 +481,7 @@ function renderVerwaltung() {
     const kopf = !g ? `<div class="gm-gruppe"><span class="nm">${esc(name)}</span></div>`
       : sort ? `<div class="gm-gruppe sortieren"><span class="nm">${esc(name)}</span>${pfeile('g', g, gi, S.gruppen.length, name)}</div>`
       : `<button class="gm-gruppe" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} bearbeiten"><span class="nm">${esc(name)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
-    return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="gm-neu" type="button" data-neu-moment="${esc(g)}">+ Moment</button>` : ''}</div>`;
+    return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="moment-zeile gm-neu" type="button" data-neu-moment="${esc(g)}"><span class="sym" aria-hidden="true"><span class="plus-kreis">+</span></span><span class="nm">Moment hinzufügen</span></button>` : ''}</div>`;
   }).join('');
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
@@ -601,9 +614,9 @@ function toast(text, rueckgaengig) {
   toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), rueckgaengig ? 5000 : 2200);
 }
 
-let ansicht = 'heute';
+let ansicht = 'heute', vorAnsicht = 'heute';
 function zeige(v) {
-  if (v === 'verwaltung' && S.einstellungen.modus === 'einfach') v = 'heute';
+  if (v === 'verwaltung' && ansicht !== 'verwaltung') vorAnsicht = ansicht;
   if (v !== 'verwaltung') sortiermodus = false;
   ansicht = v;
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
@@ -612,8 +625,9 @@ function zeige(v) {
   window.scrollTo(0, 0);
 }
 function renderAlles() {
-  document.body.classList.toggle('modus-einfach', S.einstellungen.modus === 'einfach');
-  $('#btn-modus').textContent = S.einstellungen.modus === 'einfach' ? 'Einfach' : 'Erweitert';
+  const inEinst = ansicht === 'verwaltung';
+  $('#btn-einstellungen').classList.toggle('an', inEinst);
+  $('#btn-einstellungen').setAttribute('aria-pressed', inEinst);
   if (ansicht === 'heute') renderHeute();
   if (ansicht === 'woche') renderWoche();
   if (ansicht === 'verwaltung') renderVerwaltung();
@@ -645,12 +659,9 @@ function verbinden() {
   });
 
   document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => zeige(b.dataset.view)));
-  $('#btn-modus').onclick = () => {
-    S.einstellungen.modus = S.einstellungen.modus === 'einfach' ? 'erweitert' : 'einfach';
-    speichern();
-    if (S.einstellungen.modus === 'einfach' && ansicht === 'verwaltung') zeige('heute'); else renderAlles();
-    toast(S.einstellungen.modus === 'einfach' ? 'Einfach: Heute und Woche' : 'Erweitert: mit Einstellungen');
-  };
+  // Einstellungen: Zahnrad oben rechts öffnet und schließt, „‹ Zurück“ führt zur vorigen Ansicht
+  $('#btn-einstellungen').onclick = () => zeige(ansicht === 'verwaltung' ? vorAnsicht : 'verwaltung');
+  $('#btn-zurueck').onclick = () => zeige(vorAnsicht);
   $('#btn-info').onclick = () => $('#hilfe').classList.remove('hidden');
   $('#hilfe-zu').onclick = () => $('#hilfe').classList.add('hidden');
   $('#sheet-zu').onclick = sheetZu;

@@ -60,8 +60,6 @@ body {
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
-body.modus-einfach { --bg-grad: radial-gradient(ellipse at 50% 0%, #10191d 0%, #08090a 62%); }
-body.modus-einfach .nur-erweitert { display: none !important; }
 
 button { font-family: inherit; }
 :focus-visible { outline: 2px solid rgba(var(--reg-rgb), 0.8); outline-offset: 2px; }
@@ -91,7 +89,14 @@ header h1 { font-size: 1rem; letter-spacing: 0.2px; }
   font-size: 0.65rem; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; margin-bottom: 2px;
   background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-dim);
 }
-body.modus-einfach .btn-modus { border-color: rgba(95,211,141,0.55); color: var(--mf-gruen); background: rgba(95,211,141,0.1); }
+/* Zahnrad: so hell wie die Navigation, aktiv weiß mit leichter Fläche */
+.btn-zahnrad { color: var(--text-dim); }
+.btn-zahnrad svg { width: 16px; height: 16px; display: block; }
+.btn-zahnrad.an { color: var(--text); background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); }
+/* Kopf der Einstellungen */
+.einst-kopf { display: flex; align-items: center; gap: 0.75rem; padding: 0.1rem 0.1rem 0; }
+.btn-zurueck { background: none; border: 0; color: var(--text-dim); font-size: 0.9rem; font-weight: 600; padding: 0.4rem 0.2rem; cursor: pointer; }
+.einst-titel { font-family: var(--serif); font-weight: 400; font-size: 1.7rem; line-height: 1.1; }
 
 /* ── LAYOUT ─────────────────────────────────────────── */
 main {
@@ -307,12 +312,30 @@ main {
 }
 .gm-gruppe .pfeil { color: var(--muted); font-size: 1rem; }
 .gm-gruppe.sortieren { cursor: default; padding-block: 0.3rem; }
-.gm-neu { align-self: flex-start; margin-top: 0.35rem; background: none; border: 0; padding: 0.4rem 0.2rem; color: var(--hint); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.moment-zeile.gm-neu { border-bottom: 0; }
+.gm-neu .nm { font-size: 0.85rem; font-weight: 500; color: var(--hint); }
+.plus-kreis { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1px dashed var(--border-strong); color: var(--hint); font-size: 0.9rem; line-height: 1; }
 /* Woche: Gruppen aufklappbar, geschlossen */
-.wgruppe summary { list-style: none; cursor: pointer; grid-template-columns: 5.2rem 1fr auto 1rem; }
+/* Jede Gruppe eine klare Tippzeile: mind. 48px hoch, Linie dazwischen, runder Pfeil */
+.gruppen:has(.wgruppe) { gap: 0; }
+.wgruppe { border-bottom: 1px solid var(--border); }
+.wgruppe:last-child { border-bottom: 0; }
+.wgruppe summary {
+  list-style: none; cursor: pointer; min-height: 52px; padding: 0.45rem 0.25rem; margin: 0 -0.25rem; border-radius: 12px;
+  grid-template-columns: 6rem 1fr auto 28px; transition: background 0.15s;
+}
+.wgruppe summary:active { background: rgba(255,255,255,0.05); }
 .wgruppe summary::-webkit-details-marker { display: none; }
-.wgruppe summary .auf { color: var(--muted); transition: transform 0.15s; text-align: center; }
+.wgruppe summary .gruppe-name { display: flex; flex-direction: column; color: var(--text); font-weight: 600; font-size: 0.88rem; }
+.gruppe-anzahl { font-size: 0.7rem; font-weight: 400; color: var(--hint); margin-top: 0.1rem; }
+.wgruppe summary .auf {
+  width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-dim); font-size: 1rem;
+  transition: transform 0.2s;
+}
 .wgruppe[open] summary .auf { transform: rotate(90deg); }
+.rueck-zeile { grid-template-columns: 1fr auto 28px !important; }
+.rueck-kurz { font-size: 0.85rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .wgruppe-momente { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.7rem 0 0.4rem 0.2rem; }
 /* Reihenfolge ändern */
 .btn-klein {
@@ -455,7 +478,7 @@ select:disabled { opacity: 0.45; }
   font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
   position: relative;
 }
-body.modus-einfach .nav-item span { font-size: 0.72rem; text-transform: none; letter-spacing: 0; }
+.nav-item span { font-size: 0.72rem; text-transform: none; letter-spacing: 0; }
 .nav-item svg { width: 20px; height: 20px; position: relative; }
 .nav-item span { position: relative; }
 .nav-item.active { color: var(--text); }
