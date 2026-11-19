@@ -264,7 +264,11 @@ main {
 .gruppe-zeile { display: grid; grid-template-columns: 5.2rem 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.82rem; }
 .gruppe-name { color: var(--text-dim); }
 .gruppe-spur { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.04); overflow: hidden; }
-.gruppe-fuell { height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgba(var(--reg-rgb),0.45), rgba(var(--reg-rgb),0.8)); }
+/* Gruppenbalken zweifarbig: warm = aktiver Anteil, kühl = regenerativer Anteil */
+.gruppe-fuell { display: flex; height: 100%; border-radius: 999px; overflow: hidden; }
+.gruppe-fuell .teil-akt { background: rgba(var(--akt-rgb), 0.8); }
+.gruppe-fuell .teil-reg { background: rgba(var(--reg-rgb), 0.8); }
+.gruppen + .band-legende { margin-top: 0.7rem; }
 .gruppe-wert { color: var(--hint); font-size: 0.76rem; font-variant-numeric: tabular-nums; min-width: 3.4rem; text-align: right; }
 /* Untergruppen: eingerückt an einer Haarlinie, ohne Balken und ohne Soll */
 .unter-liste { margin: -0.15rem 0 0.1rem 0.35rem; padding-left: 0.75rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.3rem; }
@@ -289,6 +293,25 @@ main {
   background: none; border-left: 0; border-right: 0; border-top: 0; color: var(--text); text-align: left; cursor: pointer; width: 100%;
 }
 .moment-zeile:last-child { border-bottom: 0; }
+.verw-gruppe { display: flex; flex-direction: column; }
+.gruppen-liste { display: flex; flex-direction: column; margin-bottom: 0.8rem; }
+.gruppen-liste .verw-gruppe + .verw-gruppe { margin-top: 0; }
+.gruppe-knopf {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.6rem; width: 100%;
+  padding: 0.65rem 0.2rem; background: none; border: 0; border-bottom: 1px solid var(--border);
+  color: var(--text); text-align: left; cursor: pointer;
+}
+.gruppe-knopf .nm { font-size: 0.92rem; font-weight: 600; min-width: 0; }
+.gruppe-knopf.unter .nm { font-weight: 500; color: var(--text-dim); }
+.gruppe-knopf .info { font-size: 0.72rem; color: var(--hint); }
+.gruppe-knopf .pfeil { color: var(--muted); font-size: 1.1rem; }
+.gruppen-liste .verw-gruppe:last-child > .gruppe-knopf:last-child,
+.gruppen-liste .verw-gruppe:last-child .verw-unter .gruppe-knopf:last-child { border-bottom: 0; }
+.verw-gruppe + .verw-gruppe { margin-top: 0.9rem; }
+.verw-gruppe-titel { padding: 0 0.2rem 0.2rem; }
+.verw-unter { margin-left: 0.35rem; padding-left: 0.75rem; border-left: 1px solid var(--border); }
+.verw-unter-titel { font-size: 0.72rem; color: var(--hint); padding-top: 0.55rem; }
+.verw-gruppe .moment-zeile:last-child { border-bottom: 0; }
 .moment-zeile .sym { font-size: 1.2rem; display: flex; justify-content: center; color: var(--text-dim); }
 .moment-zeile .nm { font-size: 0.92rem; font-weight: 600; min-width: 0; }
 .moment-zeile .info { font-size: 0.72rem; color: var(--hint); margin-top: 0.1rem; font-weight: 400; }

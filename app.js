@@ -3,16 +3,15 @@
 'use strict';
 
 // ── Grunddaten ─────────────────────────────────────────
-const GRUPPEN = { family: 'Family', social: 'Social', metime: 'Me-Time' };
+// Gruppen und Untergruppen liegen in S (selbst anlegbar). GRUPPEN/UNTERGRUPPEN sind daraus gebaute Nachschlage-Tabellen.
+const START_GRUPPEN = [ { id: 'family', name: 'Family' }, { id: 'social', name: 'Social' }, { id: 'metime', name: 'Me-Time' } ];
+let GRUPPEN = {}, UNTERGRUPPEN = {};
+function gruppenAktualisieren() {
+  GRUPPEN = {}; for (const g of S.gruppen) GRUPPEN[g.id] = g.name;
+  UNTERGRUPPEN = {}; for (const u of S.untergruppen) if (GRUPPEN[u.gruppe]) UNTERGRUPPEN[u.id] = { name: u.name, gruppe: u.gruppe };
+}
 const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'beides' };
 const SCHLAF = { erholt: 'erholt', mittel: 'mittel', kurz: 'kurz' };
-// Untergruppen: eine Ebene, freiwillig. Heute nur unter Social › Community.
-const UNTERGRUPPEN = {
-  kultur:  { name: 'Kulturorganisator', gruppe: 'social', bereich: 'Community' },
-  gruene:  { name: 'Grüne',             gruppe: 'social', bereich: 'Community' },
-  adc:     { name: 'ADC',               gruppe: 'social', bereich: 'Community' },
-  baecker: { name: 'Bäcker',            gruppe: 'social', bereich: 'Community' },
-};
 
 // Piktogramme: 24er-Raster, Linie 1.75, runde Enden, currentColor (wie im MemoMe Design System)
 const PIKTO = {"kaffee": "<path d=\"M4 9h12v4.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5Z\"/><path d=\"M16 10.5h1.5a2.75 2.75 0 0 1 0 5.5H16\"/><path d=\"M8 3.5v2.5M12 3.5v2.5\"/><path d=\"M3 21.5h14\"/>", "cello": "<path d=\"M12 7.4C9.8 7.4 8.4 8.5 8.4 10.3c0 1.2 1 1.8 1 2.8s-2 1.7-2 3.9c0 2.4 2 3.7 4.6 3.7s4.6-1.3 4.6-3.7c0-2.2-2-2.9-2-3.9s1-1.6 1-2.8c0-1.8-1.4-2.9-3.6-2.9Z\"/><path d=\"M12 16.2V1.8M10.9 3.4h2.2M10.4 16.2h3.2M12 20.7v2.3\"/>", "sport": "<circle cx=\"15.5\" cy=\"4.2\" r=\"1.9\"/><path d=\"M13.6 8 10.6 13.6\"/><path d=\"M13.6 8l2.8 2.6 2.4-1.4\"/><path d=\"M13.6 8 10.2 8.6 8 10.8\"/><path d=\"M10.6 13.6l3.4 2.8-1 4.8\"/><path d=\"M10.6 13.6 8.4 17.2 4.6 17.6\"/>", "meditation": "<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 8.4v6.2\"/><path d=\"M12 9.6l-4.4 4.6 3 2.2M12 9.6l4.4 4.6-3 2.2\"/><path d=\"M4 19.5c2.4-2.6 5.2-3.2 8-3.2s5.6.6 8 3.2Z\"/>", "spaziergang": "<circle cx=\"12.6\" cy=\"4.2\" r=\"1.9\"/><path d=\"M12.2 8l-.8 6.2\"/><path d=\"M11.4 14.2l2.4 3.2.6 3.6M11.4 14.2l-1.8 3.4-1.4 3.4\"/><path d=\"M12.2 8.6l2.6 3.2M12.2 8.6 9.6 11.6\"/><path d=\"M17.4 11v10\"/>", "lesen": "<path d=\"M3 5.6c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1Z\"/><path d=\"M12 6.6v13\"/>", "offline": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.6\"/><path d=\"M10.6 5h2.8\"/><path d=\"M4 4l16 16\"/>", "familie": "<circle cx=\"7\" cy=\"6\" r=\"2.2\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\"/><circle cx=\"12\" cy=\"12.6\" r=\"1.4\"/><path d=\"M3.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M13.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M10.6 20.5v-3a1.4 1.4 0 0 1 2.8 0v3\"/>", "zuzweit": "<circle cx=\"9\" cy=\"12\" r=\"5.6\"/><circle cx=\"15\" cy=\"12\" r=\"5.6\"/>", "freunde": "<g transform=\"rotate(-12 7.5 13)\"><path d=\"M4.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3H6.9a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><g transform=\"rotate(12 16.5 13)\"><path d=\"M13.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3h-1.2a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><path d=\"M12 2.5v2.2M9.4 3.3l.9 1.6M14.6 3.3l-.9 1.6\"/>", "coding": "<path d=\"M8 7l-5 5 5 5M16 7l5 5-5 5M13.6 5l-3.2 14\"/>", "brot": "<path d=\"M3 14c0-4 4-6.5 9-6.5s9 2.5 9 6.5c0 2-1.5 3.5-3.5 3.5h-11C4.5 17.5 3 16 3 14Z\"/><path d=\"M8 9.4l1.4 3.2M12 8.8v3.6M16 9.4l-1.4 3.2\"/><path d=\"M5 20.5h14\"/>", "feierabend": "<path d=\"M5.5 21.5V3\"/><path d=\"M5.5 3.8h12.5l-2.6 4.2 2.6 4.2H5.5\"/>", "schlaf": "<path d=\"M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1Z\"/>", "kultur": "<path d=\"M4 9.5 12 4l8 5.5\"/><path d=\"M5 20.5h14M6.5 10.5v8M10 10.5v8M14 10.5v8M17.5 10.5v8\"/>", "gruene": "<path d=\"M6 19c0-8 5-13 13-13 0 8-5 13-13 13Z\"/><path d=\"M4 21l9-9\"/>"};
@@ -22,7 +21,6 @@ function pikto(name, cls = 'pikto', strich = 1.75) {
 }
 // Piktogramm, sonst eigenes Zeichen
 const symbolHTML = (m, strich) => (m.icon && PIKTO[m.icon]) ? pikto(m.icon, 'pikto', strich) : `<span class="zeichen">${esc(m.symbol || '•')}</span>`;
-const unterName = m => m.unter && UNTERGRUPPEN[m.unter] ? `${UNTERGRUPPEN[m.unter].bereich} › ${UNTERGRUPPEN[m.unter].name}` : '';
 
 const START_MOMENTE = [
   { id: 'kaffee',      name: 'Kaffeepause',          symbol: '☕', icon: 'kaffee', gruppe: 'social', modus: 'reg',    dauer: 15 },
@@ -34,7 +32,6 @@ const START_MOMENTE = [
   { id: 'offline',     name: 'Offline',              symbol: '📵', icon: 'offline', gruppe: 'metime', modus: 'reg',    dauer: 60 },
   { id: 'familie',     name: 'Familienzeit',         symbol: '👨‍👩‍👧', icon: 'familie', gruppe: 'family', modus: 'reg',    dauer: 60 },
   { id: 'zuzweit',     name: 'Zeit zu zweit',        symbol: '💑', icon: 'zuzweit', gruppe: 'family', modus: 'reg',    dauer: 60 },
-  { id: 'brot',        name: 'Brot backen',          symbol: '🍞', icon: 'brot', gruppe: 'social', unter: 'baecker', modus: 'beides', dauer: 60 },
   { id: 'freunde',     name: 'Freunde treffen',      symbol: '🍻', icon: 'freunde', gruppe: 'social', modus: 'beides', dauer: 60 },
   { id: 'vibe',        name: 'Vibe Coding',          symbol: '💻', icon: 'coding', gruppe: 'metime', modus: 'akt',    dauer: 30, genugTag: 120 },
 ];
@@ -42,7 +39,9 @@ const START_MOMENTE = [
 function startZustand() {
   return {
     version: 1,
-    stand: 3,            // Datenstand: 3 = Piktogramme, Untergruppen, Brot backen
+    stand: 4,            // Datenstand: 4 = Gruppen und Untergruppen selbst anlegbar
+    gruppen: START_GRUPPEN.map(g => ({ ...g })),
+    untergruppen: [],    // { id, name, gruppe }
     momente: START_MOMENTE.map(m => ({ ...m })),
     taps: [],            // { id, mid, ts, min }
     feierabend: {},      // 'JJJJ-MM-TT' → 'HH:MM'
@@ -231,11 +230,12 @@ function renderHeute() {
       ${ringSVG()}
     </button>`;
   };
-  $('#moment-kacheln').innerHTML = Object.keys(GRUPPEN).map(g => {
-    const liste = S.momente.filter(m => m.gruppe === g);
+  $('#moment-kacheln').innerHTML = [...Object.keys(GRUPPEN), ''].map(g => {
+    const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
     if (!liste.length) return '';
-    return `<section class="gruppe-block" aria-label="${GRUPPEN[g]}">
-      <div class="label gruppe-label nur-erweitert">${GRUPPEN[g]}</div>
+    const titel = g ? GRUPPEN[g] : 'Ohne Gruppe';
+    return `<section class="gruppe-block" aria-label="${esc(titel)}">
+      <div class="label gruppe-label nur-erweitert">${esc(titel)}</div>
       <div class="kachel-raster">${liste.map(kachel).join('')}</div></section>`;
   }).join('');
 }
@@ -379,23 +379,29 @@ function renderWoche() {
     }).join('');
     teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2></div><div class="summen-liste">${zeilen}</div></div>`);
 
+    // je Gruppe: aktiver und regenerativer Anteil (beides halb/halb)
     const pg = {}, pu = {};
     for (const t of taps) {
-      const m = moment(t.mid), w = t.min || 10;
-      pg[m.gruppe] = (pg[m.gruppe] || 0) + w;
+      const m = moment(t.mid), w = t.min || 10, g = GRUPPEN[m.gruppe] ? m.gruppe : '';
+      const e = pg[g] ||= { akt: 0, reg: 0, min: 0 };
+      if (m.modus === 'akt') e.akt += w; else if (m.modus === 'reg') e.reg += w; else { e.akt += w / 2; e.reg += w / 2; }
+      e.min += t.min || 0;
       if (m.unter && UNTERGRUPPEN[m.unter]) { const u = pu[m.unter] ||= { min: 0, n: 0 }; u.min += t.min || 0; u.n++; }
     }
-    const maxG = Math.max(...Object.values(pg));
-    const gz = Object.keys(GRUPPEN).filter(g => pg[g]).map(g => {
+    const maxG = Math.max(...Object.values(pg).map(e => e.akt + e.reg));
+    const gz = [...Object.keys(GRUPPEN), ''].filter(g => pg[g]).map(g => {
+      const e = pg[g], breite = Math.max(6, (e.akt + e.reg) / maxG * 100);
       const unter = Object.keys(UNTERGRUPPEN).filter(u => UNTERGRUPPEN[u].gruppe === g && pu[u]);
-      const uz = unter.length ? `<div class="unter-liste"><div class="unter-bereich">${UNTERGRUPPEN[unter[0]].bereich}</div>${unter.map(u => `<div class="unter-zeile">
-          <span>${UNTERGRUPPEN[u].name}</span><span class="gruppe-wert">${pu[u].n} ×${pu[u].min ? ' · ' + fmtDauer(pu[u].min) : ''}</span></div>`).join('')}</div>` : '';
+      const uz = unter.length ? `<div class="unter-liste">${unter.map(u => `<div class="unter-zeile">
+          <span>${esc(UNTERGRUPPEN[u].name)}</span><span class="gruppe-wert">${pu[u].n} ×${pu[u].min ? ' · ' + fmtDauer(pu[u].min) : ''}</span></div>`).join('')}</div>` : '';
       return `<div class="gruppe-zeile">
-        <span class="gruppe-name">${GRUPPEN[g]}</span>
-        <span class="gruppe-spur"><span class="gruppe-fuell" style="display:block;width:${Math.max(6, pg[g] / maxG * 100)}%"></span></span>
-        <span class="gruppe-wert">${fmtDauer(pg[g])}</span></div>${uz}`;
+        <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</span>
+        <span class="gruppe-spur"><span class="gruppe-fuell" style="width:${breite}%" role="img" aria-label="${e.akt > e.reg ? 'eher aktiv' : e.reg > e.akt ? 'eher regenerativ' : 'ausgeglichen'}">
+          <span class="teil-akt" style="flex-grow:${e.akt}"></span><span class="teil-reg" style="flex-grow:${e.reg}"></span></span></span>
+        <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span></div>${uz}`;
     }).join('');
-    teile.push(`<div class="card"><div class="card-header"><h2>Gruppen</h2></div><div class="gruppen">${gz}</div></div>`);
+    teile.push(`<div class="card"><div class="card-header"><h2>Gruppen</h2></div><div class="gruppen">${gz}</div>
+      <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
   if (abende.length) teile.push(`<div class="card"><div class="card-header"><h2>Feierabende</h2></div>${abendSVG(abende)}
@@ -443,10 +449,22 @@ function abendSVG(abende) {
 // ── VERWALTUNG ─────────────────────────────────────────
 function renderVerwaltung() {
   $('#momente-anzahl').textContent = S.momente.length;
-  $('#momente-liste').innerHTML = S.momente.map(m => `<button class="moment-zeile" type="button" data-edit="${esc(m.id)}">
+  // Nach Gruppe sortiert, darin erst Momente ohne Untergruppe, dann je Untergruppe
+  const zeile = m => `<button class="moment-zeile" type="button" data-edit="${esc(m.id)}">
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
-      <span class="nm">${esc(m.name)}<span class="info" style="display:block">${GRUPPEN[m.gruppe]}${unterName(m) ? ' › ' + esc(UNTERGRUPPEN[m.unter].name) : ''} · ${MODI[m.modus]}${m.dauer ? ' · ' + fmtDauer(m.dauer) : ''}${m.etwa ? ` · etwa ${m.etwa} × pro Woche` : ''}</span></span>
-      <span class="modus-punkt ${m.modus}" aria-hidden="true"></span></button>`).join('');
+      <span class="nm">${esc(m.name)}<span class="info" style="display:block">${MODI[m.modus]}${m.dauer ? ' · ' + fmtDauer(m.dauer) : ''}${m.etwa ? ` · etwa ${m.etwa} × pro Woche` : ''}</span></span>
+      <span class="modus-punkt ${m.modus}" aria-hidden="true"></span></button>`;
+  $('#momente-liste').innerHTML = [...Object.keys(GRUPPEN), ''].map(g => {
+    const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
+    if (!liste.length) return '';
+    const ohne = liste.filter(m => !(m.unter && UNTERGRUPPEN[m.unter]));
+    const unter = Object.keys(UNTERGRUPPEN).filter(u => liste.some(m => m.unter === u));
+    return `<div class="verw-gruppe"><div class="label verw-gruppe-titel">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</div>
+      ${ohne.map(zeile).join('')}
+      ${unter.map(u => `<div class="verw-unter"><div class="verw-unter-titel">${esc(UNTERGRUPPEN[u].name)}</div>
+        ${liste.filter(m => m.unter === u).map(zeile).join('')}</div>`).join('')}</div>`;
+  }).join('');
+  renderGruppenVerwaltung();
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.classList.toggle('an', b.dataset.stil === S.einstellungen.balanceStil));
@@ -454,7 +472,7 @@ function renderVerwaltung() {
 
 function momentSheet(id) {
   const neu = !id;
-  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'gruene', gruppe: 'metime', modus: 'reg', dauer: 30 } : { ...moment(id) };
+  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'gruene', gruppe: S.gruppen[0]?.id, modus: 'reg', dauer: 30 } : { ...moment(id) };
   const segM = Object.entries(MODI).map(([k, t]) => `<button type="button" data-wert="${k}" class="${m.modus === k ? 'an' : ''}">${t}</button>`).join('');
   sheet(neu ? 'Neuer Moment' : m.name, `
     <div class="form-group"><label for="m-name">Name</label><input type="text" id="m-name" value="${esc(m.name)}" placeholder="z. B. Gartenzeit" maxlength="40"></div>
@@ -464,7 +482,7 @@ function momentSheet(id) {
     <div class="form-group"><label>Modus</label><div class="seg modus-seg" id="m-modus">${segM}</div>
       <p class="form-hinweis">Warm für Aktivierung, kühl für Regeneration.</p></div>
     <div class="form-reihe">
-      <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="form-group"><label for="m-unter">Untergruppe</label><select id="m-unter"></select></div>
     </div>
     <div class="form-reihe">
@@ -491,7 +509,7 @@ function momentSheet(id) {
   });
   const unterFuellen = () => {
     const g = $('#m-gruppe').value, wahl = Object.entries(UNTERGRUPPEN).filter(([, u]) => u.gruppe === g);
-    $('#m-unter').innerHTML = `<option value="">keine</option>` + wahl.map(([k, u]) => `<option value="${k}"${m.unter === k ? ' selected' : ''}>${u.name}</option>`).join('');
+    $('#m-unter').innerHTML = `<option value="">keine</option>` + wahl.map(([k, u]) => `<option value="${k}"${m.unter === k ? ' selected' : ''}>${esc(u.name)}</option>`).join('');
     $('#m-unter').disabled = !wahl.length;
   };
   $('#m-gruppe').onchange = unterFuellen; unterFuellen();
@@ -513,6 +531,87 @@ function momentSheet(id) {
     $('#weg-nein').onclick = () => momentSheet(m.id);
   };
 }
+
+// ── GRUPPEN VERWALTEN ──────────────────────────────────
+function renderGruppenVerwaltung() {
+  $('#gruppen-liste').innerHTML = S.gruppen.map(g => {
+    const n = S.momente.filter(m => m.gruppe === g.id).length;
+    const unter = S.untergruppen.filter(u => u.gruppe === g.id);
+    return `<div class="verw-gruppe">
+      <button class="gruppe-knopf" type="button" data-gruppe="${esc(g.id)}"><span class="nm">${esc(g.name)}</span><span class="info">${n === 1 ? '1 Moment' : n + ' Momente'}</span><span class="pfeil" aria-hidden="true">›</span></button>
+      ${unter.length ? `<div class="verw-unter">${unter.map(u => `<button class="gruppe-knopf unter" type="button" data-untergruppe="${esc(u.id)}"><span class="nm">${esc(u.name)}</span><span class="info">${(n => n === 1 ? '1 Moment' : n + ' Momente')(S.momente.filter(m => m.unter === u.id).length)}</span><span class="pfeil" aria-hidden="true">›</span></button>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function gruppeSheet(id) {
+  const neu = !id;
+  const g = neu ? { id: uid(), name: '' } : S.gruppen.find(x => x.id === id);
+  const i = S.gruppen.indexOf(g);
+  sheet(neu ? 'Neue Gruppe' : g.name, `
+    <div class="form-group"><label for="g-name">Name</label><input type="text" id="g-name" value="${esc(g.name)}" placeholder="z. B. Ehrenamt" maxlength="30"></div>
+    <div class="btn-reihe">
+      <button class="btn-primary" id="g-ok" type="button">${neu ? 'Gruppe anlegen' : 'Speichern'}</button>
+      ${neu ? '' : `<button class="btn-secondary" id="g-unter" type="button">+ Untergruppe in ${esc(g.name)}</button>
+      ${i > 0 ? '<button class="btn-leise" id="g-hoch" type="button">Weiter nach oben</button>' : ''}
+      <button class="btn-leise" id="g-weg" type="button">Gruppe entfernen …</button>`}
+    </div>`);
+  $('#g-ok').onclick = () => {
+    const name = $('#g-name').value.trim();
+    if (!name) { $('#g-name').focus(); $('#g-name').placeholder = 'Bitte einen Namen eingeben'; return; }
+    g.name = name; if (neu) S.gruppen.push(g);
+    gespeichertNeu(); sheetZu(); toast(neu ? `${name} angelegt` : 'Gespeichert');
+  };
+  if (neu) return;
+  $('#g-unter').onclick = () => untergruppeSheet(null, g.id);
+  if (i > 0) $('#g-hoch').onclick = () => { S.gruppen.splice(i, 1); S.gruppen.splice(i - 1, 0, g); gespeichertNeu(); sheetZu(); toast('Reihenfolge geändert'); };
+  $('#g-weg').onclick = () => {
+    const andere = S.gruppen.filter(x => x.id !== g.id);
+    if (!andere.length) { toast('Mindestens eine Gruppe bleibt'); return; }
+    const n = S.momente.filter(m => m.gruppe === g.id).length;
+    const nu = S.untergruppen.filter(u => u.gruppe === g.id).length;
+    sheet('Gruppe entfernen', `<p class="card-text">„${esc(g.name)}“ wird entfernt${nu ? `, mit ${nu === 1 ? 'ihrer Untergruppe' : `ihren ${nu} Untergruppen`}` : ''}. Gezählte Einträge bleiben erhalten.</p>
+      ${n ? `<div class="form-group"><label for="g-ziel">${n === 1 ? 'Der Moment kommt nach' : `Die ${n} Momente kommen nach`}</label>
+        <select id="g-ziel">${andere.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select></div>` : ''}
+      <div class="btn-reihe"><button class="btn-primary" id="gw-ja" type="button">Entfernen</button><button class="btn-leise" id="gw-nein" type="button">Behalten</button></div>`);
+    $('#gw-ja').onclick = () => {
+      const ziel = n ? $('#g-ziel').value : null;
+      const weg = new Set(S.untergruppen.filter(u => u.gruppe === g.id).map(u => u.id));
+      for (const m of S.momente) if (m.gruppe === g.id) { m.gruppe = ziel; if (weg.has(m.unter)) delete m.unter; }
+      S.untergruppen = S.untergruppen.filter(u => u.gruppe !== g.id);
+      S.gruppen = andere;
+      gespeichertNeu(); sheetZu(); toast('Gruppe entfernt');
+    };
+    $('#gw-nein').onclick = () => gruppeSheet(g.id);
+  };
+}
+
+function untergruppeSheet(id, gruppe) {
+  const neu = !id;
+  const u = neu ? { id: uid(), name: '', gruppe } : S.untergruppen.find(x => x.id === id);
+  sheet(neu ? `Neue Untergruppe in ${GRUPPEN[u.gruppe]}` : u.name, `
+    <div class="form-group"><label for="u-name">Name</label><input type="text" id="u-name" value="${esc(u.name)}" placeholder="z. B. Kinder" maxlength="30"></div>
+    <div class="form-group"><label for="u-gruppe">Gehört zu</label><select id="u-gruppe">${S.gruppen.map(g => `<option value="${esc(g.id)}"${g.id === u.gruppe ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select></div>
+    <div class="btn-reihe">
+      <button class="btn-primary" id="u-ok" type="button">${neu ? 'Untergruppe anlegen' : 'Speichern'}</button>
+      ${neu ? '' : '<button class="btn-leise" id="u-weg" type="button">Untergruppe entfernen</button>'}
+    </div>`);
+  $('#u-ok').onclick = () => {
+    const name = $('#u-name').value.trim();
+    if (!name) { $('#u-name').focus(); $('#u-name').placeholder = 'Bitte einen Namen eingeben'; return; }
+    const alt = u.gruppe; u.name = name; u.gruppe = $('#u-gruppe').value;
+    if (neu) S.untergruppen.push(u);
+    else if (alt !== u.gruppe) for (const m of S.momente) if (m.unter === u.id) m.gruppe = u.gruppe; // Momente ziehen mit
+    gespeichertNeu(); sheetZu(); toast(neu ? `${name} angelegt` : 'Gespeichert');
+  };
+  if (!neu) $('#u-weg').onclick = () => {
+    for (const m of S.momente) if (m.unter === u.id) delete m.unter;  // Momente bleiben in ihrer Gruppe
+    S.untergruppen = S.untergruppen.filter(x => x.id !== u.id);
+    gespeichertNeu(); sheetZu(); toast('Untergruppe entfernt, Momente bleiben');
+  };
+}
+
+function gespeichertNeu() { gruppenAktualisieren(); speichern(); renderAlles(); }
 
 // ── Sheet, Toast, Navigation ───────────────────────────
 function sheet(titel, html) { $('#sheet-titel').textContent = titel; $('#sheet-body').innerHTML = html; $('#sheet').classList.remove('hidden'); }
@@ -589,6 +688,11 @@ function verbinden() {
 
   $('#momente-liste').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) momentSheet(b.dataset.edit); });
   $('#btn-moment-neu').onclick = () => momentSheet(null);
+  $('#gruppen-liste').addEventListener('click', e => {
+    const g = e.target.closest('[data-gruppe]'), u = e.target.closest('[data-untergruppe]');
+    if (u) untergruppeSheet(u.dataset.untergruppe); else if (g) gruppeSheet(g.dataset.gruppe);
+  });
+  $('#btn-gruppe-neu').onclick = () => gruppeSheet(null);
   $('#korridor-von').onchange = e => { if (e.target.value) { S.einstellungen.korridorVon = e.target.value; speichern(); } };
   $('#korridor-bis').onchange = e => { if (e.target.value) { S.einstellungen.korridorBis = e.target.value; speichern(); } };
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.onclick = () => { S.einstellungen.balanceStil = b.dataset.stil; speichern(); renderVerwaltung(); });
@@ -607,12 +711,19 @@ function verbinden() {
   if (gespeichert && gespeichert.version === 1) {
     S = { ...startZustand(), ...gespeichert, einstellungen: { ...startZustand().einstellungen, ...gespeichert.einstellungen } };
     if (!(gespeichert.stand >= 3)) {
-      // Stand 3: Piktogramme für die Startmomente, Brot backen unter Social › Community › Bäcker
+      // Stand 3: Piktogramme für die Startmomente
       for (const m of S.momente) { const st = START_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
-      if (!S.momente.some(m => m.id === 'brot')) S.momente.push({ ...START_MOMENTE.find(x => x.id === 'brot') });
-      S.stand = 3; speichern();
+    }
+    if (!(gespeichert.stand >= 4)) {
+      // Stand 4: Gruppen und Untergruppen werden Daten. Feste Untergruppen aus Stand 3 werden übernommen,
+      // aber nur, wenn ein Moment sie nutzt.
+      S.gruppen = START_GRUPPEN.map(g => ({ ...g }));
+      const alt = { kultur: 'Kulturorganisator', gruene: 'Grüne', adc: 'ADC', baecker: 'Bäcker' };
+      S.untergruppen = Object.keys(alt).filter(k => S.momente.some(m => m.unter === k)).map(k => ({ id: k, name: alt[k], gruppe: 'social' }));
+      S.stand = 4; speichern();
     }
   }
+  gruppenAktualisieren();
   verbinden();
   zeige('heute');
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
