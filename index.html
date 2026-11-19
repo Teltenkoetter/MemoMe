@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="modus-einfach">
 
@@ -55,16 +55,10 @@
     <!-- ── VERWALTUNG ────────────────────────────────── -->
     <section id="view-verwaltung" class="view hidden">
       <div class="card">
-        <div class="card-header"><h2>Momente</h2><span class="badge" id="momente-anzahl"></span><button class="btn-klein rechts" id="btn-sort-momente" type="button">Reihenfolge ändern</button></div>
-        <p class="card-text hidden" id="sort-momente-hinweis">Mit den Pfeilen verschiebst du einen Moment innerhalb seiner Gruppe. So stehen die Kacheln auch auf Heute.</p>
-        <div id="momente-liste" class="momente-liste"></div>
-        <button class="btn-secondary" id="btn-moment-neu" type="button">+ Neuer Moment</button>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><h2>Gruppen</h2><button class="btn-klein rechts" id="btn-sort-gruppen" type="button">Reihenfolge ändern</button></div>
-        <p class="card-text">Gruppen ordnen die Momente. Ob etwas aktiv oder erholsam ist, legt der Moment selbst fest. Untergruppen gliedern nur den Wochenblick, auf Heute bleibt alles nach Gruppen sortiert.</p>
-        <div id="gruppen-liste" class="gruppen-liste"></div>
+        <div class="card-header"><h2>Gruppen &amp; Momente</h2><button class="btn-klein rechts" id="btn-sort" type="button">Reihenfolge ändern</button></div>
+        <p class="card-text">Tippe auf eine Gruppe, um sie umzubenennen oder zu entfernen, und auf einen Moment, um ihn zu bearbeiten. Ob etwas aktiv oder erholsam ist, legt der Moment fest.</p>
+        <p class="card-text hidden" id="sort-hinweis">Mit den Pfeilen verschiebst du Gruppen und Momente. Momente bleiben in ihrer Gruppe. Die Reihenfolge gilt auch für Heute und die Woche.</p>
+        <div id="gm-liste" class="gm-liste"></div>
         <button class="btn-secondary" id="btn-gruppe-neu" type="button">+ Neue Gruppe</button>
       </div>
 
@@ -154,7 +148,7 @@
         <div class="modal-divider"></div>
         <div class="modal-section">
           <div class="modal-section-title">Gruppen</div>
-          <p class="hilfe-text">Gruppen (zum Beispiel Family, Social, Me-Time) ordnen die Momente. Im Modus Erweitert lassen sie sich unter Einstellungen anlegen, umbenennen und entfernen, dazu Untergruppen wie „Kinder“. Eine Untergruppe lässt sich auch direkt beim Moment anlegen. Ob ein Moment aktiv oder erholsam ist, legt der Moment selbst fest: Üben mit den Kindern kann Family und Aktivierung sein, Familienzeit Family und Regeneration.</p>
+          <p class="hilfe-text">Gruppen (zum Beispiel Family, Social, Me-Time) ordnen die Momente. Im Modus Erweitert lassen sich unter Einstellungen in „Gruppen &amp; Momente“ Gruppen und Momente anlegen, umbenennen, sortieren und entfernen. Die Reihenfolge gilt auf Heute und in der Woche. In der Woche lässt sich jede Gruppe aufklappen. Ob ein Moment aktiv oder erholsam ist, legt der Moment selbst fest: Üben mit den Kindern kann Family und Aktivierung sein, Familienzeit Family und Regeneration.</p>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
@@ -163,13 +157,13 @@
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 9</p>
+        <p class="modal-meta modal-meta-build">Version 11</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

@@ -3,12 +3,11 @@
 'use strict';
 
 // ── Grunddaten ─────────────────────────────────────────
-// Gruppen und Untergruppen liegen in S (selbst anlegbar). GRUPPEN/UNTERGRUPPEN sind daraus gebaute Nachschlage-Tabellen.
+// Gruppen liegen in S (selbst anlegbar, sortierbar). GRUPPEN ist daraus gebaut: id → Name, in der eingestellten Reihenfolge.
 const START_GRUPPEN = [ { id: 'family', name: 'Family' }, { id: 'social', name: 'Social' }, { id: 'metime', name: 'Me-Time' } ];
-let GRUPPEN = {}, UNTERGRUPPEN = {};
+let GRUPPEN = {};
 function gruppenAktualisieren() {
   GRUPPEN = {}; for (const g of S.gruppen) GRUPPEN[g.id] = g.name;
-  UNTERGRUPPEN = {}; for (const u of S.untergruppen) if (GRUPPEN[u.gruppe]) UNTERGRUPPEN[u.id] = { name: u.name, gruppe: u.gruppe };
 }
 const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'beides' };
 const SCHLAF = { erholt: 'erholt', mittel: 'mittel', kurz: 'kurz' };
@@ -41,9 +40,8 @@ const START_MOMENTE = [
 function startZustand() {
   return {
     version: 1,
-    stand: 4,            // Datenstand: 4 = Gruppen und Untergruppen selbst anlegbar
+    stand: 5,            // Datenstand: 5 = Gruppen und Momente in einer Liste, keine Untergruppen
     gruppen: START_GRUPPEN.map(g => ({ ...g })),
-    untergruppen: [],    // { id, name, gruppe }
     momente: START_MOMENTE.map(m => ({ ...m })),
     taps: [],            // { id, mid, ts, min }
     feierabend: {},      // 'JJJJ-MM-TT' → 'HH:MM'
@@ -359,7 +357,8 @@ function renderWoche() {
   if (taps.length) {
     const pm = {};
     for (const t of taps) { const p = pm[t.mid] ||= { n: 0, min: 0 }; p.n++; p.min += t.min || 0; }
-    const zeilen = S.momente.filter(m => pm[m.id]).map(m => {
+    // gleiche Ordnung wie auf Heute: Gruppen in ihrer Reihenfolge, darin die Momente in ihrer Reihenfolge
+    const zeile = m => {
       const p = pm[m.id];
       const rgb = m.modus === 'akt' ? 'var(--akt-rgb)' : 'var(--reg-rgb)';
       let band = '';
@@ -378,31 +377,28 @@ function renderWoche() {
         <span class="summe-name">${esc(m.name)}</span>
         <span class="summe-wert"><strong>${p.n} ×</strong>${p.min ? ' · ' + fmtDauer(p.min) : ''}</span>
         ${band}</div>`;
-    }).join('');
-    teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2></div><div class="summen-liste">${zeilen}</div></div>`);
-
+    };
     // je Gruppe: aktiver und regenerativer Anteil (beides halb/halb)
-    const pg = {}, pu = {};
+    const pg = {};
     for (const t of taps) {
       const m = moment(t.mid), w = t.min || 10, g = GRUPPEN[m.gruppe] ? m.gruppe : '';
       const e = pg[g] ||= { akt: 0, reg: 0, min: 0 };
       if (m.modus === 'akt') e.akt += w; else if (m.modus === 'reg') e.reg += w; else { e.akt += w / 2; e.reg += w / 2; }
       e.min += t.min || 0;
-      if (m.unter && UNTERGRUPPEN[m.unter]) { const u = pu[m.unter] ||= { min: 0, n: 0 }; u.min += t.min || 0; u.n++; }
     }
     const maxG = Math.max(...Object.values(pg).map(e => e.akt + e.reg));
+    // Gruppen in der eingestellten Reihenfolge, geschlossen; darin die Momente in ihrer Reihenfolge
     const gz = [...Object.keys(GRUPPEN), ''].filter(g => pg[g]).map(g => {
       const e = pg[g], breite = Math.max(6, (e.akt + e.reg) / maxG * 100);
-      const unter = Object.keys(UNTERGRUPPEN).filter(u => UNTERGRUPPEN[u].gruppe === g && pu[u]);
-      const uz = unter.length ? `<div class="unter-liste">${unter.map(u => `<div class="unter-zeile">
-          <span>${esc(UNTERGRUPPEN[u].name)}</span><span class="gruppe-wert">${pu[u].n} ×${pu[u].min ? ' · ' + fmtDauer(pu[u].min) : ''}</span></div>`).join('')}</div>` : '';
-      return `<div class="gruppe-zeile">
+      const liste = S.momente.filter(m => pm[m.id] && (g ? m.gruppe === g : !GRUPPEN[m.gruppe]));
+      return `<details class="wgruppe"><summary class="gruppe-zeile">
         <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</span>
         <span class="gruppe-spur"><span class="gruppe-fuell" style="width:${breite}%" role="img" aria-label="${e.akt > e.reg ? 'eher aktiv' : e.reg > e.akt ? 'eher regenerativ' : 'ausgeglichen'}">
           <span class="teil-akt" style="flex-grow:${e.akt}"></span><span class="teil-reg" style="flex-grow:${e.reg}"></span></span></span>
-        <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span></div>${uz}`;
+        <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
+        <div class="wgruppe-momente">${liste.map(zeile).join('')}</div></details>`;
     }).join('');
-    teile.push(`<div class="card"><div class="card-header"><h2>Gruppen</h2></div><div class="gruppen">${gz}</div>
+    teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2></div><div class="gruppen">${gz}</div>
       <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
@@ -450,13 +446,12 @@ function abendSVG(abende) {
 
 // ── VERWALTUNG ─────────────────────────────────────────
 function renderVerwaltung() {
-  $('#momente-anzahl').textContent = S.momente.length;
-  // Nach Gruppe, in der Reihenfolge wie auf Heute. Die Untergruppe steht in der Infozeile.
-  const sort = sortiermodus.momente;
-  $('#btn-sort-momente').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
-  $('#btn-sort-momente').classList.toggle('an', sort);
-  $('#sort-momente-hinweis').classList.toggle('hidden', !sort);
-  const info = m => [UNTERGRUPPEN[m.unter] ? esc(UNTERGRUPPEN[m.unter].name) : '', MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : ''].filter(Boolean).join(' · ');
+  // Gruppen als Überschriften, darunter ihre Momente. Gleiche Reihenfolge wie auf Heute und in der Woche.
+  const sort = sortiermodus;
+  $('#btn-sort').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
+  $('#btn-sort').classList.toggle('an', sort);
+  $('#sort-hinweis').classList.toggle('hidden', !sort);
+  const info = m => [MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : ''].filter(Boolean).join(' · ');
   const zeile = (m, i, liste) => sort
     ? `<div class="moment-zeile sortieren">
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
@@ -466,21 +461,23 @@ function renderVerwaltung() {
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
       <span class="nm">${esc(m.name)}<span class="info" style="display:block">${info(m)}</span></span>
       <span class="modus-punkt ${m.modus}" aria-hidden="true"></span></button>`;
-  $('#momente-liste').innerHTML = [...Object.keys(GRUPPEN), ''].map(g => {
+  $('#gm-liste').innerHTML = [...S.gruppen.map(g => g.id), ''].map((g, gi) => {
     const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
-    if (!liste.length) return '';
-    return `<div class="verw-gruppe"><div class="label verw-gruppe-titel">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}</div>
-      ${liste.map(zeile).join('')}</div>`;
+    if (!g && !liste.length) return '';
+    const name = g ? GRUPPEN[g] : 'Ohne Gruppe';
+    const kopf = !g ? `<div class="gm-gruppe"><span class="nm">${esc(name)}</span></div>`
+      : sort ? `<div class="gm-gruppe sortieren"><span class="nm">${esc(name)}</span>${pfeile('g', g, gi, S.gruppen.length, name)}</div>`
+      : `<button class="gm-gruppe" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} bearbeiten"><span class="nm">${esc(name)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
+    return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="gm-neu" type="button" data-neu-moment="${esc(g)}">+ Moment</button>` : ''}</div>`;
   }).join('');
-  renderGruppenVerwaltung();
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.classList.toggle('an', b.dataset.stil === S.einstellungen.balanceStil));
 }
 
-function momentSheet(id) {
+function momentSheet(id, gruppeVorwahl) {
   const neu = !id;
-  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'gruene', gruppe: S.gruppen[0]?.id, modus: 'reg', dauer: 30 } : { ...moment(id) };
+  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'gruene', gruppe: gruppeVorwahl || S.gruppen[0]?.id, modus: 'reg', dauer: 30 } : { ...moment(id) };
   const segM = Object.entries(MODI).map(([k, t]) => `<button type="button" data-wert="${k}" class="${m.modus === k ? 'an' : ''}">${t}</button>`).join('');
   sheet(neu ? 'Neuer Moment' : m.name, `
     <div class="form-group"><label for="m-name">Name</label><input type="text" id="m-name" value="${esc(m.name)}" placeholder="z. B. Gartenzeit" maxlength="40"></div>
@@ -492,10 +489,6 @@ function momentSheet(id) {
       <p class="form-hinweis">Warm für Aktivierung, kühl für Regeneration.</p></div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-      <div class="form-group"><label for="m-unter">Untergruppe</label><select id="m-unter"></select></div>
-    </div>
-    <div class="form-group hidden" id="m-unter-neu-feld"><label for="m-unter-neu">Name der neuen Untergruppe</label><input type="text" id="m-unter-neu" maxlength="30" placeholder="z. B. Kinder"></div>
-    <div class="form-reihe">
       <div class="form-group"><label for="m-dauer">Dauer (min)</label><input type="number" id="m-dauer" min="0" max="600" step="5" value="${m.dauer || 0}"></div>
     </div>
     <div class="form-reihe">
@@ -517,28 +510,12 @@ function momentSheet(id) {
     icon = b.dataset.icon;
     document.querySelectorAll('#m-pikto button').forEach(x => { x.classList.toggle('an', x === b); x.setAttribute('aria-pressed', x === b); });
   });
-  const unterFuellen = () => {
-    const g = $('#m-gruppe').value, wahl = Object.entries(UNTERGRUPPEN).filter(([, u]) => u.gruppe === g);
-    $('#m-unter').innerHTML = `<option value="">keine</option>` + wahl.map(([k, u]) => `<option value="${k}"${m.unter === k ? ' selected' : ''}>${esc(u.name)}</option>`).join('')
-      + `<option value="+neu">+ Neue Untergruppe …</option>`;
-    neuZeigen();
-  };
-  const neuZeigen = () => { const an = $('#m-unter').value === '+neu'; $('#m-unter-neu-feld').classList.toggle('hidden', !an); if (an) $('#m-unter-neu').focus(); };
-  $('#m-unter').onchange = neuZeigen;
-  $('#m-gruppe').onchange = unterFuellen; unterFuellen();
   $('#m-ok').onclick = () => {
     const name = $('#m-name').value.trim();
     if (!name) { $('#m-name').focus(); $('#m-name').placeholder = 'Bitte einen Namen eingeben'; return; }
     const zahl = v => { const n = parseInt(v, 10); return n > 0 ? n : undefined; };
-    // Untergruppe direkt hier neu anlegen
-    let unter = $('#m-unter').value || undefined;
-    if (unter === '+neu') {
-      const uname = $('#m-unter-neu').value.trim();
-      if (!uname) { $('#m-unter-neu').focus(); $('#m-unter-neu').placeholder = 'Bitte einen Namen eingeben'; return; }
-      const u = { id: uid(), name: uname, gruppe: $('#m-gruppe').value };
-      S.untergruppen.push(u); gruppenAktualisieren(); unter = u.id;
-    }
-    Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, unter, modus, gruppe: $('#m-gruppe').value,
+    delete m.unter;
+    Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, modus, gruppe: $('#m-gruppe').value,
       dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value) });
     if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
     speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
@@ -552,27 +529,9 @@ function momentSheet(id) {
   };
 }
 
-// ── GRUPPEN VERWALTEN ──────────────────────────────────
-function renderGruppenVerwaltung() {
-  const sort = sortiermodus.gruppen;
-  $('#btn-sort-gruppen').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
-  $('#btn-sort-gruppen').classList.toggle('an', sort);
-  const anzahl = n => n === 1 ? '1 Moment' : n + ' Momente';
-  $('#gruppen-liste').innerHTML = S.gruppen.map((g, i) => {
-    const n = S.momente.filter(m => m.gruppe === g.id).length;
-    const unter = S.untergruppen.filter(u => u.gruppe === g.id);
-    const kopf = sort
-      ? `<div class="gruppe-knopf sortieren"><span class="nm">${esc(g.name)}</span><span class="info">${anzahl(n)}</span>${pfeile('g', g.id, i, S.gruppen.length, g.name)}</div>`
-      : `<button class="gruppe-knopf" type="button" data-gruppe="${esc(g.id)}"><span class="nm">${esc(g.name)}</span><span class="info">${anzahl(n)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
-    const uz = unter.map((u, j) => sort
-      ? `<div class="gruppe-knopf unter sortieren"><span class="nm">${esc(u.name)}</span><span class="info">${anzahl(S.momente.filter(m => m.unter === u.id).length)}</span>${pfeile('u', u.id, j, unter.length, u.name)}</div>`
-      : `<button class="gruppe-knopf unter" type="button" data-untergruppe="${esc(u.id)}"><span class="nm">${esc(u.name)}</span><span class="info">${anzahl(S.momente.filter(m => m.unter === u.id).length)}</span><span class="pfeil" aria-hidden="true">›</span></button>`).join('');
-    return `<div class="verw-gruppe">${kopf}${unter.length ? `<div class="verw-unter">${uz}</div>` : ''}</div>`;
-  }).join('');
-}
-
+// ── GRUPPEN ───────────────────────────────────────────
 // ── REIHENFOLGE ────────────────────────────────────────
-const sortiermodus = { momente: false, gruppen: false };
+let sortiermodus = false;
 function pfeile(art, id, i, n, name) {
   return `<span class="sort-pfeile">
     <button type="button" data-${art}-hoch="${esc(id)}" ${i === 0 ? 'disabled' : ''} aria-label="${esc(name)} nach oben">↑</button>
@@ -586,7 +545,7 @@ function verschieben(arr, id, richtung, gleicheListe) {
   const a = idx[pos], b = idx[ziel];
   [arr[a], arr[b]] = [arr[b], arr[a]];
   gruppenAktualisieren(); speichern(); renderVerwaltung();
-  const fokus = document.querySelector(`[data-${arr === S.momente ? 'm' : arr === S.gruppen ? 'g' : 'u'}-${richtung < 0 ? 'hoch' : 'runter'}="${CSS.escape(id)}"]`);
+  const fokus = document.querySelector(`[data-${arr === S.momente ? 'm' : 'g'}-${richtung < 0 ? 'hoch' : 'runter'}="${CSS.escape(id)}"]`);
   if (fokus && !fokus.disabled) fokus.focus();
 }
 
@@ -598,8 +557,7 @@ function gruppeSheet(id) {
     <div class="form-group"><label for="g-name">Name</label><input type="text" id="g-name" value="${esc(g.name)}" placeholder="z. B. Ehrenamt" maxlength="30"></div>
     <div class="btn-reihe">
       <button class="btn-primary" id="g-ok" type="button">${neu ? 'Gruppe anlegen' : 'Speichern'}</button>
-      ${neu ? '' : `<button class="btn-secondary" id="g-unter" type="button">+ Untergruppe in ${esc(g.name)}</button>
-      <button class="btn-leise" id="g-weg" type="button">Gruppe entfernen …</button>`}
+      ${neu ? '' : '<button class="btn-leise" id="g-weg" type="button">Gruppe entfernen …</button>'}
     </div>`);
   $('#g-ok').onclick = () => {
     const name = $('#g-name').value.trim();
@@ -608,50 +566,21 @@ function gruppeSheet(id) {
     gespeichertNeu(); sheetZu(); toast(neu ? `${name} angelegt` : 'Gespeichert');
   };
   if (neu) return;
-  $('#g-unter').onclick = () => untergruppeSheet(null, g.id);
   $('#g-weg').onclick = () => {
     const andere = S.gruppen.filter(x => x.id !== g.id);
     if (!andere.length) { toast('Mindestens eine Gruppe bleibt'); return; }
     const n = S.momente.filter(m => m.gruppe === g.id).length;
-    const nu = S.untergruppen.filter(u => u.gruppe === g.id).length;
-    sheet('Gruppe entfernen', `<p class="card-text">„${esc(g.name)}“ wird entfernt${nu ? `, mit ${nu === 1 ? 'ihrer Untergruppe' : `ihren ${nu} Untergruppen`}` : ''}. Gezählte Einträge bleiben erhalten.</p>
+    sheet('Gruppe entfernen', `<p class="card-text">„${esc(g.name)}“ wird entfernt. Gezählte Einträge bleiben erhalten.</p>
       ${n ? `<div class="form-group"><label for="g-ziel">${n === 1 ? 'Der Moment kommt nach' : `Die ${n} Momente kommen nach`}</label>
         <select id="g-ziel">${andere.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select></div>` : ''}
       <div class="btn-reihe"><button class="btn-primary" id="gw-ja" type="button">Entfernen</button><button class="btn-leise" id="gw-nein" type="button">Behalten</button></div>`);
     $('#gw-ja').onclick = () => {
       const ziel = n ? $('#g-ziel').value : null;
-      const weg = new Set(S.untergruppen.filter(u => u.gruppe === g.id).map(u => u.id));
-      for (const m of S.momente) if (m.gruppe === g.id) { m.gruppe = ziel; if (weg.has(m.unter)) delete m.unter; }
-      S.untergruppen = S.untergruppen.filter(u => u.gruppe !== g.id);
+      for (const m of S.momente) if (m.gruppe === g.id) m.gruppe = ziel;
       S.gruppen = andere;
       gespeichertNeu(); sheetZu(); toast('Gruppe entfernt');
     };
     $('#gw-nein').onclick = () => gruppeSheet(g.id);
-  };
-}
-
-function untergruppeSheet(id, gruppe) {
-  const neu = !id;
-  const u = neu ? { id: uid(), name: '', gruppe } : S.untergruppen.find(x => x.id === id);
-  sheet(neu ? `Neue Untergruppe in ${GRUPPEN[u.gruppe]}` : u.name, `
-    <div class="form-group"><label for="u-name">Name</label><input type="text" id="u-name" value="${esc(u.name)}" placeholder="z. B. Kinder" maxlength="30"></div>
-    <div class="form-group"><label for="u-gruppe">Gehört zu</label><select id="u-gruppe">${S.gruppen.map(g => `<option value="${esc(g.id)}"${g.id === u.gruppe ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select></div>
-    <div class="btn-reihe">
-      <button class="btn-primary" id="u-ok" type="button">${neu ? 'Untergruppe anlegen' : 'Speichern'}</button>
-      ${neu ? '' : '<button class="btn-leise" id="u-weg" type="button">Untergruppe entfernen</button>'}
-    </div>`);
-  $('#u-ok').onclick = () => {
-    const name = $('#u-name').value.trim();
-    if (!name) { $('#u-name').focus(); $('#u-name').placeholder = 'Bitte einen Namen eingeben'; return; }
-    const alt = u.gruppe; u.name = name; u.gruppe = $('#u-gruppe').value;
-    if (neu) S.untergruppen.push(u);
-    else if (alt !== u.gruppe) for (const m of S.momente) if (m.unter === u.id) m.gruppe = u.gruppe; // Momente ziehen mit
-    gespeichertNeu(); sheetZu(); toast(neu ? `${name} angelegt` : 'Gespeichert');
-  };
-  if (!neu) $('#u-weg').onclick = () => {
-    for (const m of S.momente) if (m.unter === u.id) delete m.unter;  // Momente bleiben in ihrer Gruppe
-    S.untergruppen = S.untergruppen.filter(x => x.id !== u.id);
-    gespeichertNeu(); sheetZu(); toast('Untergruppe entfernt, Momente bleiben');
   };
 }
 
@@ -675,7 +604,7 @@ function toast(text, rueckgaengig) {
 let ansicht = 'heute';
 function zeige(v) {
   if (v === 'verwaltung' && S.einstellungen.modus === 'einfach') v = 'heute';
-  if (v !== 'verwaltung') { sortiermodus.momente = false; sortiermodus.gruppen = false; }
+  if (v !== 'verwaltung') sortiermodus = false;
   ansicht = v;
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === v));
@@ -731,30 +660,21 @@ function verbinden() {
   $('#woche-zurueck').onclick = () => { wocheVersatz--; renderWoche(); };
   $('#woche-vor').onclick = () => { if (wocheVersatz < 0) { wocheVersatz++; renderWoche(); } };
 
-  $('#momente-liste').addEventListener('click', e => {
-    const h = e.target.closest('[data-m-hoch],[data-m-runter]');
-    if (h) {
-      const id = h.dataset.mHoch || h.dataset.mRunter, m = moment(id);
+  $('#gm-liste').addEventListener('click', e => {
+    const mh = e.target.closest('[data-m-hoch],[data-m-runter]');
+    if (mh) {
+      const id = mh.dataset.mHoch || mh.dataset.mRunter, m = moment(id);
       const g = GRUPPEN[m.gruppe] ? m.gruppe : null;
-      verschieben(S.momente, id, h.dataset.mHoch ? -1 : 1, x => g ? x.gruppe === g : !GRUPPEN[x.gruppe]);
+      verschieben(S.momente, id, mh.dataset.mHoch ? -1 : 1, x => g ? x.gruppe === g : !GRUPPEN[x.gruppe]);
       return;
     }
-    const b = e.target.closest('[data-edit]'); if (b) momentSheet(b.dataset.edit);
-  });
-  $('#btn-sort-momente').onclick = () => { sortiermodus.momente = !sortiermodus.momente; renderVerwaltung(); };
-  $('#btn-sort-gruppen').onclick = () => { sortiermodus.gruppen = !sortiermodus.gruppen; renderGruppenVerwaltung(); };
-  $('#btn-moment-neu').onclick = () => momentSheet(null);
-  $('#gruppen-liste').addEventListener('click', e => {
     const gh = e.target.closest('[data-g-hoch],[data-g-runter]');
     if (gh) { verschieben(S.gruppen, gh.dataset.gHoch || gh.dataset.gRunter, gh.dataset.gHoch ? -1 : 1, () => true); return; }
-    const uh = e.target.closest('[data-u-hoch],[data-u-runter]');
-    if (uh) {
-      const id = uh.dataset.uHoch || uh.dataset.uRunter, gr = S.untergruppen.find(u => u.id === id).gruppe;
-      verschieben(S.untergruppen, id, uh.dataset.uHoch ? -1 : 1, u => u.gruppe === gr); return;
-    }
-    const g = e.target.closest('[data-gruppe]'), u = e.target.closest('[data-untergruppe]');
-    if (u) untergruppeSheet(u.dataset.untergruppe); else if (g) gruppeSheet(g.dataset.gruppe);
+    const neu = e.target.closest('[data-neu-moment]'); if (neu) { momentSheet(null, neu.dataset.neuMoment); return; }
+    const b = e.target.closest('[data-edit]'); if (b) { momentSheet(b.dataset.edit); return; }
+    const g = e.target.closest('[data-gruppe]'); if (g) gruppeSheet(g.dataset.gruppe);
   });
+  $('#btn-sort').onclick = () => { sortiermodus = !sortiermodus; renderVerwaltung(); };
   $('#btn-gruppe-neu').onclick = () => gruppeSheet(null);
   const korridorNeu = () => {
     const von = $('#korridor-von').value, bis = $('#korridor-bis').value;
@@ -814,12 +734,14 @@ function zustandAus(alt) {
     for (const m of z.momente) { const st = START_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
   }
   if (!(alt.stand >= 4)) {
-    // Stand 4: Gruppen und Untergruppen werden Daten. Feste Untergruppen aus Stand 3 werden übernommen,
-    // aber nur, wenn ein Moment sie nutzt.
+    // Stand 4: Gruppen werden Daten
     z.gruppen = START_GRUPPEN.map(x => ({ ...x }));
-    const namen = { kultur: 'Kulturorganisator', gruene: 'Grüne', adc: 'ADC', baecker: 'Bäcker' };
-    z.untergruppen = Object.keys(namen).filter(k => z.momente.some(m => m.unter === k)).map(k => ({ id: k, name: namen[k], gruppe: 'social' }));
-    z.stand = 4;
+  }
+  if (!(alt.stand >= 5)) {
+    // Stand 5: keine Untergruppen mehr; die Momente bleiben in ihrer Gruppe
+    delete z.untergruppen;
+    for (const m of z.momente) delete m.unter;
+    z.stand = 5;
   }
   korridorPruefen(z.einstellungen);
   return z;
