@@ -179,10 +179,10 @@ function waageSVG(b) {
     <line x1="${cx - 40}" y1="114" x2="${cx + 40}" y2="114" stroke="rgba(255,255,255,.2)" stroke-width="2" stroke-linecap="round"/>
     <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linecap="round"/>
     <circle cx="${cx}" cy="${cy}" r="4.5" fill="#fafafa"/>
-    ${schale(lx, ly, '226,162,113', fa)}
-    ${schale(rx, ry, '127,188,204', fr)}
-    <text x="${lx}" y="${ly + 66}" text-anchor="middle" fill="rgba(226,162,113,.9)" font-size="11" font-family="Inter, sans-serif">Aktivität</text>
-    <text x="${rx}" y="${ry + 66}" text-anchor="middle" fill="rgba(127,188,204,.9)" font-size="11" font-family="Inter, sans-serif">Regeneration</text>
+    ${schale(lx, ly, '217,163,106', fa)}
+    ${schale(rx, ry, '134,189,181', fr)}
+    <text x="${lx}" y="${ly + 66}" text-anchor="middle" fill="rgba(217,163,106,.9)" font-size="11" font-family="Inter, sans-serif">Aktivität</text>
+    <text x="${rx}" y="${ry + 66}" text-anchor="middle" fill="rgba(134,189,181,.9)" font-size="11" font-family="Inter, sans-serif">Regeneration</text>
   </svg>`;
 }
 
@@ -434,7 +434,7 @@ function abendSVG(abende) {
       <text class="tag-label" x="${px}" y="${oben ? y - 12 : y + 30}" text-anchor="middle">${tag}</text>`;
   }).join('');
   return `<svg class="abend-svg" viewBox="0 0 ${W} 100" role="img" aria-label="Feierabende auf einer Zeitachse">
-    <rect x="${x(kv)}" y="${y - 9}" width="${x(kb) - x(kv)}" height="18" rx="9" fill="rgba(201,169,224,.13)"/>
+    <rect x="${x(kv)}" y="${y - 9}" width="${x(kb) - x(kv)}" height="18" rx="9" fill="rgba(169,180,222,.14)"/>
     <text x="${(x(kv) + x(kb)) / 2}" y="${y + 50}" text-anchor="middle" style="font-size:9px">Korridor ${S.einstellungen.korridorVon}–${S.einstellungen.korridorBis}</text>
     <line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="rgba(255,255,255,.14)" stroke-width="1.5" stroke-linecap="round"/>
     ${ticks}${punkte}</svg>`;

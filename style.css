@@ -23,7 +23,8 @@
   --modal:         #111116;
   --text:          #FAFAFA;
   --text-dim:      #B0B0B0;
-  --muted:         #6B6B70;
+  --muted:         #6B6B70;   /* nur Symbole, Linien, Navigation */
+  --hint:          #8a8a91;   /* kleiner Text, besser lesbar als muted */
   --border:        rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.14);
   --shadow:        inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.3);
@@ -35,14 +36,17 @@
   --mf-gruen:      #5fd38d;
 
   /* MemoMe: Farbe nach Modus. Warm = Aktivierung, kühl = Regeneration. Gedeckt, nie grell. */
-  --akt:           #e2a271;
-  --akt-rgb:       226, 162, 113;
-  --reg:           #7fbccc;
-  --reg-rgb:       127, 188, 204;
-  --abend:         #c9a9e0;   /* Feierabend: Dämmerung zwischen warm und kühl */
-  --abend-rgb:     201, 169, 224;
-  --schlaf:        #8e9ce6;
-  --schlaf-rgb:    142, 156, 230;
+  /* Werte aus dem MemoMe Design System */
+  --akt:           #d9a36a;   /* gedeckter Bernstein */
+  --akt-rgb:       217, 163, 106;
+  --reg:           #86bdb5;   /* Salbei-Türkis */
+  --reg-rgb:       134, 189, 181;
+  --beides:        #bdb4a5;   /* warmes Grau zwischen beiden */
+  --beides-rgb:    189, 180, 165;
+  --abend:         #a9b4de;   /* Dämmerungsblau: Feierabend und Schlaf */
+  --abend-rgb:     169, 180, 222;
+  --schlaf:        var(--abend);
+  --schlaf-rgb:    var(--abend-rgb);
 }
 
 body {
@@ -77,7 +81,7 @@ header h1 { font-size: 1rem; letter-spacing: 0.2px; }
 .title-me   { font-weight: 300; color: var(--text-dim); }
 .header-btns { display: flex; align-items: center; gap: 0.4rem; }
 .btn-help {
-  background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--muted);
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--hint);
   width: 28px; height: 28px; border-radius: 50%;
   font-size: 0.75rem; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
@@ -108,22 +112,22 @@ main {
 .card-header h2 { font-size: 0.95rem; font-weight: 700; }
 .card-header .rechts { margin-left: auto; }
 .card-text { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 0.8rem; }
-.badge { background: rgba(255,255,255,0.06); color: var(--muted); border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 700; }
+.badge { background: rgba(255,255,255,0.06); color: var(--hint); border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.72rem; font-weight: 700; }
 .label {
-  font-size: 0.68rem; font-weight: 700; color: var(--muted);
+  font-size: 0.68rem; font-weight: 700; color: var(--hint);
   text-transform: uppercase; letter-spacing: 0.6px;
 }
 
 /* ── HEUTE: Kopf ────────────────────────────────────── */
 .tag-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0.2rem 0.2rem 0; flex-wrap: wrap; }
 .tag-datum { font-family: var(--serif); font-size: 1.7rem; line-height: 1.1; }
-.tag-sub { font-family: var(--serif); font-style: italic; font-size: 1rem; color: var(--muted); }
+.tag-sub { font-family: var(--serif); font-style: italic; font-size: 1rem; color: var(--hint); }
 
 /* ── BALANCE ────────────────────────────────────────── */
 .balance-card { padding: 0.95rem 1.1rem 1rem; }
 .balance-kopf { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.7rem; }
 .balance-wort { font-family: var(--serif); font-size: 1.25rem; color: var(--text); }
-.balance-wort.leer { color: var(--muted); font-style: italic; }
+.balance-wort.leer { color: var(--hint); font-style: italic; }
 
 .band {
   position: relative; height: 14px; border-radius: 999px; overflow: hidden;
@@ -133,7 +137,7 @@ main {
 .band-akt { background: linear-gradient(90deg, rgba(var(--akt-rgb),0.85), rgba(var(--akt-rgb),0.55)); transition: flex-grow 0.6s ease; }
 .band-reg { background: linear-gradient(90deg, rgba(var(--reg-rgb),0.55), rgba(var(--reg-rgb),0.85)); transition: flex-grow 0.6s ease; }
 .band-mitte { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgba(255,255,255,0.18); }
-.band-legende { display: flex; justify-content: space-between; margin-top: 0.45rem; font-size: 0.72rem; color: var(--muted); }
+.band-legende { display: flex; justify-content: space-between; margin-top: 0.45rem; font-size: 0.72rem; color: var(--hint); }
 .band-legende .akt { color: rgba(var(--akt-rgb), 0.9); }
 .band-legende .reg { color: rgba(var(--reg-rgb), 0.9); }
 .band.klein { height: 8px; }
@@ -160,16 +164,11 @@ main {
 }
 .kachel.akt    { --m-rgb: var(--akt-rgb); }
 .kachel.reg    { --m-rgb: var(--reg-rgb); }
-.kachel.beides {
-  background:
-    radial-gradient(90% 80% at 100% 0%, rgba(var(--reg-rgb), 0.10) 0%, transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgba(var(--akt-rgb), 0.08) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%);
-}
+.kachel.beides { --m-rgb: var(--beides-rgb); }
 .kachel.abend  { --m-rgb: var(--abend-rgb); }
 .kachel.schlaf { --m-rgb: var(--schlaf-rgb); }
 .kachel.gefuellt { border-color: rgba(var(--m-rgb), 0.32); }
-.kachel.gefuellt:not(.beides) {
+.kachel.gefuellt {
   background:
     radial-gradient(120% 90% at 100% 0%, rgba(var(--m-rgb), 0.20) 0%, transparent 65%),
     linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
@@ -200,7 +199,7 @@ main {
 .kachel-zahl { font-family: var(--serif); font-size: 2.3rem; line-height: 1; color: rgba(var(--m-rgb), 1); }
 .kachel-dauer { font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .kachel-name { position: relative; font-size: 0.86rem; font-weight: 600; line-height: 1.25; }
-.kachel-zusatz { position: relative; font-size: 0.7rem; color: var(--muted); margin-top: 0.1rem; }
+.kachel-zusatz { position: relative; font-size: 0.7rem; color: var(--hint); margin-top: 0.1rem; }
 .kachel-genug { font-family: var(--serif); font-style: italic; font-size: 0.85rem; color: rgba(var(--akt-rgb), 0.9); }
 
 /* Puls beim Tippen */
@@ -232,13 +231,13 @@ main {
 }
 .schlaf-wahl button.an { background: rgba(var(--schlaf-rgb), 0.22); border-color: rgba(var(--schlaf-rgb), 0.55); color: var(--text); }
 
-.raster-hinweis { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 0.2rem 0 0.4rem; }
+.raster-hinweis { font-size: 0.72rem; color: var(--hint); text-align: center; padding: 0.2rem 0 0.4rem; }
 
 /* ── WOCHE ──────────────────────────────────────────── */
 .woche-kopf { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .woche-titel { text-align: center; }
 .woche-kw { font-family: var(--serif); font-size: 1.7rem; line-height: 1.1; }
-.woche-spanne { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+.woche-spanne { font-size: 0.75rem; color: var(--hint); margin-top: 0.15rem; }
 .btn-rund {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
   background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-dim);
@@ -259,28 +258,28 @@ main {
 .richtband { position: relative; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.04); }
 .richtband-zone { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: rgba(var(--m-rgb), 0.22); }
 .richtband-punkt { position: absolute; top: 50%; width: 10px; height: 10px; margin-left: -5px; margin-top: -5px; border-radius: 50%; background: rgba(var(--m-rgb), 1); box-shadow: 0 0 0 3px rgba(var(--m-rgb), 0.18); }
-.richtband-text { grid-column: 2 / 4; font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+.richtband-text { grid-column: 2 / 4; font-size: 0.7rem; color: var(--hint); margin-top: 0.2rem; }
 
 .gruppen { display: flex; flex-direction: column; gap: 0.55rem; }
 .gruppe-zeile { display: grid; grid-template-columns: 5.2rem 1fr auto; align-items: center; gap: 0.6rem; font-size: 0.82rem; }
 .gruppe-name { color: var(--text-dim); }
 .gruppe-spur { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.04); overflow: hidden; }
 .gruppe-fuell { height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgba(var(--reg-rgb),0.45), rgba(var(--reg-rgb),0.8)); }
-.gruppe-wert { color: var(--muted); font-size: 0.76rem; font-variant-numeric: tabular-nums; min-width: 3.4rem; text-align: right; }
+.gruppe-wert { color: var(--hint); font-size: 0.76rem; font-variant-numeric: tabular-nums; min-width: 3.4rem; text-align: right; }
 /* Untergruppen: eingerückt an einer Haarlinie, ohne Balken und ohne Soll */
 .unter-liste { margin: -0.15rem 0 0.1rem 0.35rem; padding-left: 0.75rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.3rem; }
-.unter-bereich { font-size: 0.7rem; color: var(--muted); }
+.unter-bereich { font-size: 0.7rem; color: var(--hint); }
 .unter-zeile { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.8rem; color: var(--text-dim); }
 
 .abend-svg { display: block; width: 100%; height: auto; overflow: visible; }
-.abend-svg text { fill: var(--muted); font-size: 10px; font-family: 'Inter', sans-serif; }
+.abend-svg text { fill: var(--hint); font-size: 10px; font-family: 'Inter', sans-serif; }
 .abend-svg .tag-label { fill: var(--text-dim); font-size: 9.5px; font-weight: 600; }
 
 .schlaf-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .chip { padding: 0.35rem 0.75rem; border-radius: 999px; background: rgba(var(--schlaf-rgb), 0.12); border: 1px solid rgba(var(--schlaf-rgb), 0.3); font-size: 0.8rem; color: var(--text-dim); }
 .chip strong { color: var(--text); font-weight: 600; margin-right: 0.2rem; }
 
-.leer-text { font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--muted); line-height: 1.45; }
+.leer-text { font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--hint); line-height: 1.45; }
 
 /* ── VERWALTUNG ─────────────────────────────────────── */
 .momente-liste { display: flex; flex-direction: column; margin-bottom: 0.8rem; }
@@ -292,14 +291,14 @@ main {
 .moment-zeile:last-child { border-bottom: 0; }
 .moment-zeile .sym { font-size: 1.2rem; display: flex; justify-content: center; color: var(--text-dim); }
 .moment-zeile .nm { font-size: 0.92rem; font-weight: 600; min-width: 0; }
-.moment-zeile .info { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; font-weight: 400; }
+.moment-zeile .info { font-size: 0.72rem; color: var(--hint); margin-top: 0.1rem; font-weight: 400; }
 .modus-punkt { width: 10px; height: 10px; border-radius: 50%; }
 .modus-punkt.akt { background: var(--akt); }
 .modus-punkt.reg { background: var(--reg); }
-.modus-punkt.beides { background: linear-gradient(90deg, var(--akt) 50%, var(--reg) 50%); }
+.modus-punkt.beides { background: var(--beides); }
 
 .form-group { margin-bottom: 0.85rem; min-width: 0; }
-.form-group label { display: block; font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.35rem; }
+.form-group label { display: block; font-size: 0.68rem; font-weight: 700; color: var(--hint); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.35rem; }
 input[type="text"], input[type="number"], input[type="time"], select {
   width: 100%; padding: 0.7rem 0.9rem;
   border: 1px solid var(--border); border-radius: 10px;
@@ -311,15 +310,15 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6B70' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 0.9rem center; padding-right: 2.5rem;
 }
-.form-hinweis { font-size: 0.7rem; color: var(--muted); margin-top: 0.3rem; line-height: 1.4; }
+.form-hinweis { font-size: 0.7rem; color: var(--hint); margin-top: 0.3rem; line-height: 1.4; }
 .zeit-reihe, .form-reihe { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 
 .seg { display: flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 3px; gap: 3px; }
-.seg button { flex: 1; padding: 0.5rem 0.4rem; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.seg button { flex: 1; padding: 0.5rem 0.4rem; border: 0; border-radius: 9px; background: transparent; color: var(--hint); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
 .seg button.an { background: rgba(255,255,255,0.1); color: var(--text); }
 .seg.modus-seg button.an[data-wert="akt"] { background: rgba(var(--akt-rgb),0.22); }
 .seg.modus-seg button.an[data-wert="reg"] { background: rgba(var(--reg-rgb),0.22); }
-.seg.modus-seg button.an[data-wert="beides"] { background: linear-gradient(90deg, rgba(var(--akt-rgb),0.22), rgba(var(--reg-rgb),0.22)); }
+.seg.modus-seg button.an[data-wert="beides"] { background: rgba(var(--beides-rgb),0.22); }
 .seg.klein button { padding: 0.25rem 0.55rem; font-size: 0.7rem; }
 
 .btn-primary {
@@ -337,7 +336,7 @@ select {
   font-size: 0.92rem; font-weight: 600; cursor: pointer;
 }
 .btn-leise {
-  display: block; width: 100%; background: transparent; color: var(--muted);
+  display: block; width: 100%; background: transparent; color: var(--hint);
   border: 1px solid var(--border); padding: 0.7rem 1rem; border-radius: 14px;
   font-size: 0.88rem; cursor: pointer;
 }
@@ -369,7 +368,7 @@ select {
 .modal-body { padding: 1rem 1.25rem 1.25rem; }
 .modal-section-title { font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.5rem; }
 .modal-divider { height: 1px; background: var(--border); margin: 0.9rem 0; }
-.modal-meta { font-size: 0.75rem; color: var(--muted); text-align: center; line-height: 1.5; }
+.modal-meta { font-size: 0.75rem; color: var(--hint); text-align: center; line-height: 1.5; }
 .modal-meta-build { font-size: 0.68rem; opacity: 0.6; margin-top: 0.3rem; }
 .hilfe-text { font-size: 0.86rem; color: var(--text-dim); line-height: 1.6; }
 .hilfe-text strong { color: var(--text); }
