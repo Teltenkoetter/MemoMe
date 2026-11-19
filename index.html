@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MemoMe">
+  <meta name="theme-color" content="#080808">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <title>MemoMe</title>
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body class="modus-einfach">
+
+  <header>
+    <h1><span class="title-memo">Memo</span><span class="title-me">Me</span></h1>
+    <div class="header-btns">
+      <button id="btn-modus" class="btn-modus" type="button">Einfach</button>
+      <button id="btn-info" class="btn-help" type="button" title="Hilfe" aria-label="Hilfe">?</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── HEUTE ─────────────────────────────────────── -->
+    <section id="view-heute" class="view">
+      <div class="tag-kopf">
+        <div class="tag-datum" id="heute-datum"></div>
+        <div class="tag-sub">Kann, nicht muss.</div>
+      </div>
+
+      <div class="card balance-card" id="balance-heute"></div>
+
+      <div class="kachel-raster" id="sonder-kacheln"></div>
+      <div class="kachel-raster" id="moment-kacheln"></div>
+      <p class="raster-hinweis">Tippen zählt einen Moment. Lang drücken nimmt den letzten zurück.</p>
+    </section>
+
+    <!-- ── WOCHE ─────────────────────────────────────── -->
+    <section id="view-woche" class="view hidden">
+      <div class="woche-kopf">
+        <button class="btn-rund" id="woche-zurueck" type="button" aria-label="Vorige Woche">‹</button>
+        <div class="woche-titel">
+          <div class="woche-kw" id="woche-kw"></div>
+          <div class="woche-spanne" id="woche-spanne"></div>
+        </div>
+        <button class="btn-rund" id="woche-vor" type="button" aria-label="Nächste Woche">›</button>
+      </div>
+      <div id="woche-inhalt" class="view"></div>
+    </section>
+
+    <!-- ── VERWALTUNG ────────────────────────────────── -->
+    <section id="view-verwaltung" class="view hidden">
+      <div class="card">
+        <div class="card-header"><h2>Momente</h2><span class="badge" id="momente-anzahl"></span></div>
+        <div id="momente-liste" class="momente-liste"></div>
+        <button class="btn-secondary" id="btn-moment-neu" type="button">+ Neuer Moment</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Feierabend-Korridor</h2></div>
+        <p class="card-text">Ein ruhiger Bereich, in dem der Feierabend gut liegt. Er ist ein Richtwert, keine Pflicht.</p>
+        <div class="zeit-reihe">
+          <div class="form-group"><label for="korridor-von">von</label><input type="time" id="korridor-von"></div>
+          <div class="form-group"><label for="korridor-bis">bis</label><input type="time" id="korridor-bis"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Balance zeigen als</h2></div>
+        <div class="seg" id="seg-balance-stil" role="group" aria-label="Balance-Darstellung">
+          <button type="button" data-stil="band">Band</button>
+          <button type="button" data-stil="waage">Waage</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Daten</h2></div>
+        <p class="card-text">Alles bleibt auf diesem Gerät. Nichts wird übertragen.</p>
+        <button class="btn-leise" id="btn-alles-loeschen" type="button">Alle Einträge löschen …</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-view="heute" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/>
+        <rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>
+      </svg>
+      <span>Heute</span>
+    </button>
+    <button class="nav-item" data-view="woche" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17c3-6 6-6 9-3s6 3 9-3"/><path d="M3 21h18"/>
+      </svg>
+      <span>Woche</span>
+    </button>
+    <button class="nav-item nur-erweitert" data-view="verwaltung" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>
+      </svg>
+      <span>Verwaltung</span>
+    </button>
+  </nav>
+
+  <!-- ── SHEET (Bearbeiten, Feierabend, Bestätigen) ─── -->
+  <div id="sheet" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sheet-titel">
+      <div class="modal-header">
+        <h2 id="sheet-titel"></h2>
+        <button class="btn-modal-close" id="sheet-zu" type="button" aria-label="Schließen">✕</button>
+      </div>
+      <div class="modal-body" id="sheet-body"></div>
+    </div>
+  </div>
+
+  <!-- ── HILFE ─────────────────────────────────────── -->
+  <div id="hilfe" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="hilfe-titel">
+      <div class="modal-header">
+        <h2 id="hilfe-titel">Hilfe</h2>
+        <button class="btn-modal-close" id="hilfe-zu" type="button" aria-label="Schließen">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <div class="modal-section-title">Worum es geht</div>
+          <p class="hilfe-text">MemoMe sammelt Ruheinseln und Boxenstopps. Es zeigt, was da war, und nie, was fehlt. Ein leerer Tag ist neutral.</p>
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-section">
+          <div class="modal-section-title">Heute</div>
+          <p class="hilfe-text"><strong>Tippen</strong> zählt einen Moment, mit seiner üblichen Dauer.<br>
+          <strong>Lang drücken</strong> (etwa 1 Sekunde, bis der Ring voll ist) nimmt den letzten Tipp zurück.<br>
+          <strong>Arbeitstag abgeschlossen</strong> merkt sich die Uhrzeit. Vergessen? Später antippen und die Zeit anpassen.<br>
+          <strong>Schlaf</strong> wird nur gefühlt festgehalten: erholt, mittel oder kurz.</p>
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-section">
+          <div class="modal-section-title">Einfach und Erweitert</div>
+          <p class="hilfe-text">Einfach zeigt Heute und Woche. Erweitert zeigt zusätzlich die Verwaltung der Momente, den Feierabend-Korridor und die Darstellung der Balance.</p>
+        </div>
+        <div class="modal-divider"></div>
+        <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
+        <p class="modal-meta modal-meta-build">Prototyp · Version 1</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
+
+  <script src="app.js?v=1"></script>
+</body>
+</html>
