@@ -398,28 +398,23 @@ function renderWoche() {
         <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
         <div class="wgruppe-momente">${liste.map(zeile).join('')}</div></details>`;
     }).join('');
-    teile.push(`<div class="card"><div class="card-header"><h2>Was da war</h2><button class="btn-klein rechts btn-alle" type="button" aria-expanded="false" aria-label="Alle Zeilen öffnen"><span class="dreieck" aria-hidden="true">▸</span> Alle</button></div><div class="gruppen">${gz}</div>
+    teile.push(`<div class="card"><div class="card-header"><h2>Momente</h2><button class="btn-klein rechts btn-alle" type="button" aria-expanded="false" aria-label="Alle Zeilen öffnen"><span class="dreieck" aria-hidden="true">▸</span> Alle</button></div><div class="gruppen">${gz}</div>
       <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
-  // Rückblick: Feierabend und Schlaf, je eine geschlossene Zeile mit kurzer Zusammenfassung
-  const rueck = [];
+  // Feierabend & Schlaf: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
+  const rahmen = [];
   if (abende.length) {
-    const kurz = abende.length > 1 ? `meist gegen ${median(abende.map(a => zuMin(a.z)))}`
-      : `${abende[0].d.toLocaleDateString('de-DE', { weekday: 'short' }).replace('.', '')} ${abende[0].z}`;
-    rueck.push(`<details class="wgruppe"><summary class="gruppe-zeile rueck-zeile">
-        <span class="gruppe-name">Feierabend</span><span class="rueck-kurz">${kurz}</span><span class="auf" aria-hidden="true">›</span></summary>
-      <div class="wgruppe-momente">${abendSVG(abende)}</div></details>`);
+    const kurz = abende.length > 1 ? `meist ${median(abende.map(a => zuMin(a.z)))}` : abende[0].z;
+    rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Feierabend</span>${abendMini(abende)}<span class="rahmen-kurz">${kurz}</span></div>`);
   }
-  const sArten = Object.keys(SCHLAF).filter(s => schlaf[s]);
-  if (sArten.length) {
-    const summe = sArten.reduce((n, s) => n + schlaf[s], 0);
-    const haeufig = sArten.reduce((a, b) => schlaf[b] > schlaf[a] ? b : a);
-    rueck.push(`<details class="wgruppe"><summary class="gruppe-zeile rueck-zeile">
-        <span class="gruppe-name">Schlaf</span><span class="rueck-kurz">${summe > 1 ? 'meist ' : ''}${SCHLAF[haeufig]}</span><span class="auf" aria-hidden="true">›</span></summary>
-      <div class="wgruppe-momente"><div class="schlaf-chips">${sArten.map(s => `<span class="chip"><strong>${schlaf[s]} ×</strong>${SCHLAF[s]}</span>`).join('')}</div></div></details>`);
+  const naechte = tage.map(d => S.schlaf[tagKey(d)]).filter(Boolean);
+  if (naechte.length) {
+    const mitte = naechte.reduce((n, w) => n + SCHLAF_WERT[w], 0) / naechte.length;
+    const wort = mitte >= 0.75 ? 'erholt' : mitte <= 0.25 ? 'kurz' : 'mittel';
+    rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Schlaf</span>${schlafSkala(naechte, mitte)}<span class="rahmen-kurz">${naechte.length > 1 ? 'eher ' : ''}${wort}</span></div>`);
   }
-  if (rueck.length) teile.push(`<div class="card"><div class="card-header"><h2>Rückblick</h2><button class="btn-klein rechts btn-alle" type="button" aria-expanded="false" aria-label="Alle Zeilen öffnen"><span class="dreieck" aria-hidden="true">▸</span> Alle</button></div><div class="gruppen">${rueck.join('')}</div></div>`);
+  if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Feierabend &amp; Schlaf</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
 
   $('#woche-inhalt').innerHTML = teile.join('');
   // „▸ Alle“: öffnet bzw. schließt alle Zeilen einer Karte; passt sich an, wenn Zeilen einzeln geöffnet werden
@@ -435,6 +430,41 @@ function renderWoche() {
     zeilen.forEach(d => d.addEventListener('toggle', anzeigen));
     anzeigen();
   });
+}
+
+// Feierabend als schmale Zeitachse: Korridor als weiches Band, ein Punkt pro Abend, nur die Endstunden beschriftet
+function abendMini(abende) {
+  const kv = zuMin(S.einstellungen.korridorVon), kb = zuMin(S.einstellungen.korridorBis);
+  const zeiten = abende.map(a => zuMin(a.z));
+  const von = Math.floor((Math.min(kv, ...zeiten) - 15) / 60) * 60, bis = Math.ceil((Math.max(kb, ...zeiten) + 15) / 60) * 60;
+  const W = 150, x0 = 10, x1 = W - 10, y = 11;
+  const x = m => x0 + (m - von) / (bis - von) * (x1 - x0);
+  const punkte = zeiten.map(m => `<circle cx="${x(m).toFixed(1)}" cy="${y}" r="4.2" class="mini-punkt"/>`).join('');
+  return `<svg class="mini" viewBox="0 0 ${W} 32" role="img" aria-label="Feierabende im Verhältnis zum Korridor ${S.einstellungen.korridorVon} bis ${S.einstellungen.korridorBis}">
+    <line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="mini-achse"/>
+    <rect x="${x(kv).toFixed(1)}" y="${y - 7}" width="${(x(kb) - x(kv)).toFixed(1)}" height="14" rx="7" class="mini-band"/>
+    ${punkte}
+    <text x="${x0}" y="30" class="mini-text">${pad(von / 60 % 24)}</text><text x="${x1}" y="28" text-anchor="end" class="mini-text">${pad(bis / 60 % 24)}</text></svg>`;
+}
+// Schlaf als Skala von kurz bis erholt: ein blasser Punkt je Nacht, eine Markierung für die Mitte der Woche
+const SCHLAF_WERT = { kurz: 0, mittel: 0.5, erholt: 1 };
+function schlafSkala(naechte, mitte) {
+  const W = 150, x0 = 10, x1 = W - 10, y = 11;
+  const x = v => x0 + v * (x1 - x0);
+  // gleiche Nächte liegen nebeneinander, mittig um ihren Wert
+  const anzahl = {}, zaehler = {};
+  naechte.forEach(w => { anzahl[w] = (anzahl[w] || 0) + 1; });
+  const punkte = naechte.map(w => {
+    const k = zaehler[w] = (zaehler[w] || 0) + 1;
+    const dx = (k - 1 - (anzahl[w] - 1) / 2) * 7;
+    return `<circle cx="${(x(SCHLAF_WERT[w]) + dx).toFixed(1)}" cy="${y}" r="3.2" class="mini-nacht"/>`;
+  }).join('');
+  return `<svg class="mini" viewBox="0 0 ${W} 32" role="img" aria-label="Schlaf der Woche, eher ${mitte >= 0.75 ? 'erholt' : mitte <= 0.25 ? 'kurz' : 'mittel'}">
+    <line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="mini-achse"/>
+    <line x1="${x(0.5)}" y1="${y - 3}" x2="${x(0.5)}" y2="${y + 3}" class="mini-achse"/>
+    ${punkte}
+    <circle cx="${x(mitte).toFixed(1)}" cy="${y}" r="6.5" class="mini-mitte"/>
+    <text x="${x0}" y="30" class="mini-text">kurz</text><text x="${x1}" y="28" text-anchor="end" class="mini-text">erholt</text></svg>`;
 }
 
 function median(arr) {
