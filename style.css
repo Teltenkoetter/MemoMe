@@ -178,12 +178,13 @@ main {
 .kachel-symbol {
   position: absolute; right: -0.8rem; top: -0.8rem;
   width: 5.4rem; height: 5.4rem; line-height: 1;
-  color: var(--text); opacity: 0.16;
+  color: rgb(var(--m-rgb)); opacity: 0.24;   /* Piktogramm immer leicht in der Modusfarbe; „beides“ bleibt neutral */
   pointer-events: none;
 }
 .kachel-symbol .pikto { display: block; width: 100%; height: 100%; }
 .kachel-symbol .zeichen { display: block; font-size: 4.6rem; filter: grayscale(0.35) saturate(0.8); }
-.kachel.gefuellt .kachel-symbol { color: rgb(var(--m-rgb)); opacity: 0.3; }
+.kachel.gefuellt .kachel-symbol { opacity: 0.4; }
+.kachel.ohne-pikto .kachel-name { font-size: 1.08rem; line-height: 1.2; }
 
 /* Rückblick (Schlaf, Feierabend): niedriger als Momente, darunter ein dünner Strich */
 .kachel.rahmen { min-height: 92px; }
@@ -398,6 +399,7 @@ select {
 .symbol-wahl { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.45rem; }
 .symbol-wahl button { width: 2.6rem; height: 2.6rem; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-dim); cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .symbol-wahl button .pikto { width: 22px; height: 22px; }
+.symbol-wahl button.kein { width: auto; padding: 0 0.75rem; font-size: 0.75rem; font-weight: 600; }
 .symbol-wahl button.an { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.1); color: var(--text); }
 select:disabled { opacity: 0.45; }
 

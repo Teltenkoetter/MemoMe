@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body class="modus-einfach">
 
@@ -86,8 +86,13 @@
 
       <div class="card">
         <div class="card-header"><h2>Daten</h2></div>
-        <p class="card-text">Alles bleibt auf diesem Gerät. Nichts wird übertragen.</p>
-        <button class="btn-leise" id="btn-alles-loeschen" type="button">Alle Einträge löschen …</button>
+        <p class="card-text">Alles bleibt auf diesem Gerät. Nichts wird übertragen. Mit einer Sicherungsdatei lassen sich die Daten auf ein anderes Gerät mitnehmen.</p>
+        <div class="btn-reihe">
+          <button class="btn-secondary" id="btn-export" type="button">Daten sichern (Datei)</button>
+          <button class="btn-secondary" id="btn-import" type="button">Sicherung laden …</button>
+          <input type="file" id="import-datei" accept="application/json,.json" hidden>
+          <button class="btn-leise" id="btn-alles-loeschen" type="button">Alle Einträge löschen …</button>
+        </div>
       </div>
     </section>
   </main>
@@ -110,7 +115,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>
       </svg>
-      <span>Verwaltung</span>
+      <span>Einstellungen</span>
     </button>
   </nav>
 
@@ -147,23 +152,23 @@
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Einfach und Erweitert</div>
-          <p class="hilfe-text">Gruppen (zum Beispiel Family, Social, Me-Time) ordnen die Momente. Im Modus Erweitert lassen sie sich unter Verwaltung anlegen, umbenennen und entfernen, dazu Untergruppen wie „Kinder“. Ob ein Moment aktiv oder erholsam ist, legt der Moment selbst fest: Üben mit den Kindern kann Family und Aktivierung sein, Familienzeit Family und Regeneration.</p>
+          <div class="modal-section-title">Gruppen</div>
+          <p class="hilfe-text">Gruppen (zum Beispiel Family, Social, Me-Time) ordnen die Momente. Im Modus Erweitert lassen sie sich unter Einstellungen anlegen, umbenennen und entfernen, dazu Untergruppen wie „Kinder“. Eine Untergruppe lässt sich auch direkt beim Moment anlegen. Ob ein Moment aktiv oder erholsam ist, legt der Moment selbst fest: Üben mit den Kindern kann Family und Aktivierung sein, Familienzeit Family und Regeneration.</p>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
           <div class="modal-section-title">Einfach und Erweitert</div>
-          <p class="hilfe-text">Einfach zeigt Heute und Woche. Erweitert zeigt zusätzlich die Verwaltung der Momente, den Feierabend-Korridor und die Darstellung der Balance.</p>
+          <p class="hilfe-text">Einfach zeigt Heute und Woche. Erweitert zeigt zusätzlich die Einstellungen: Momente, Gruppen, Feierabend-Korridor, Darstellung der Balance und Daten.</p>
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 7</p>
+        <p class="modal-meta modal-meta-build">Version 8</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

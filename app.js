@@ -20,7 +20,9 @@ function pikto(name, cls = 'pikto', strich = 1.75) {
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strich}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
 // Piktogramm, sonst eigenes Zeichen
-const symbolHTML = (m, strich) => (m.icon && PIKTO[m.icon]) ? pikto(m.icon, 'pikto', strich) : `<span class="zeichen">${esc(m.symbol || '•')}</span>`;
+// Piktogramm; ältere Momente können noch ein eigenes Zeichen haben; „kein Piktogramm“ zeigt nichts
+const hatSymbol = m => !!((m.icon && PIKTO[m.icon]) || (m.icon !== 'kein' && m.symbol));
+const symbolHTML = (m, strich) => (m.icon && PIKTO[m.icon]) ? pikto(m.icon, 'pikto', strich) : (m.icon !== 'kein' && m.symbol) ? `<span class="zeichen">${esc(m.symbol)}</span>` : '';
 
 const START_MOMENTE = [
   { id: 'kaffee',      name: 'Kaffeepause',          symbol: '☕', icon: 'kaffee', gruppe: 'social', modus: 'reg',    dauer: 15 },
@@ -223,7 +225,7 @@ function renderHeute() {
         : `<span class="kachel-zahl">${p.n}×</span>`;
       if (m.genugTag && p.min >= m.genugTag) zusatz = '<span class="kachel-genug">genug für heute</span>';
     }
-    return `<button class="kachel ${m.modus}${p ? ' gefuellt' : ''}" data-mid="${esc(m.id)}" type="button" aria-label="${esc(m.name)}${p ? ', heute ' + p.n + ' mal' : ''}">
+    return `<button class="kachel ${m.modus}${p ? ' gefuellt' : ''}${hatSymbol(m) ? '' : ' ohne-pikto'}" data-mid="${esc(m.id)}" type="button" aria-label="${esc(m.name)}${p ? ', heute ' + p.n + ' mal' : ''}">
       <span class="kachel-symbol" aria-hidden="true">${symbolHTML(m, 1.4)}</span>
       <span class="kachel-wert">${wert}</span>
       <span><span class="kachel-name">${esc(m.name)}</span>${zusatz ? '<br>' + zusatz : ''}</span>
@@ -477,14 +479,16 @@ function momentSheet(id) {
   sheet(neu ? 'Neuer Moment' : m.name, `
     <div class="form-group"><label for="m-name">Name</label><input type="text" id="m-name" value="${esc(m.name)}" placeholder="z. B. Gartenzeit" maxlength="40"></div>
     <div class="form-group"><label>Piktogramm</label>
-      <div class="symbol-wahl" id="m-pikto">${Object.keys(PIKTO).map(k => `<button type="button" data-icon="${k}" class="${m.icon === k ? 'an' : ''}" aria-label="Piktogramm ${k}" aria-pressed="${m.icon === k}">${pikto(k)}</button>`).join('')}</div>
-      <label for="m-symbol" style="margin-top:0.6rem">oder eigenes Zeichen</label><input type="text" id="m-symbol" value="${m.icon ? '' : esc(m.symbol || '')}" maxlength="8" placeholder="leer lassen für Piktogramm"></div>
+      <div class="symbol-wahl" id="m-pikto">${Object.keys(PIKTO).map(k => `<button type="button" data-icon="${k}" class="${m.icon === k ? 'an' : ''}" aria-label="Piktogramm ${k}" aria-pressed="${m.icon === k}">${pikto(k)}</button>`).join('')}
+        <button type="button" data-icon="kein" class="kein${hatSymbol(m) ? '' : ' an'}" aria-pressed="${!hatSymbol(m)}">kein Piktogramm</button></div>
+      <p class="form-hinweis">Ohne Piktogramm steht der Name größer auf der Kachel.</p></div>
     <div class="form-group"><label>Modus</label><div class="seg modus-seg" id="m-modus">${segM}</div>
       <p class="form-hinweis">Warm für Aktivierung, kühl für Regeneration.</p></div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="form-group"><label for="m-unter">Untergruppe</label><select id="m-unter"></select></div>
     </div>
+    <div class="form-group hidden" id="m-unter-neu-feld"><label for="m-unter-neu">Name der neuen Untergruppe</label><input type="text" id="m-unter-neu" maxlength="30" placeholder="z. B. Kinder"></div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-dauer">Dauer (min)</label><input type="number" id="m-dauer" min="0" max="600" step="5" value="${m.dauer || 0}"></div>
     </div>
@@ -504,21 +508,31 @@ function momentSheet(id) {
   });
   let icon = m.icon;
   document.querySelectorAll('#m-pikto button').forEach(b => b.onclick = () => {
-    icon = b.dataset.icon; $('#m-symbol').value = '';
+    icon = b.dataset.icon;
     document.querySelectorAll('#m-pikto button').forEach(x => { x.classList.toggle('an', x === b); x.setAttribute('aria-pressed', x === b); });
   });
   const unterFuellen = () => {
     const g = $('#m-gruppe').value, wahl = Object.entries(UNTERGRUPPEN).filter(([, u]) => u.gruppe === g);
-    $('#m-unter').innerHTML = `<option value="">keine</option>` + wahl.map(([k, u]) => `<option value="${k}"${m.unter === k ? ' selected' : ''}>${esc(u.name)}</option>`).join('');
-    $('#m-unter').disabled = !wahl.length;
+    $('#m-unter').innerHTML = `<option value="">keine</option>` + wahl.map(([k, u]) => `<option value="${k}"${m.unter === k ? ' selected' : ''}>${esc(u.name)}</option>`).join('')
+      + `<option value="+neu">+ Neue Untergruppe …</option>`;
+    neuZeigen();
   };
+  const neuZeigen = () => { const an = $('#m-unter').value === '+neu'; $('#m-unter-neu-feld').classList.toggle('hidden', !an); if (an) $('#m-unter-neu').focus(); };
+  $('#m-unter').onchange = neuZeigen;
   $('#m-gruppe').onchange = unterFuellen; unterFuellen();
   $('#m-ok').onclick = () => {
     const name = $('#m-name').value.trim();
     if (!name) { $('#m-name').focus(); $('#m-name').placeholder = 'Bitte einen Namen eingeben'; return; }
     const zahl = v => { const n = parseInt(v, 10); return n > 0 ? n : undefined; };
-    const zeichen = $('#m-symbol').value.trim();
-    Object.assign(m, { name, symbol: zeichen || m.symbol || '•', icon: zeichen ? undefined : icon, unter: $('#m-unter').value || undefined, modus, gruppe: $('#m-gruppe').value,
+    // Untergruppe direkt hier neu anlegen
+    let unter = $('#m-unter').value || undefined;
+    if (unter === '+neu') {
+      const uname = $('#m-unter-neu').value.trim();
+      if (!uname) { $('#m-unter-neu').focus(); $('#m-unter-neu').placeholder = 'Bitte einen Namen eingeben'; return; }
+      const u = { id: uid(), name: uname, gruppe: $('#m-gruppe').value };
+      S.untergruppen.push(u); gruppenAktualisieren(); unter = u.id;
+    }
+    Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, unter, modus, gruppe: $('#m-gruppe').value,
       dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value) });
     if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
     speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
@@ -675,7 +689,7 @@ function verbinden() {
     S.einstellungen.modus = S.einstellungen.modus === 'einfach' ? 'erweitert' : 'einfach';
     speichern();
     if (S.einstellungen.modus === 'einfach' && ansicht === 'verwaltung') zeige('heute'); else renderAlles();
-    toast(S.einstellungen.modus === 'einfach' ? 'Einfach: Heute und Woche' : 'Erweitert: mit Verwaltung');
+    toast(S.einstellungen.modus === 'einfach' ? 'Einfach: Heute und Woche' : 'Erweitert: mit Einstellungen');
   };
   $('#btn-info').onclick = () => $('#hilfe').classList.remove('hidden');
   $('#hilfe-zu').onclick = () => $('#hilfe').classList.add('hidden');
@@ -703,26 +717,52 @@ function verbinden() {
     $('#del-nein').onclick = sheetZu;
   };
 
+  // Sicherung als Datei (zum Mitnehmen auf ein anderes Gerät)
+  $('#btn-export').onclick = () => {
+    const daten = JSON.stringify({ app: 'MemoMe', exportiert: new Date().toISOString(), zustand: S }, null, 1);
+    const url = URL.createObjectURL(new Blob([daten], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = `MemoMe-Sicherung-${heuteKey()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Sicherung erstellt');
+  };
+  $('#btn-import').onclick = () => $('#import-datei').click();
+  $('#import-datei').onchange = async e => {
+    const datei = e.target.files[0]; e.target.value = '';
+    if (!datei) return;
+    let neu;
+    try { const j = JSON.parse(await datei.text()); neu = j.app === 'MemoMe' ? j.zustand : null; } catch { neu = null; }
+    if (!neu || neu.version !== 1 || !Array.isArray(neu.momente)) { toast('Diese Datei ist keine MemoMe-Sicherung'); return; }
+    sheet('Sicherung laden', `<p class="card-text">Die Sicherung enthält ${neu.momente.length === 1 ? '1 Moment' : neu.momente.length + ' Momente'} und ${(n => n === 1 ? '1 Eintrag' : n + ' Einträge')((neu.taps || []).length)}. Sie ersetzt alles, was jetzt auf diesem Gerät gespeichert ist.</p>
+      <div class="btn-reihe"><button class="btn-primary" id="imp-ja" type="button">Sicherung laden</button><button class="btn-leise" id="imp-nein" type="button">Abbrechen</button></div>`);
+    $('#imp-ja').onclick = () => { S = zustandAus(neu); gruppenAktualisieren(); speichern(); sheetZu(); renderAlles(); toast('Sicherung geladen'); };
+    $('#imp-nein').onclick = sheetZu;
+  };
+
   document.addEventListener('visibilitychange', () => { if (!document.hidden) renderAlles(); });
+}
+
+// Gespeicherten oder importierten Zustand auf den aktuellen Datenstand bringen
+function zustandAus(alt) {
+  const z = { ...startZustand(), ...alt, einstellungen: { ...startZustand().einstellungen, ...alt.einstellungen } };
+  if (!(alt.stand >= 3)) {
+    // Stand 3: Piktogramme für die Startmomente
+    for (const m of z.momente) { const st = START_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
+  }
+  if (!(alt.stand >= 4)) {
+    // Stand 4: Gruppen und Untergruppen werden Daten. Feste Untergruppen aus Stand 3 werden übernommen,
+    // aber nur, wenn ein Moment sie nutzt.
+    z.gruppen = START_GRUPPEN.map(x => ({ ...x }));
+    const namen = { kultur: 'Kulturorganisator', gruene: 'Grüne', adc: 'ADC', baecker: 'Bäcker' };
+    z.untergruppen = Object.keys(namen).filter(k => z.momente.some(m => m.unter === k)).map(k => ({ id: k, name: namen[k], gruppe: 'social' }));
+    z.stand = 4;
+  }
+  return z;
 }
 
 (async function start() {
   const gespeichert = await laden();
-  if (gespeichert && gespeichert.version === 1) {
-    S = { ...startZustand(), ...gespeichert, einstellungen: { ...startZustand().einstellungen, ...gespeichert.einstellungen } };
-    if (!(gespeichert.stand >= 3)) {
-      // Stand 3: Piktogramme für die Startmomente
-      for (const m of S.momente) { const st = START_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
-    }
-    if (!(gespeichert.stand >= 4)) {
-      // Stand 4: Gruppen und Untergruppen werden Daten. Feste Untergruppen aus Stand 3 werden übernommen,
-      // aber nur, wenn ein Moment sie nutzt.
-      S.gruppen = START_GRUPPEN.map(g => ({ ...g }));
-      const alt = { kultur: 'Kulturorganisator', gruene: 'Grüne', adc: 'ADC', baecker: 'Bäcker' };
-      S.untergruppen = Object.keys(alt).filter(k => S.momente.some(m => m.unter === k)).map(k => ({ id: k, name: alt[k], gruppe: 'social' }));
-      S.stand = 4; speichern();
-    }
-  }
+  if (gespeichert && gespeichert.version === 1) { S = zustandAus(gespeichert); speichern(); }
   gruppenAktualisieren();
   verbinden();
   zeige('heute');
