@@ -145,6 +145,18 @@ function tapsZwischen(von, bis) {
   const a = von.getTime(), b = bis.getTime();
   return S.taps.filter(t => t.ts >= a && t.ts < b && moment(t.mid));
 }
+// Runden: gezählt werden Zeitabschnitte, nicht Tipps. Ein Tipp gehört zur vorigen Runde desselben Moments,
+// wenn er innerhalb seiner Dauer danach kommt (die Zeiten überlappen), mindestens aber innerhalb von 3 Minuten.
+// Die Dauer zählt voll: dreimal 15 min hintereinander = eine Runde mit 45 min. Gespeichert bleiben die einzelnen Tipps.
+function runden(taps) {
+  const letzte = {}, aus = [];
+  [...taps].sort((a, b) => a.ts - b.ts).forEach(t => {
+    const r = letzte[t.mid], fenster = Math.max(t.min || 0, 3) * 60000;
+    if (r && t.ts - r.ts <= fenster) { r.ts = t.ts; r.min += t.min || 0; r.tipps++; return; }
+    aus.push(letzte[t.mid] = { mid: t.mid, ts: t.ts, min: t.min || 0, tipps: 1 });
+  });
+  return aus;
+}
 function tapsHeute() {
   const d = new Date(); const von = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const bis = new Date(von); bis.setDate(bis.getDate() + 1);
@@ -217,7 +229,8 @@ function renderHeute() {
   const fa = S.feierabend[k];
   const spalte = art => {
     const w = (S[art] ||= {})[k];
-    return `<div class="kachel rahmen spalte abend${w ? ' gefuellt' : ''}" data-sonder="${art}">
+    const ton = { schlaf: 'reg ton', arbeit: 'akt ton' }[art] || 'neutral';
+    return `<div class="kachel rahmen spalte ${ton}${w ? ' gefuellt' : ''}" data-sonder="${art}">
       <span class="kachel-name">${WAHL[art].name}</span>
       <div class="wahl" role="group" aria-label="${WAHL[art].name}, gefühlt">
         ${WAHL[art].werte.map(([v, t]) => `<button type="button" data-wahl="${art}" data-wert="${v}" class="${w === v ? 'an' : ''}" aria-pressed="${w === v}">${t}</button>`).join('')}
@@ -229,7 +242,7 @@ function renderHeute() {
   sonder.style.setProperty('--spalten', arten.length + 1);
   // Spalte „Arbeit“: an Arbeitstagen das Ende als Uhrzeit, an freien Tagen etwas · halber Tag · ganzer Tag
   const arbeitSpalte = !arbeitstag ? spalte('arbeit') : `
-    <button class="kachel rahmen spalte abend${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Arbeit, ${fa ? 'Ende ' + fa : 'Ende tippen'}">
+    <button class="kachel rahmen spalte akt ton${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Arbeit, ${fa ? 'Ende ' + fa : 'Ende tippen'}">
       <span class="kachel-name">Arbeit</span>
       <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : '<span class="spalte-leise">Ende tippen</span>'}</span>
       ${ringSVG()}
@@ -240,7 +253,7 @@ function renderHeute() {
 
   // Momente
   const proMoment = {};
-  for (const t of taps) { const p = proMoment[t.mid] ||= { n: 0, min: 0 }; p.n++; p.min += t.min || 0; }
+  for (const t of runden(taps)) { const p = proMoment[t.mid] ||= { n: 0, min: 0 }; p.n++; p.min += t.min; }
   const kachel = m => {
     const p = proMoment[m.id];
     let wert = '', zusatz = '';
@@ -377,7 +390,7 @@ function renderWoche() {
   const teile = [];
   const gesamtMin = taps.reduce((s, t) => s + (t.min || 0), 0);
   teile.push(`<div class="card">${balanceHTML(b, S.einstellungen.balanceStil, 'Balance der Woche')}
-    ${taps.length ? `<p class="card-text" style="margin:0.75rem 0 0">${taps.length} Momente${gesamtMin ? ` · ${fmtDauer(gesamtMin)} gesammelt` : ''}</p>` : ''}</div>`);
+    ${taps.length ? `<p class="card-text" style="margin:0.75rem 0 0">${runden(taps).length} Momente${gesamtMin ? ` · ${fmtDauer(gesamtMin)} gesammelt` : ''}</p>` : ''}</div>`);
 
   if (!taps.length && !abende.length && !gefuehlt) {
     teile.push(`<div class="card"><p class="leer-text">In dieser Woche ist noch nichts gesammelt. Das ist in Ordnung.</p></div>`);
@@ -385,7 +398,7 @@ function renderWoche() {
 
   if (taps.length) {
     const pm = {};
-    for (const t of taps) { const p = pm[t.mid] ||= { n: 0, min: 0 }; p.n++; p.min += t.min || 0; }
+    for (const t of runden(taps)) { const p = pm[t.mid] ||= { n: 0, min: 0 }; p.n++; p.min += t.min; }
     // gleiche Ordnung wie auf Heute: Gruppen in ihrer Reihenfolge, darin die Momente in ihrer Reihenfolge
     const zeile = m => {
       const p = pm[m.id];
@@ -535,7 +548,7 @@ const WOLKE_RGB = { reg: '246,240,228', mich: '134,189,181', akt: '217,163,106' 
 function tagKarte(taps, tage) {
   const W = 320, H = 300, L = 30, R = 8, T = 10, B = 26;
   // getippt wird am Ende: die Wolke liegt auf der Mitte des Moments
-  const pts = taps.map(t => { const m = moment(t.mid); return { t, m, art: m && (ART[m.modus] || 'reg'), d: new Date(t.ts - (t.min || 0) * 30000) }; })
+  const pts = runden(taps).map(t => { const m = moment(t.mid); return { t, m, art: m && (ART[m.modus] || 'reg'), d: new Date(t.ts - (t.min || 0) * 30000) }; })
     .filter(p => p.m && heatFilter[ART_FILTER[p.art]]);
   const stunde = d => d.getHours() + d.getMinutes() / 60;
   const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => ({ i: x.i, h: zuMin(x.z) / 60 }));
