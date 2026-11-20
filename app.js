@@ -436,7 +436,8 @@ function renderWoche() {
       <div class="tag-filter" role="group" aria-label="Momente zeigen">
         ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}</div>
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
-      <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p></div>`);
+      <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p>
+      <p class="tag-legende leise">Mehr sehen: zwei Finger aufziehen oder lange drücken</p></div>`);
 
   // Rahmen des Tages: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
   // Reihenfolge wie auf Heute: Schlaf, dann Arbeit (Feierabend, an freien Tagen als Notiz), Essen, Trinken
@@ -487,7 +488,7 @@ function renderWoche() {
   document.querySelectorAll('#woche-inhalt [data-filter]').forEach(btn => btn.onclick = () => {
     const f = btn.dataset.filter; heatFilter[f] = !heatFilter[f];
     btn.classList.toggle('an', heatFilter[f]); btn.setAttribute('aria-pressed', heatFilter[f]);
-    $('#tag-karte').innerHTML = tagKarte(taps, tage);
+    $('#tag-karte .tag-svg').outerHTML = tagKarte(taps, tage);
   });
   // Woche abschließen
   const notizSchreiben = () => (S.wochen[wk] ||= {});
@@ -557,50 +558,64 @@ function tagKarte(taps, tage) {
   }).sort((a, b) => RANG[a.art] - RANG[b.art]);   // aktiv unten, erholsam oben
   const schein = glow.map(g => `<ellipse cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" rx="${g.rx}" ry="${g.ry.toFixed(1)}" fill="url(#wolke-${g.art})"/>`).join('');
   tagWolken = glow;
-  // Namen: unsichtbar, bis man hineinzoomt (siehe tagKarteGesten)
-  const namen = glow.map((g, k) => `<text x="${g.cx.toFixed(1)}" y="${g.cy.toFixed(1)}" class="tag-name" data-k="${k}">${esc(g.name)}</text>`).join('');
   const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="1.3" class="tag-kern ${g.art}"/>`).join('');
   const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
     <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}</defs>
-    ${achsen}${striche}${schein}${kerne}<g class="tag-namen">${namen}</g></svg>`;
+    ${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
-// Hineinzoomen mit zwei Fingern: Namen erscheinen, beim Loslassen federt die Karte zurück.
-// Langer Druck auf eine Wolke: Name und Uhrzeit, solange der Finger liegt.
+// Hineinzoomen mit zwei Fingern: die Karte wird als Vektor neu gezeichnet (bleibt scharf),
+// Namen erscheinen als kleine Schilder; beim Loslassen federt sie zurück.
+// Langer Druck auf eine Wolke: Name und Uhrzeit, deutlich über dem Finger.
 let tagWolken = [];
 function tagKarteGesten(box) {
   if (!box) return;
   const svg = () => box.querySelector('.tag-svg');
-  let z = 1, tx = 0, ty = 0;
+  const VB_W = 320, VB_H = 300;
+  let z = 1, tx = 0, ty = 0, feder = 0;
+  const ebene = document.createElement('div');
+  ebene.className = 'tag-namen'; ebene.setAttribute('aria-hidden', 'true');
+  box.appendChild(ebene);
+  // Maßstab: Bildschirmpixel je viewBox-Einheit bei z = 1
+  const mass = () => box.clientWidth / VB_W;
   const setzen = () => {
     const s = svg(); if (!s) return;
-    s.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`;
-    namenZeigen(s);
+    const k = mass() * z;
+    s.setAttribute('viewBox', `${(-tx / k).toFixed(2)} ${(-ty / k).toFixed(2)} ${(VB_W / z).toFixed(2)} ${(VB_H / z).toFixed(2)}`);
+    namenZeigen(k);
   };
-  // Namen nur zeigen, wenn die Wolke groß genug ist und kein anderer Name im Weg steht
-  const namenZeigen = s => {
-    const g = s.querySelector('.tag-namen'); if (!g) return;
-    const fs = 9.5 / z;
-    g.setAttribute('font-size', fs.toFixed(2)); g.setAttribute('stroke-width', (3 / z).toFixed(2));
-    const belegt = [];
-    const reihe = tagWolken.map((w, k) => ({ w, k })).sort((a, b) => b.w.ry - a.w.ry);
-    const sicht = new Array(tagWolken.length).fill(0);
-    reihe.forEach(({ w, k }) => {
-      const stark = Math.min(1, Math.max(0, (w.ry * z - 16) / 10)) * Math.min(1, Math.max(0, (z - 1.3) / 0.5));
-      if (!stark) return;
-      const b = w.name.length * fs * 0.3 + 1 / z, h = fs * 0.6;
-      const r = [w.cx - b, w.cy - h, w.cx + b, w.cy + h];
+  // Namen nur, wenn die Wolke groß genug ist und kein anderer Name im Weg steht
+  const namenZeigen = k => {
+    if (z < 1.35) { ebene.innerHTML = ''; return; }
+    const sichtbar = Math.min(1, (z - 1.35) / 0.4);
+    const belegt = [], teile = [];
+    const B = box.clientWidth, H = box.clientHeight;
+    [...tagWolken].sort((a, b) => b.ry - a.ry).forEach(w => {
+      if (w.ry * k < 20) return;
+      const x = w.cx * k + tx, y = w.cy * k + ty;
+      const halb = w.name.length * 3.9 + 9, r = [x - halb, y - 12, x + halb, y + 12];
+      if (r[0] < 2 || r[2] > B - 2 || r[1] < 2 || r[3] > H - 2) return;   // nichts Angeschnittenes
       if (belegt.some(o => r[0] < o[2] && r[2] > o[0] && r[1] < o[3] && r[3] > o[1])) return;
-      belegt.push(r); sicht[k] = stark;
+      belegt.push(r);
+      teile.push(`<span style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;opacity:${sichtbar.toFixed(2)}">${esc(w.name)}</span>`);
     });
-    g.querySelectorAll('.tag-name').forEach(t => { t.style.opacity = sicht[+t.dataset.k] || 0; });
+    ebene.innerHTML = teile.join('');
   };
+  // weich zurück, mit einem kleinen Nachfedern
   const zurueck = () => {
-    const s = svg(); if (!s) return;
-    box.classList.add('federt');
-    z = 1; tx = 0; ty = 0; setzen();
-    setTimeout(() => box.classList.remove('federt'), 500);
+    cancelAnimationFrame(feder);
+    const a = { z, tx, ty }, t0 = performance.now();
+    const dauer = matchMedia('(prefers-reduced-motion: reduce)').matches ? 150 : 480;
+    const ease = t => { const c = 1.25; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; };
+    const schritt = now => {
+      const t = Math.min(1, (now - t0) / dauer), e = ease(t);
+      z = a.z + (1 - a.z) * e; tx = a.tx * (1 - e); ty = a.ty * (1 - e);
+      if (t >= 1) { z = 1; tx = 0; ty = 0; }
+      setzen();
+      if (t < 1) feder = requestAnimationFrame(schritt);
+    };
+    feder = requestAnimationFrame(schritt);
   };
 
   // Zwei Finger
@@ -609,8 +624,7 @@ function tagKarteGesten(box) {
   const abstand = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
   box.addEventListener('touchstart', e => {
     if (e.touches.length !== 2) return;
-    tippEnde();
-    box.classList.remove('federt');
+    tippEnde(); cancelAnimationFrame(feder);
     const [a, b] = e.touches, m = mitte(a, b);
     start = { d: abstand(a, b), m: [(m[0] - tx) / z, (m[1] - ty) / z], z };
   }, { passive: true });
@@ -631,7 +645,7 @@ function tagKarteGesten(box) {
   let radZeit;
   box.addEventListener('wheel', e => {
     if (!e.ctrlKey) return;
-    e.preventDefault(); box.classList.remove('federt');
+    e.preventDefault(); cancelAnimationFrame(feder);
     const r = box.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
     const neu = Math.min(5, Math.max(1, z * Math.exp(-e.deltaY / 80)));
     tx = mx - (mx - tx) * neu / z; ty = my - (my - ty) * neu / z; z = neu;
@@ -652,14 +666,18 @@ function tagKarteGesten(box) {
     tippTimer = setTimeout(() => {
       const s = svg(); if (!s) return;
       const r = s.getBoundingClientRect(), vb = s.viewBox.baseVal;
-      const px = (tippStart[0] - r.left) / r.width * vb.width, py = (tippStart[1] - r.top) / r.height * vb.height;
+      const px = vb.x + (tippStart[0] - r.left) / r.width * vb.width, py = vb.y + (tippStart[1] - r.top) / r.height * vb.height;
       let best = null, wert = 2.2;
       tagWolken.forEach(w => { const v = ((px - w.cx) / w.rx) ** 2 + ((py - w.cy) / w.ry) ** 2; if (v < wert) { wert = v; best = w; } });
       if (!best) return;
       tipp.innerHTML = `<strong>${esc(best.name)}</strong><span>${best.zeit}</span>`;
       const br = box.getBoundingClientRect();
-      const lx = r.left - br.left + best.cx / vb.width * r.width, ly = r.top - br.top + (best.cy - best.ry * 0.6) / vb.height * r.height;
-      tipp.style.left = `${Math.min(br.width - 70, Math.max(70, lx))}px`; tipp.style.top = `${Math.max(28, ly)}px`;
+      // Mitte über der Wolke, aber immer gut 70 px über dem Finger
+      const lx = r.left - br.left + (best.cx - vb.x) / vb.width * r.width;
+      const oben = r.top - br.top + (best.cy - best.ry * 0.7 - vb.y) / vb.height * r.height;
+      const ly = Math.min(oben, tippStart[1] - br.top - 70);
+      tipp.style.left = `${Math.min(br.width - 80, Math.max(80, lx))}px`;
+      tipp.style.top = `${ly}px`;
       tipp.classList.add('an');
       if (navigator.vibrate) navigator.vibrate(8);
     }, 450);
