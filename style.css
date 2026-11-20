@@ -543,10 +543,10 @@ select:disabled { opacity: 0.45; }
 }
 
 /* Angebot für andere: kleines Herz, Umriss grau = offen, gefüllt = angekommen */
-.herz-wrap { display: inline-flex; vertical-align: -2px; margin-left: 0.35rem; }
-.herz { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linejoin: round; }
+.herz-wrap { display: inline-flex; vertical-align: -3px; margin-left: 0.4rem; }
+.herz { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 1.7; stroke-linejoin: round; }
 .herz-wrap.voll .herz { fill: #c98f86; stroke: #c98f86; }
-.kachel-herz .herz { width: 13px; height: 13px; }
+.kachel-herz .herz { width: 17px; height: 17px; }
 .schalter-zeile { display: flex !important; align-items: center; gap: 0.6rem; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.92rem !important; font-weight: 600 !important; color: var(--text) !important; cursor: pointer; }
 .schalter-zeile input { width: 20px; height: 20px; accent-color: #c98f86; }
 
@@ -555,10 +555,10 @@ select:disabled { opacity: 0.45; }
 .tag-svg { display: block; width: 100%; height: auto; border-radius: 12px; background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.025), transparent 70%); }
 .tag-achse { fill: var(--hint); font-size: 10px; font-family: 'Inter', sans-serif; }
 .tag-feierabend { stroke: rgba(var(--abend-rgb), 0.75); stroke-width: 2; stroke-linecap: round; }
-.tag-schein.reg { fill: rgba(245, 238, 225, 0.35); }
-.tag-kern.reg { fill: rgba(250, 246, 238, 0.95); }
-.tag-schein.akt { fill: rgba(var(--akt-rgb), 0.3); }
-.tag-kern.akt { fill: rgba(var(--akt-rgb), 0.85); }
+.tag-schein.reg { fill: rgba(245, 238, 225, 0.2); }
+.tag-kern.reg { fill: rgba(250, 246, 238, 0.82); }
+.tag-schein.akt { fill: rgba(var(--akt-rgb), 0.18); }
+.tag-kern.akt { fill: rgba(var(--akt-rgb), 0.75); }
 .tag-legende { font-size: 0.72rem; color: var(--hint); margin-top: 0.5rem; text-align: center; }
 
 /* Woche abschließen */
@@ -570,3 +570,13 @@ select:disabled { opacity: 0.45; }
 .reflexion { font-family: var(--serif); font-style: italic; font-size: 1.2rem; line-height: 1.35; }
 #abschluss-satz { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--text); font: inherit; font-size: 0.95rem; resize: vertical; }
 #abschluss-satz:focus { outline: none; border-color: rgba(255,255,255,0.35); }
+
+/* Haltung (Präambel in der Hilfe, wie MemoFix) */
+.haltung { border-left: 3px solid var(--text); padding: 0.2rem 0 0.2rem 0.9rem; margin: 0 0 1.25rem; }
+.haltung h4 { margin: 0 0 0.45rem; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); }
+.haltung p { margin: 0 0 0.4rem; font-size: 0.9rem; line-height: 1.5; color: var(--text-dim); }
+.haltung p em { color: var(--text); }
+.hilfe-liste { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+.hilfe-liste li { font-size: 0.86rem; color: var(--text-dim); line-height: 1.5; padding-left: 0.9rem; position: relative; }
+.hilfe-liste li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+.hilfe-liste strong { color: var(--text); }

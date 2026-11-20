@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -108,7 +108,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 17c3-6 6-6 9-3s6 3 9-3"/><path d="M3 21h18"/>
       </svg>
-      <span>Woche</span>
+      <span>Verlauf</span>
     </button>
   </nav>
 
@@ -131,37 +131,61 @@
         <button class="btn-modal-close" id="hilfe-zu" type="button" aria-label="Schließen">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-section">
-          <div class="modal-section-title">Worum es geht</div>
-          <p class="hilfe-text">MemoMe sammelt Ruheinseln und Boxenstopps. Es zeigt, was da war, und nie, was fehlt. Ein leerer Tag ist neutral.</p>
-        </div>
-        <div class="modal-divider"></div>
+        <aside class="haltung">
+          <h4>Kann statt Muss</h4>
+          <p>Wer viel arbeitet, merkt oft erst spät, dass die Ruheinseln fehlen. MemoMe sammelt, was dir guttut: ohne Punkte, ohne Lücken, ohne Mahnung.</p>
+          <p><em>Ein leerer Tag ist neutral. Es zählt, was da war.</em></p>
+        </aside>
         <div class="modal-section">
           <div class="modal-section-title">Heute</div>
-          <p class="hilfe-text"><strong>Tippen</strong> zählt einen Moment, mit seiner üblichen Dauer.<br>
-          <strong>Kurz halten</strong> (etwa eine halbe Sekunde, bis der Ring voll ist) nimmt den letzten Tipp zurück.<br>
-          Oben stehen die beiden Rückblicke: <strong>Schlaf</strong> (morgens, nur gefühlt: erholt, mittel oder kurz) und <strong>Arbeitstag abgeschlossen</strong> (merkt sich die Uhrzeit; vergessen ist in Ordnung, später antippen und anpassen).<br>
-          Darunter die Momente nach Gruppe: Family, Social, Me-Time.</p>
+          <ul class="hilfe-liste">
+            <li><strong>Tippen</strong> zählt einen Moment mit seiner üblichen Dauer. <strong>Kurz halten</strong>, bis der Ring voll ist, nimmt den letzten Tipp zurück.</li>
+            <li><strong>Schlaf</strong> hältst du morgens fest, nur gefühlt: erholt, mittel oder kurz.</li>
+            <li><strong>Arbeitstag abgeschlossen</strong> merkt sich die Uhrzeit deines Feierabends. Vergessen ist in Ordnung: später antippen und anpassen.</li>
+            <li>Die Momente stehen nach Gruppen. Ein kleines <strong>Herz</strong> zeigt ein Angebot für andere.</li>
+            <li>Die <strong>Balance</strong> oben zeigt, ob der Tag eher aktiv oder eher erholsam war. Ohne Zahl, ohne Ziel.</li>
+          </ul>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Gruppen</div>
-          <p class="hilfe-text">Gruppen (zum Beispiel Family, Social, Me-Time) ordnen die Momente. In den Einstellungen (Zahnrad oben rechts) lassen sich unter „Gruppen &amp; Momente“ Gruppen und Momente anlegen, umbenennen, sortieren und entfernen. Die Reihenfolge gilt auf Heute und in der Woche. In der Woche lässt sich jede Gruppe aufklappen.<br>Ein Moment kann ein <strong>Angebot für andere</strong> sein (Schalter beim Moment). Er trägt dann ein kleines Herz. In der Woche unter „Woche abschließen“ kannst du festhalten, wie es ankam und ob es dir selbst etwas gegeben hat. Das ist Nachdenken, keine Bewertung.<br><strong>Über den Tag</strong> zeigt in der Woche, wann deine Momente lagen: Je größer der Punkt, desto länger. Der Strich zeigt den Feierabend. Ob ein Moment aktiv oder erholsam ist, legt der Moment selbst fest: Üben mit den Kindern kann Family und Aktivierung sein, Familienzeit Family und Regeneration.</p>
+          <div class="modal-section-title">Verlauf</div>
+          <ul class="hilfe-liste">
+            <li>Eine Woche geht von <strong>Montag bis Sonntag</strong>. Mit ‹ und › blätterst du zu anderen Wochen. Monat und Jahr kommen später dazu.</li>
+            <li><strong>Momente:</strong> je Gruppe ein Balken, warm für aktiv, kühl für erholsam. Tippen öffnet die Gruppe, „▸ Alle“ öffnet alle.</li>
+            <li><strong>Über den Tag:</strong> wann deine Momente lagen. Je größer der Punkt, desto länger. Der Strich zeigt den Feierabend.</li>
+            <li><strong>Feierabend &amp; Schlaf:</strong> wann die Arbeit endete und wie die Nächte waren.</li>
+            <li><strong>Woche abschließen</strong>, zum Beispiel am Sonntagabend: kurz zurückschauen, bei Angeboten festhalten, wie es ankam, wenn du magst ein Satz. Danach ist nichts mehr offen. Eine vergangene Woche lässt sich auch später noch abschließen.</li>
+          </ul>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Einstellungen</div>
-          <p class="hilfe-text">Gruppen, Momente und Daten findest du über das Zahnrad oben rechts: Gruppen &amp; Momente, Feierabend-Korridor, Darstellung der Balance, Daten sichern und laden. „‹ Zurück“ bringt dich wieder zur vorigen Ansicht.</p>
+          <div class="modal-section-title">Einstellungen (Zahnrad oben rechts)</div>
+          <ul class="hilfe-liste">
+            <li><strong>Gruppen &amp; Momente</strong> anlegen, umbenennen, sortieren und entfernen. Die Reihenfolge gilt überall.</li>
+            <li>Ob ein Moment <strong>aktiv oder erholsam</strong> ist, legt der Moment fest: Üben mit den Kindern kann Family und aktiv sein, Familienzeit Family und erholsam.</li>
+            <li><strong>Angebot für andere</strong>, <strong>Richtwert</strong> (etwa so oft, kein Soll) und <strong>genug ab</strong> stellst du beim Moment ein.</li>
+            <li>Der <strong>Feierabend-Korridor</strong> ist das Zeitfenster, in dem dein Arbeitstag ungefähr enden soll.</li>
+          </ul>
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-section">
+          <div class="modal-section-title">Daten &amp; Updates</div>
+          <ul class="hilfe-liste">
+            <li>Alles bleibt <strong>auf diesem Gerät</strong>, nichts wird übertragen.</li>
+            <li><strong>Daten sichern</strong> erzeugt eine Datei. Mit „Sicherung laden“ ziehst du auf ein anderes Gerät um.</li>
+            <li>„Browserdaten löschen“ in den Einstellungen von Handy oder Browser entfernt auch MemoMe. Sichere deshalb ab und zu.</li>
+            <li>Bei einer neuen Version erscheint unten „Neue Version verfügbar“. Ein Tipp auf „Neu laden“ genügt.</li>
+          </ul>
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 17</p>
+        <p class="modal-meta modal-meta-build">Version 18</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=17"></script>
+  <script src="app.js?v=18"></script>
 </body>
 </html>
