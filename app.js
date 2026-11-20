@@ -9,7 +9,7 @@ let GRUPPEN = {};
 function gruppenAktualisieren() {
   GRUPPEN = {}; for (const g of S.gruppen) GRUPPEN[g.id] = g.name;
 }
-const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'beides' };
+const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'aktiv für mich' };
 const SCHLAF = { erholt: 'erholt', mittel: 'mittel', kurz: 'kurz' };
 
 // Piktogramme: 24er-Raster, Linie 1.75, runde Enden, currentColor (wie im MemoMe Design System)
@@ -31,7 +31,7 @@ const symbolHTML = (m, strich) => (m.icon && PIKTO[m.icon]) ? pikto(m.icon, 'pik
 const START_MOMENTE = [
   { id: 'kaffee',      name: 'Kaffeepause',          symbol: '☕', icon: 'kaffee', gruppe: 'social', modus: 'reg',    dauer: 15 },
   { id: 'cello',       name: 'Cello',                symbol: '🎻', icon: 'cello', gruppe: 'metime', modus: 'reg',    dauer: 30 },
-  { id: 'sport',       name: 'Sport / Joggen',       symbol: '🏃', icon: 'sport', gruppe: 'metime', modus: 'akt',    dauer: 30 },
+  { id: 'sport',       name: 'Sport / Joggen',       symbol: '🏃', icon: 'sport', gruppe: 'metime', modus: 'beides', dauer: 30 },
   { id: 'meditation',  name: 'Meditation',           symbol: '🧘', icon: 'meditation', gruppe: 'metime', modus: 'reg',    dauer: 10 },
   { id: 'spaziergang', name: 'Spaziergang',          symbol: '🚶', icon: 'spaziergang', gruppe: 'metime', modus: 'reg',    dauer: 20 },
   { id: 'lesen',       name: 'Lesen',                symbol: '📖', icon: 'lesen', gruppe: 'metime', modus: 'reg',    dauer: 20 },
@@ -39,7 +39,7 @@ const START_MOMENTE = [
   { id: 'familie',     name: 'Familienzeit',         symbol: '👨‍👩‍👧', icon: 'familie', gruppe: 'family', modus: 'reg',    dauer: 60 },
   { id: 'zuzweit',     name: 'Zeit zu zweit',        symbol: '💑', icon: 'zuzweit', gruppe: 'family', modus: 'reg',    dauer: 60 },
   { id: 'freunde',     name: 'Freunde treffen',      symbol: '🍻', icon: 'freunde', gruppe: 'social', modus: 'beides', dauer: 60 },
-  { id: 'vibe',        name: 'Vibe Coding',          symbol: '💻', icon: 'coding', gruppe: 'metime', modus: 'akt',    dauer: 30, genugTag: 120 },
+  { id: 'vibe',        name: 'Vibe Coding',          symbol: '💻', icon: 'coding', gruppe: 'metime', modus: 'beides', dauer: 30, genugTag: 120 },
 ];
 
 function startZustand() {
@@ -411,12 +411,11 @@ function renderWoche() {
   }
 
   // Über den Tag: wann die Momente lagen (Leuchtpunkte, Größe = Dauer, Strich = Feierabend)
-  if (taps.length) teile.push(`<div class="card"><div class="card-header"><h2>Über den Tag</h2>
-      <span class="rechts tag-filter" role="group" aria-label="Momente zeigen">
-        <button type="button" class="btn-klein${heatFilter.erholsam ? ' an' : ''}" data-filter="erholsam" aria-pressed="${heatFilter.erholsam}">erholsam</button>
-        <button type="button" class="btn-klein${heatFilter.aktiv ? ' an' : ''}" data-filter="aktiv" aria-pressed="${heatFilter.aktiv}">aktiv</button></span></div>
+  if (taps.length) teile.push(`<div class="card"><div class="card-header"><h2>Über den Tag</h2></div>
+      <div class="tag-filter" role="group" aria-label="Momente zeigen">
+        ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}</div>
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
-      <p class="tag-legende">Größe = Dauer · Strich = Feierabend</p></div>`);
+      <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p></div>`);
 
   // Feierabend & Schlaf: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
   const rahmen = [];
@@ -495,35 +494,39 @@ function renderWoche() {
 }
 
 // ── Über den Tag ──
-const heatFilter = { erholsam: true, aktiv: false };
+const heatFilter = { erholsam: true, fuermich: true, aktiv: false };
 const REFLEXION = ['Was hat dir diese Woche gutgetan?', 'Welche Ruheinsel möchtest du behalten?', 'Was darf nächste Woche etwas weniger sein?', 'Wofür bist du diese Woche dankbar?'];
+// Art eines Moments in der Karte: erholsam, aktiv für mich oder aktiv
+const ART = { reg: 'reg', beides: 'mich', akt: 'akt' };
+const ART_FILTER = { reg: 'erholsam', mich: 'fuermich', akt: 'aktiv' };
+const WOLKE_RGB = { reg: '246,240,228', mich: '134,189,181', akt: '217,163,106' };
 function tagKarte(taps, tage) {
   const W = 320, H = 300, L = 30, R = 8, T = 10, B = 26;
-  const pts = taps.map(t => ({ t, m: moment(t.mid), d: new Date(t.ts) }))
-    .filter(p => p.m && (p.m.modus === 'akt' ? heatFilter.aktiv : heatFilter.erholsam));
+  // getippt wird am Ende: die Wolke liegt auf der Mitte des Moments
+  const pts = taps.map(t => { const m = moment(t.mid); return { t, m, art: m && (ART[m.modus] || 'reg'), d: new Date(t.ts - (t.min || 0) * 30000) }; })
+    .filter(p => p.m && heatFilter[ART_FILTER[p.art]]);
   const stunde = d => d.getHours() + d.getMinutes() / 60;
   const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => ({ i: x.i, h: zuMin(x.z) / 60 }));
   const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h)];
   const hMin = Math.min(7, Math.floor(Math.min(...alle, 24)) - 1), hMax = Math.max(23, Math.ceil(Math.max(...alle, 0)) + 1);
   const spalte = (W - L - R) / 7;
   const x = i => L + (i + 0.5) * spalte, y = h => T + (h - hMin) / (hMax - hMin) * (H - T - B);
+  const proStunde = (H - T - B) / (hMax - hMin);
   const tagNamen = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   let achsen = tagNamen.map((n, i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="tag-achse">${n}</text>`).join('');
   for (let h = Math.ceil(hMin / 4) * 4; h <= hMax; h += 4) achsen += `<text x="${L - 8}" y="${(y(h) + 3).toFixed(1)}" text-anchor="end" class="tag-achse">${h}</text>`;
   const striche = fa.map(f => `<line x1="${(x(f.i) - spalte * 0.32).toFixed(1)}" x2="${(x(f.i) + spalte * 0.32).toFixed(1)}" y1="${y(f.h).toFixed(1)}" y2="${y(f.h).toFixed(1)}" class="tag-feierabend"/>`).join('');
+  // gleiche Breite für alle, die Länge folgt der Dauer: lange Momente überdecken kurze nicht mehr
+  const RANG = { akt: 0, mich: 1, reg: 2 };
   const glow = pts.map(p => {
-    const i = (p.d.getDay() + 6) % 7, r = 3 + Math.sqrt(p.t.min || 10) * 1.05;
-    const art = p.m.modus === 'akt' ? 'akt' : 'reg';
-    return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), r, art };
-  });
-  // weiche Wolke: von innen nach außen auslaufend, überlagerte Momente werden heller; nur ein winziger Kern
-  const schein = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${(g.r * 2.3).toFixed(1)}" fill="url(#wolke-${g.art})"/>`).join('');
+    const i = (p.d.getDay() + 6) % 7, halb = (p.t.min || 0) / 120 * proStunde;
+    return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), rx: 10, ry: halb + 8, art: p.art };
+  }).sort((a, b) => RANG[a.art] - RANG[b.art]);   // aktiv unten, erholsam oben
+  const schein = glow.map(g => `<ellipse cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" rx="${g.rx}" ry="${g.ry.toFixed(1)}" fill="url(#wolke-${g.art})"/>`).join('');
   const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="1.3" class="tag-kern ${g.art}"/>`).join('');
+  const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
-    <defs>
-      <radialGradient id="wolke-reg"><stop offset="0" stop-color="rgb(246,240,228)" stop-opacity="0.5"/><stop offset="0.4" stop-color="rgb(246,240,228)" stop-opacity="0.2"/><stop offset="1" stop-color="rgb(246,240,228)" stop-opacity="0"/></radialGradient>
-      <radialGradient id="wolke-akt"><stop offset="0" stop-color="rgb(217,163,106)" stop-opacity="0.5"/><stop offset="0.4" stop-color="rgb(217,163,106)" stop-opacity="0.2"/><stop offset="1" stop-color="rgb(217,163,106)" stop-opacity="0"/></radialGradient>
-    </defs>
+    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}</defs>
     ${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
