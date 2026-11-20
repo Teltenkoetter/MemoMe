@@ -556,9 +556,9 @@ select:disabled { opacity: 0.45; }
 .tag-achse { fill: var(--hint); font-size: 10px; font-family: 'Inter', sans-serif; }
 .tag-feierabend { stroke: rgba(var(--abend-rgb), 0.75); stroke-width: 2; stroke-linecap: round; }
 .tag-schein.reg { fill: rgba(245, 238, 225, 0.2); }
-.tag-kern.reg { fill: rgba(250, 246, 238, 0.82); }
+.tag-kern.reg { fill: rgba(250, 246, 238, 0.7); }
 .tag-schein.akt { fill: rgba(var(--akt-rgb), 0.18); }
-.tag-kern.akt { fill: rgba(var(--akt-rgb), 0.75); }
+.tag-kern.akt { fill: rgba(var(--akt-rgb), 0.7); }
 .tag-legende { font-size: 0.72rem; color: var(--hint); margin-top: 0.5rem; text-align: center; }
 
 /* Woche abschließen */
