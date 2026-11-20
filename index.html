@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" class="snap-heute">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 
@@ -33,7 +33,7 @@
 
       <div class="card balance-card" id="balance-heute"></div>
 
-      <div class="kachel-raster" id="sonder-kacheln" aria-label="Rückblick"></div>
+      <div class="rahmen-raster" id="sonder-kacheln" aria-label="Rahmen des Tages"></div>
       <hr class="rahmen-strich">
       <div class="momente-gruppen" id="moment-kacheln"></div>
       <p class="raster-hinweis">Tippen zählt einen Moment. Lang drücken nimmt den letzten zurück.</p>
@@ -67,8 +67,18 @@
       </div>
 
       <div class="card">
+        <div class="card-header"><h2>Rahmen des Tages</h2></div>
+        <p class="card-text">Was du auf Heute neben dem Feierabend festhalten möchtest, nur gefühlt. Ausgeschaltetes verschwindet von Heute, Einträge bleiben erhalten.</p>
+        <div class="schalter-liste">
+          <label class="schalter-zeile" for="zeige-schlaf"><input type="checkbox" id="zeige-schlaf"><span>Schlaf</span></label>
+          <label class="schalter-zeile" for="zeige-essen"><input type="checkbox" id="zeige-essen"><span>Essen</span></label>
+          <label class="schalter-zeile" for="zeige-trinken"><input type="checkbox" id="zeige-trinken"><span>Trinken</span></label>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-header"><h2>Feierabend-Korridor</h2></div>
-        <p class="card-text">Wann soll dein Arbeitstag ungefähr enden? Also der Moment, in dem du „Arbeitstag abgeschlossen“ tippst, zum Beispiel 17:30 bis 19:00. Kein Muss: In der Woche erscheint der Korridor als weiches Band hinter deinen Feierabenden.</p>
+        <p class="card-text">Wann soll dein Arbeitstag ungefähr enden? Also der Moment, in dem du „Feierabend“ tippst, zum Beispiel 17:30 bis 19:00. Kein Muss: In der Woche erscheint der Korridor als weiches Band hinter deinen Feierabenden.</p>
         <div class="zeit-reihe">
           <div class="form-group"><label for="korridor-von">Arbeitstag endet ab</label><input type="time" id="korridor-von"></div>
           <div class="form-group"><label for="korridor-bis">spätestens gegen</label><input type="time" id="korridor-bis"></div>
@@ -140,8 +150,9 @@
           <div class="modal-section-title">Heute</div>
           <ul class="hilfe-liste">
             <li><strong>Tippen</strong> zählt einen Moment mit seiner üblichen Dauer. <strong>Kurz halten</strong>, bis der Ring voll ist, nimmt den letzten Tipp zurück.</li>
-            <li><strong>Schlaf</strong> hältst du morgens fest, nur gefühlt: erholt, mittel oder kurz.</li>
-            <li><strong>Arbeitstag abgeschlossen</strong> merkt sich die Uhrzeit deines Feierabends. Vergessen ist in Ordnung: später antippen und anpassen.</li>
+            <li>Oben steht der <strong>Rahmen des Tages</strong>, nur gefühlt und ohne richtig oder falsch: <strong>Schlaf</strong> (erholt, mittel, kurz) hältst du morgens fest, <strong>Essen</strong> (frisch, gemischt, gegönnt) und <strong>Trinken</strong> (viel, mittel, wenig; gemeint sind Wasser, Tee und Ähnliches) wann du magst. Gegönnt ist Genuss, kein Ausrutscher. Nochmal tippen hebt die Wahl auf.</li>
+            <li><strong>Feierabend</strong> merkt sich die Uhrzeit, wenn dein Arbeitstag endet. Vergessen ist in Ordnung: später antippen und anpassen.</li>
+            <li><strong>Schnell wischen</strong> hält an jeder Gruppe, sie steht dann oben.</li>
             <li>Die Momente stehen nach Gruppen. Ein kleines <strong>Herz</strong> zeigt ein Angebot für andere.</li>
             <li>Die <strong>Balance</strong> oben zeigt, ob der Tag eher aktiv oder eher erholsam war. Ohne Zahl, ohne Ziel.</li>
           </ul>
@@ -153,7 +164,7 @@
             <li>Eine Woche geht von <strong>Montag bis Sonntag</strong>. Mit ‹ und › blätterst du zu anderen Wochen. Monat und Jahr kommen später dazu.</li>
             <li><strong>Momente:</strong> je Gruppe ein Balken, warm für aktiv, kühl für erholsam. Tippen öffnet die Gruppe, „▸ Alle“ öffnet alle.</li>
             <li><strong>Über den Tag:</strong> wann deine Momente lagen, hell für erholsam, türkis für aktiv für mich, bernstein für aktiv. Die Wolke liegt auf der Mitte des Moments und ist so lang, wie er gedauert hat. Der Strich zeigt den Feierabend.</li>
-            <li><strong>Feierabend &amp; Schlaf:</strong> wann die Arbeit endete und wie die Nächte waren.</li>
+            <li><strong>Rahmen des Tages:</strong> wie Schlaf, Essen und Trinken sich anfühlten und wann die Arbeit endete. Ein Punkt je Tag, der Ring zeigt die Mitte der Woche.</li>
             <li><strong>Woche abschließen</strong>, zum Beispiel am Sonntagabend: kurz zurückschauen, bei Angeboten festhalten, wie es ankam, wenn du magst ein Satz. Danach ist nichts mehr offen. Eine vergangene Woche lässt sich auch später noch abschließen.</li>
           </ul>
         </div>
@@ -179,13 +190,13 @@
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 21</p>
+        <p class="modal-meta modal-meta-build">Version 22</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>

@@ -10,10 +10,17 @@ function gruppenAktualisieren() {
   GRUPPEN = {}; for (const g of S.gruppen) GRUPPEN[g.id] = g.name;
 }
 const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'aktiv für mich' };
-const SCHLAF = { erholt: 'erholt', mittel: 'mittel', kurz: 'kurz' };
+// Rahmen des Tages: drei gefühlte Werte, oben der eine Pol, unten der andere. Keine Wertung, keine Ampel.
+const WAHL = {
+  schlaf:  { name: 'Schlaf',  icon: 'schlaf',  werte: [['erholt', 'erholt'], ['mittel', 'mittel'], ['kurz', 'kurz']] },
+  essen:   { name: 'Essen',   icon: 'essen',   werte: [['frisch', 'frisch'], ['gemischt', 'gemischt'], ['gegoennt', 'gegönnt']] },
+  trinken: { name: 'Trinken', icon: 'trinken', werte: [['viel', 'viel'], ['mittel', 'mittel'], ['wenig', 'wenig']] },
+};
+const WAHL_TEXT = (art, w) => (WAHL[art].werte.find(x => x[0] === w) || [w, w])[1];
+const wahlAn = art => S.einstellungen['zeige_' + art] !== false;
 
 // Piktogramme: 24er-Raster, Linie 1.75, runde Enden, currentColor (wie im MemoMe Design System)
-const PIKTO = {"kaffee": "<path d=\"M4 9h12v4.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5Z\"/><path d=\"M16 10.5h1.5a2.75 2.75 0 0 1 0 5.5H16\"/><path d=\"M8 3.5v2.5M12 3.5v2.5\"/><path d=\"M3 21.5h14\"/>", "cello": "<path d=\"M12 7.4C9.8 7.4 8.4 8.5 8.4 10.3c0 1.2 1 1.8 1 2.8s-2 1.7-2 3.9c0 2.4 2 3.7 4.6 3.7s4.6-1.3 4.6-3.7c0-2.2-2-2.9-2-3.9s1-1.6 1-2.8c0-1.8-1.4-2.9-3.6-2.9Z\"/><path d=\"M12 16.2V1.8M10.9 3.4h2.2M10.4 16.2h3.2M12 20.7v2.3\"/>", "sport": "<circle cx=\"15.5\" cy=\"4.2\" r=\"1.9\"/><path d=\"M13.6 8 10.6 13.6\"/><path d=\"M13.6 8l2.8 2.6 2.4-1.4\"/><path d=\"M13.6 8 10.2 8.6 8 10.8\"/><path d=\"M10.6 13.6l3.4 2.8-1 4.8\"/><path d=\"M10.6 13.6 8.4 17.2 4.6 17.6\"/>", "meditation": "<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 8.4v6.2\"/><path d=\"M12 9.6l-4.4 4.6 3 2.2M12 9.6l4.4 4.6-3 2.2\"/><path d=\"M4 19.5c2.4-2.6 5.2-3.2 8-3.2s5.6.6 8 3.2Z\"/>", "spaziergang": "<circle cx=\"12.6\" cy=\"4.2\" r=\"1.9\"/><path d=\"M12.2 8l-.8 6.2\"/><path d=\"M11.4 14.2l2.4 3.2.6 3.6M11.4 14.2l-1.8 3.4-1.4 3.4\"/><path d=\"M12.2 8.6l2.6 3.2M12.2 8.6 9.6 11.6\"/><path d=\"M17.4 11v10\"/>", "lesen": "<path d=\"M3 5.6c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1Z\"/><path d=\"M12 6.6v13\"/>", "offline": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.6\"/><path d=\"M10.6 5h2.8\"/><path d=\"M4 4l16 16\"/>", "familie": "<circle cx=\"7\" cy=\"6\" r=\"2.2\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\"/><circle cx=\"12\" cy=\"12.6\" r=\"1.4\"/><path d=\"M3.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M13.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M10.6 20.5v-3a1.4 1.4 0 0 1 2.8 0v3\"/>", "zuzweit": "<circle cx=\"9\" cy=\"12\" r=\"5.6\"/><circle cx=\"15\" cy=\"12\" r=\"5.6\"/>", "freunde": "<g transform=\"rotate(-12 7.5 13)\"><path d=\"M4.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3H6.9a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><g transform=\"rotate(12 16.5 13)\"><path d=\"M13.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3h-1.2a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><path d=\"M12 2.5v2.2M9.4 3.3l.9 1.6M14.6 3.3l-.9 1.6\"/>", "coding": "<path d=\"M8 7l-5 5 5 5M16 7l5 5-5 5M13.6 5l-3.2 14\"/>", "brot": "<path d=\"M3 14c0-4 4-6.5 9-6.5s9 2.5 9 6.5c0 2-1.5 3.5-3.5 3.5h-11C4.5 17.5 3 16 3 14Z\"/><path d=\"M8 9.4l1.4 3.2M12 8.8v3.6M16 9.4l-1.4 3.2\"/><path d=\"M5 20.5h14\"/>", "feierabend": "<path d=\"M5.5 21.5V3\"/><path d=\"M5.5 3.8h12.5l-2.6 4.2 2.6 4.2H5.5\"/>", "schlaf": "<path d=\"M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1Z\"/>", "kultur": "<path d=\"M4 9.5 12 4l8 5.5\"/><path d=\"M5 20.5h14M6.5 10.5v8M10 10.5v8M14 10.5v8M17.5 10.5v8\"/>", "gruene": "<path d=\"M6 19c0-8 5-13 13-13 0 8-5 13-13 13Z\"/><path d=\"M4 21l9-9\"/>", "kinder": "<circle cx=\"8\" cy=\"4.6\" r=\"1.9\"/><path d=\"M8 8.2v7.3M8 15.5l-2.2 5.5M8 15.5l2.2 5.5M8 10.2l4.6 2.8\"/><circle cx=\"16.5\" cy=\"10.8\" r=\"1.5\"/><path d=\"M16.5 13.6v4.2M16.5 17.8l-1.6 3.2M16.5 17.8l1.6 3.2M16.5 14.6l-3.9-1.6\"/>", "orga": "<rect x=\"5\" y=\"4.5\" width=\"14\" height=\"16.5\" rx=\"2.5\"/><rect x=\"8.5\" y=\"2.6\" width=\"7\" height=\"3.8\" rx=\"1.3\"/><path d=\"M8.6 11.2h.4M11.8 11.2h3.8M8.6 14.6h.4M11.8 14.6h3.8M8.6 18h.4M11.8 18h3.8\"/>", "haus": "<path d=\"M12 2.5v9\"/><path d=\"M7.5 11.5h9l1.6 9H5.9Z\"/><path d=\"M9.6 15v5.5M12 15v5.5M14.4 15v5.5\"/>", "kraft": "<path d=\"M7 12h10\"/><rect x=\"3.5\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><rect x=\"17\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><path d=\"M2 10.5v3M22 10.5v3\"/>", "musik": "<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/><rect x=\"16.8\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/>", "wlanaus": "<path d=\"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\".9\"/><path d=\"M4 4l16 16\"/>", "buehne": "<path d=\"M5 3.5h14v7.5a7 7 0 0 1-14 0Z\"/><path d=\"M8.3 9.2c.6-.8 1.6-.8 2.2 0M13.5 9.2c.6-.8 1.6-.8 2.2 0\"/><path d=\"M8.8 13.6a3.6 3.6 0 0 0 6.4 0\"/>", "tee": "<path d=\"M4 10.5h16c0 4.7-3.6 8.5-8 8.5s-8-3.8-8-8.5Z\"/><path d=\"M9 19l-.6 2h7.2l-.6-2\"/><path d=\"M9.5 3.5c-1 1.2 1 2 0 3.3M14.5 3.5c-1 1.2 1 2 0 3.3\"/>", "gespraech": "<path d=\"M4.5 4h9a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H8.5L5.5 15v-2.5h-1a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M18 9h1.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1V20l-3-2.5h-4a2 2 0 0 1-2-1.6\"/>"};
+const PIKTO = {"kaffee": "<path d=\"M4 9h12v4.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5Z\"/><path d=\"M16 10.5h1.5a2.75 2.75 0 0 1 0 5.5H16\"/><path d=\"M8 3.5v2.5M12 3.5v2.5\"/><path d=\"M3 21.5h14\"/>", "cello": "<path d=\"M12 7.4C9.8 7.4 8.4 8.5 8.4 10.3c0 1.2 1 1.8 1 2.8s-2 1.7-2 3.9c0 2.4 2 3.7 4.6 3.7s4.6-1.3 4.6-3.7c0-2.2-2-2.9-2-3.9s1-1.6 1-2.8c0-1.8-1.4-2.9-3.6-2.9Z\"/><path d=\"M12 16.2V1.8M10.9 3.4h2.2M10.4 16.2h3.2M12 20.7v2.3\"/>", "sport": "<circle cx=\"15.5\" cy=\"4.2\" r=\"1.9\"/><path d=\"M13.6 8 10.6 13.6\"/><path d=\"M13.6 8l2.8 2.6 2.4-1.4\"/><path d=\"M13.6 8 10.2 8.6 8 10.8\"/><path d=\"M10.6 13.6l3.4 2.8-1 4.8\"/><path d=\"M10.6 13.6 8.4 17.2 4.6 17.6\"/>", "meditation": "<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 8.4v6.2\"/><path d=\"M12 9.6l-4.4 4.6 3 2.2M12 9.6l4.4 4.6-3 2.2\"/><path d=\"M4 19.5c2.4-2.6 5.2-3.2 8-3.2s5.6.6 8 3.2Z\"/>", "spaziergang": "<circle cx=\"12.6\" cy=\"4.2\" r=\"1.9\"/><path d=\"M12.2 8l-.8 6.2\"/><path d=\"M11.4 14.2l2.4 3.2.6 3.6M11.4 14.2l-1.8 3.4-1.4 3.4\"/><path d=\"M12.2 8.6l2.6 3.2M12.2 8.6 9.6 11.6\"/><path d=\"M17.4 11v10\"/>", "lesen": "<path d=\"M3 5.6c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1Z\"/><path d=\"M12 6.6v13\"/>", "offline": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.6\"/><path d=\"M10.6 5h2.8\"/><path d=\"M4 4l16 16\"/>", "familie": "<circle cx=\"7\" cy=\"6\" r=\"2.2\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\"/><circle cx=\"12\" cy=\"12.6\" r=\"1.4\"/><path d=\"M3.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M13.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M10.6 20.5v-3a1.4 1.4 0 0 1 2.8 0v3\"/>", "zuzweit": "<circle cx=\"9\" cy=\"12\" r=\"5.6\"/><circle cx=\"15\" cy=\"12\" r=\"5.6\"/>", "freunde": "<g transform=\"rotate(-12 7.5 13)\"><path d=\"M4.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3H6.9a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><g transform=\"rotate(12 16.5 13)\"><path d=\"M13.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3h-1.2a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><path d=\"M12 2.5v2.2M9.4 3.3l.9 1.6M14.6 3.3l-.9 1.6\"/>", "coding": "<path d=\"M8 7l-5 5 5 5M16 7l5 5-5 5M13.6 5l-3.2 14\"/>", "brot": "<path d=\"M3 14c0-4 4-6.5 9-6.5s9 2.5 9 6.5c0 2-1.5 3.5-3.5 3.5h-11C4.5 17.5 3 16 3 14Z\"/><path d=\"M8 9.4l1.4 3.2M12 8.8v3.6M16 9.4l-1.4 3.2\"/><path d=\"M5 20.5h14\"/>", "feierabend": "<path d=\"M5.5 21.5V3\"/><path d=\"M5.5 3.8h12.5l-2.6 4.2 2.6 4.2H5.5\"/>", "schlaf": "<path d=\"M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1Z\"/>", "kultur": "<path d=\"M4 9.5 12 4l8 5.5\"/><path d=\"M5 20.5h14M6.5 10.5v8M10 10.5v8M14 10.5v8M17.5 10.5v8\"/>", "gruene": "<path d=\"M6 19c0-8 5-13 13-13 0 8-5 13-13 13Z\"/><path d=\"M4 21l9-9\"/>", "kinder": "<circle cx=\"8\" cy=\"4.6\" r=\"1.9\"/><path d=\"M8 8.2v7.3M8 15.5l-2.2 5.5M8 15.5l2.2 5.5M8 10.2l4.6 2.8\"/><circle cx=\"16.5\" cy=\"10.8\" r=\"1.5\"/><path d=\"M16.5 13.6v4.2M16.5 17.8l-1.6 3.2M16.5 17.8l1.6 3.2M16.5 14.6l-3.9-1.6\"/>", "orga": "<rect x=\"5\" y=\"4.5\" width=\"14\" height=\"16.5\" rx=\"2.5\"/><rect x=\"8.5\" y=\"2.6\" width=\"7\" height=\"3.8\" rx=\"1.3\"/><path d=\"M8.6 11.2h.4M11.8 11.2h3.8M8.6 14.6h.4M11.8 14.6h3.8M8.6 18h.4M11.8 18h3.8\"/>", "haus": "<path d=\"M12 2.5v9\"/><path d=\"M7.5 11.5h9l1.6 9H5.9Z\"/><path d=\"M9.6 15v5.5M12 15v5.5M14.4 15v5.5\"/>", "kraft": "<path d=\"M7 12h10\"/><rect x=\"3.5\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><rect x=\"17\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><path d=\"M2 10.5v3M22 10.5v3\"/>", "musik": "<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/><rect x=\"16.8\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/>", "wlanaus": "<path d=\"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\".9\"/><path d=\"M4 4l16 16\"/>", "buehne": "<path d=\"M5 3.5h14v7.5a7 7 0 0 1-14 0Z\"/><path d=\"M8.3 9.2c.6-.8 1.6-.8 2.2 0M13.5 9.2c.6-.8 1.6-.8 2.2 0\"/><path d=\"M8.8 13.6a3.6 3.6 0 0 0 6.4 0\"/>", "tee": "<path d=\"M4 10.5h16c0 4.7-3.6 8.5-8 8.5s-8-3.8-8-8.5Z\"/><path d=\"M9 19l-.6 2h7.2l-.6-2\"/><path d=\"M9.5 3.5c-1 1.2 1 2 0 3.3M14.5 3.5c-1 1.2 1 2 0 3.3\"/>", "essen": "<circle cx=\"14\" cy=\"12.5\" r=\"6.8\"/><circle cx=\"14\" cy=\"12.5\" r=\"3.6\"/><path d=\"M2.8 3.5v4.2a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v17\"/>", "trinken": "<path d=\"M5.5 3.5h13l-1.7 16.3a1.8 1.8 0 0 1-1.8 1.6H9a1.8 1.8 0 0 1-1.8-1.6Z\"/><path d=\"M6.4 11.2c1.9-.9 3.7-.9 5.6 0s3.7.9 5.6 0\"/>", "gespraech": "<path d=\"M4.5 4h9a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H8.5L5.5 15v-2.5h-1a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M18 9h1.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1V20l-3-2.5h-4a2 2 0 0 1-2-1.6\"/>"};
 function pikto(name, cls = 'pikto', strich = 1.75) {
   const p = PIKTO[name]; if (!p) return '';
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strich}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
@@ -51,8 +58,10 @@ function startZustand() {
     taps: [],            // { id, mid, ts, min }
     feierabend: {},      // 'JJJJ-MM-TT' → 'HH:MM'
     schlaf: {},          // 'JJJJ-MM-TT' → 'erholt' | 'mittel' | 'kurz'
+    essen: {},           // 'JJJJ-MM-TT' → 'frisch' | 'gemischt' | 'gegoennt'
+    trinken: {},         // 'JJJJ-MM-TT' → 'viel' | 'mittel' | 'wenig'
     wochen: {},          // 'JJJJ-Wkw' → { angebote: { mid: { an, mir } }, satz, abgeschlossen }
-    einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach' },
+    einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach', zeige_schlaf: true, zeige_essen: true, zeige_trinken: true },
   };
 }
 
@@ -201,19 +210,23 @@ function renderHeute() {
   // Sonderkacheln
   const k = heuteKey();
   const fa = S.feierabend[k];
-  const sl = S.schlaf[k];
-  $('#sonder-kacheln').innerHTML = `
-    <div class="kachel rahmen schlaf${sl ? ' gefuellt' : ''}" data-sonder="schlaf">
-      <span class="kachel-symbol" aria-hidden="true">${pikto('schlaf', 'pikto', 1.4)}</span>
-      <div class="schlaf-wahl" role="group" aria-label="Schlaf gefühlt">
-        ${Object.entries(SCHLAF).map(([w, t]) => `<button type="button" data-schlaf="${w}" class="${sl === w ? 'an' : ''}" aria-pressed="${sl === w}">${t}</button>`).join('')}
-      </div>
-      <span class="kachel-name">Schlaf, gefühlt</span>
-    </div>
-    <button class="kachel rahmen abend${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button">
+  const spalte = art => {
+    const w = (S[art] ||= {})[k];
+    return `<div class="kachel rahmen spalte abend${w ? ' gefuellt' : ''}" data-sonder="${art}">
+      <span class="kachel-symbol" aria-hidden="true">${pikto(WAHL[art].icon, 'pikto', 1.4)}</span>
+      <span class="kachel-name">${WAHL[art].name}</span>
+      <div class="wahl" role="group" aria-label="${WAHL[art].name}, gefühlt">
+        ${WAHL[art].werte.map(([v, t]) => `<button type="button" data-wahl="${art}" data-wert="${v}" class="${w === v ? 'an' : ''}" aria-pressed="${w === v}">${t}</button>`).join('')}
+      </div></div>`;
+  };
+  const arten = Object.keys(WAHL).filter(wahlAn);
+  const sonder = $('#sonder-kacheln');
+  sonder.style.setProperty('--spalten', arten.length + 1);
+  sonder.innerHTML = arten.map(spalte).join('') + `
+    <button class="kachel rahmen spalte abend${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Feierabend${fa ? ' ' + fa : ''}">
       <span class="kachel-symbol" aria-hidden="true">${pikto('feierabend', 'pikto', 1.4)}</span>
-      <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : ''}</span>
-      <span class="kachel-name">Arbeitstag abgeschlossen</span>
+      <span class="kachel-name">Feierabend</span>
+      <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : '<span class="spalte-leise">tippen</span>'}</span>
       ${ringSVG()}
     </button>`;
 
@@ -351,14 +364,14 @@ function renderWoche() {
   const notiz = (S.wochen ||= {})[wk] || {};
   const tage = []; for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(d.getDate() + i); tage.push(d); }
   const abende = tage.map(d => ({ d, z: S.feierabend[tagKey(d)] })).filter(x => x.z);
-  const schlaf = {}; tage.forEach(d => { const s = S.schlaf[tagKey(d)]; if (s) schlaf[s] = (schlaf[s] || 0) + 1; });
+  const gefuehlt = Object.keys(WAHL).some(art => tage.some(d => (S[art] || {})[tagKey(d)]));
 
   const teile = [];
   const gesamtMin = taps.reduce((s, t) => s + (t.min || 0), 0);
   teile.push(`<div class="card">${balanceHTML(b, S.einstellungen.balanceStil, 'Balance der Woche')}
     ${taps.length ? `<p class="card-text" style="margin:0.75rem 0 0">${taps.length} Momente${gesamtMin ? ` · ${fmtDauer(gesamtMin)} gesammelt` : ''}</p>` : ''}</div>`);
 
-  if (!taps.length && !abende.length && !Object.keys(schlaf).length) {
+  if (!taps.length && !abende.length && !gefuehlt) {
     teile.push(`<div class="card"><p class="leer-text">In dieser Woche ist noch nichts gesammelt. Das ist in Ordnung.</p></div>`);
   }
 
@@ -417,19 +430,21 @@ function renderWoche() {
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
       <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p></div>`);
 
-  // Feierabend & Schlaf: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
+  // Rahmen des Tages: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
   const rahmen = [];
+  for (const art of Object.keys(WAHL)) {
+    const werte = tage.map(d => (S[art] || {})[tagKey(d)]).filter(Boolean);
+    if (!werte.length) continue;
+    const pos = w => { const i = WAHL[art].werte.findIndex(x => x[0] === w); return i < 0 ? 0.5 : 1 - i / 2; };
+    const mitte = werte.reduce((n, w) => n + pos(w), 0) / werte.length;
+    const wort = WAHL[art].werte[mitte >= 0.75 ? 0 : mitte <= 0.25 ? 2 : 1][1];
+    rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">${WAHL[art].name}</span>${skala(art, werte, pos, mitte, wort)}<span class="rahmen-kurz">${werte.length > 1 ? 'eher ' : ''}${wort}</span></div>`);
+  }
   if (abende.length) {
     const kurz = abende.length > 1 ? `meist ${median(abende.map(a => zuMin(a.z)))}` : abende[0].z;
     rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Feierabend</span>${abendMini(abende)}<span class="rahmen-kurz">${kurz}</span></div>`);
   }
-  const naechte = tage.map(d => S.schlaf[tagKey(d)]).filter(Boolean);
-  if (naechte.length) {
-    const mitte = naechte.reduce((n, w) => n + SCHLAF_WERT[w], 0) / naechte.length;
-    const wort = mitte >= 0.75 ? 'erholt' : mitte <= 0.25 ? 'kurz' : 'mittel';
-    rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Schlaf</span>${schlafSkala(naechte, mitte)}<span class="rahmen-kurz">${naechte.length > 1 ? 'eher ' : ''}${wort}</span></div>`);
-  }
-  if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Feierabend &amp; Schlaf</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
+  if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Rahmen des Tages</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
 
   // Woche abschließen: der eine Ort zum Nachdenken. Angebote nur, wenn es diese Woche welche gab.
   const angebote = S.momente.filter(m => m.angebot && taps.some(t => t.mid === m.id));
@@ -544,25 +559,25 @@ function abendMini(abende) {
     ${punkte}
     <text x="${x0}" y="30" class="mini-text">${pad(von / 60 % 24)}</text><text x="${x1}" y="28" text-anchor="end" class="mini-text">${pad(bis / 60 % 24)}</text></svg>`;
 }
-// Schlaf als Skala von kurz bis erholt: ein blasser Punkt je Nacht, eine Markierung für die Mitte der Woche
-const SCHLAF_WERT = { kurz: 0, mittel: 0.5, erholt: 1 };
-function schlafSkala(naechte, mitte) {
+// Gefühlte Werte als Skala (z. B. kurz bis erholt): ein blasser Punkt je Tag, ein Ring für die Mitte der Woche
+function skala(art, werte, pos, mitte, wort) {
   const W = 150, x0 = 10, x1 = W - 10, y = 11;
   const x = v => x0 + v * (x1 - x0);
-  // gleiche Nächte liegen nebeneinander, mittig um ihren Wert
+  // gleiche Werte liegen nebeneinander, mittig um ihren Platz
   const anzahl = {}, zaehler = {};
-  naechte.forEach(w => { anzahl[w] = (anzahl[w] || 0) + 1; });
-  const punkte = naechte.map(w => {
+  werte.forEach(w => { anzahl[w] = (anzahl[w] || 0) + 1; });
+  const punkte = werte.map(w => {
     const k = zaehler[w] = (zaehler[w] || 0) + 1;
     const dx = (k - 1 - (anzahl[w] - 1) / 2) * 7;
-    return `<circle cx="${(x(SCHLAF_WERT[w]) + dx).toFixed(1)}" cy="${y}" r="3.2" class="mini-nacht"/>`;
+    return `<circle cx="${(x(pos(w)) + dx).toFixed(1)}" cy="${y}" r="3.2" class="mini-nacht"/>`;
   }).join('');
-  return `<svg class="mini" viewBox="0 0 ${W} 32" role="img" aria-label="Schlaf der Woche, eher ${mitte >= 0.75 ? 'erholt' : mitte <= 0.25 ? 'kurz' : 'mittel'}">
+  const [oben, , unten] = WAHL[art].werte.map(v => v[1]);
+  return `<svg class="mini" viewBox="0 0 ${W} 32" role="img" aria-label="${WAHL[art].name} der Woche, eher ${wort}">
     <line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" class="mini-achse"/>
     <line x1="${x(0.5)}" y1="${y - 3}" x2="${x(0.5)}" y2="${y + 3}" class="mini-achse"/>
     ${punkte}
     <circle cx="${x(mitte).toFixed(1)}" cy="${y}" r="6.5" class="mini-mitte"/>
-    <text x="${x0}" y="30" class="mini-text">kurz</text><text x="${x1}" y="28" text-anchor="end" class="mini-text">erholt</text></svg>`;
+    <text x="${x0}" y="30" class="mini-text">${unten}</text><text x="${x1}" y="28" text-anchor="end" class="mini-text">${oben}</text></svg>`;
 }
 
 function median(arr) {
@@ -624,6 +639,7 @@ function renderVerwaltung() {
       : `<button class="gm-gruppe" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} bearbeiten"><span class="nm">${esc(name)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
     return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="moment-zeile gm-neu" type="button" data-neu-moment="${esc(g)}"><span class="sym" aria-hidden="true"><span class="plus-kreis">+</span></span><span class="nm">Moment hinzufügen</span></button>` : ''}</div>`;
   }).join('');
+  for (const art of Object.keys(WAHL)) $('#zeige-' + art).checked = wahlAn(art);
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.classList.toggle('an', b.dataset.stil === S.einstellungen.balanceStil));
@@ -763,6 +779,7 @@ function zeige(v) {
   if (v === 'verwaltung' && ansicht !== 'verwaltung') vorAnsicht = ansicht;
   if (v !== 'verwaltung') sortiermodus = false;
   ansicht = v;
+  document.documentElement.classList.toggle('snap-heute', v === 'heute');   // Heute: schnelles Wischen hält an jeder Gruppe
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   renderAlles();
@@ -796,9 +813,9 @@ function verbinden() {
     });
   }
   sonder.addEventListener('click', e => {
-    const b = e.target.closest('[data-schlaf]'); if (!b) return;
-    const k = heuteKey(), w = b.dataset.schlaf;
-    if (S.schlaf[k] === w) delete S.schlaf[k]; else S.schlaf[k] = w;
+    const b = e.target.closest('[data-wahl]'); if (!b) return;
+    const k = heuteKey(), art = b.dataset.wahl, w = b.dataset.wert, m = (S[art] ||= {});
+    if (m[k] === w) delete m[k]; else m[k] = w;
     speichern(); renderHeute();
   });
 
@@ -840,11 +857,12 @@ function verbinden() {
   };
   $('#korridor-von').onchange = korridorNeu;
   $('#korridor-bis').onchange = korridorNeu;
+  for (const art of Object.keys(WAHL)) $('#zeige-' + art).onchange = e => { S.einstellungen['zeige_' + art] = e.target.checked; speichern(); renderHeute(); };
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.onclick = () => { S.einstellungen.balanceStil = b.dataset.stil; speichern(); renderVerwaltung(); });
   $('#btn-alles-loeschen').onclick = () => {
     sheet('Alle Einträge löschen', `<p class="card-text">Gezählte Momente, Feierabende und Schlaf-Einträge werden von diesem Gerät gelöscht. Die Momente selbst und die Einstellungen bleiben. Das lässt sich nicht rückgängig machen.</p>
       <div class="btn-reihe"><button class="btn-primary" id="del-ja" type="button">Einträge löschen</button><button class="btn-leise" id="del-nein" type="button">Abbrechen</button></div>`);
-    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
+    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; S.essen = {}; S.trinken = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
     $('#del-nein').onclick = sheetZu;
   };
 
