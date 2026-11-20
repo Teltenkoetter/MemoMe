@@ -588,6 +588,17 @@ select:disabled { opacity: 0.45; }
 .tag-schein.akt { fill: rgba(var(--akt-rgb), 0.18); }
 .tag-kern.akt { fill: rgba(var(--akt-rgb), 0.7); }
 .tag-kern.mich { fill: rgba(var(--reg-rgb), 0.8); }
+#tag-karte { position: relative; overflow: hidden; border-radius: 12px; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#tag-karte .tag-svg { transform-origin: 0 0; will-change: transform; }
+#tag-karte.federt .tag-svg { transition: transform 0.45s cubic-bezier(0.34, 1.25, 0.64, 1); }
+.tag-namen { fill: var(--text); stroke: rgba(8, 8, 10, 0.85); paint-order: stroke; stroke-linejoin: round; text-anchor: middle; dominant-baseline: middle; font-family: 'Inter', sans-serif; font-weight: 600; pointer-events: none; }
+.tag-name { opacity: 0; transition: opacity 0.2s; }
+#tag-karte.federt .tag-name { opacity: 0 !important; }
+.tag-tipp { position: absolute; transform: translate(-50%, -100%); padding: 0.35rem 0.6rem; border-radius: 10px; background: rgba(22, 22, 28, 0.96); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 18px rgba(0,0,0,0.35); font-size: 0.78rem; line-height: 1.25; text-align: center; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+.tag-tipp.an { opacity: 1; }
+.tag-tipp strong { display: block; font-weight: 600; }
+.tag-tipp span { color: var(--text-dim); font-size: 0.72rem; }
+@media (prefers-reduced-motion: reduce) { #tag-karte.federt .tag-svg { transition-duration: 0.15s; transition-timing-function: ease-out; } }
 .tag-legende { font-size: 0.72rem; color: var(--hint); margin-top: 0.5rem; text-align: center; }
 
 /* Woche abschließen */
