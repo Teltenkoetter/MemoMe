@@ -15,7 +15,11 @@ const WAHL = {
   schlaf:  { name: 'Schlaf',  icon: 'schlaf',  werte: [['erholt', 'erholt'], ['mittel', 'mittel'], ['kurz', 'kurz']] },
   essen:   { name: 'Essen',   icon: 'essen',   werte: [['frisch', 'frisch'], ['gemischt', 'gemischt'], ['gegoennt', 'gegönnt']] },
   trinken: { name: 'Trinken', icon: 'trinken', werte: [['viel', 'viel'], ['mittel', 'mittel'], ['wenig', 'wenig']] },
+  // nur an freien Tagen statt Feierabend: wie viel vom freien Tag die Arbeit genommen hat; ohne Wahl ist der Tag frei
+  arbeit:  { name: 'Arbeit',  icon: 'feierabend', frei: true, werte: [['etwas', 'etwas'], ['halb', 'halber Tag'], ['ganz', 'ganzer Tag']] },
 };
+const TAGE_KURZ = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const istArbeitstag = d => (S.einstellungen.arbeitstage || [1, 2, 3, 4, 5]).includes(d.getDay());
 const WAHL_TEXT = (art, w) => (WAHL[art].werte.find(x => x[0] === w) || [w, w])[1];
 const wahlAn = art => S.einstellungen['zeige_' + art] !== false;
 
@@ -60,8 +64,9 @@ function startZustand() {
     schlaf: {},          // 'JJJJ-MM-TT' → 'erholt' | 'mittel' | 'kurz'
     essen: {},           // 'JJJJ-MM-TT' → 'frisch' | 'gemischt' | 'gegoennt'
     trinken: {},         // 'JJJJ-MM-TT' → 'viel' | 'mittel' | 'wenig'
+    arbeit: {},          // 'JJJJ-MM-TT' → 'etwas' | 'halb' | 'ganz' (nur an freien Tagen)
     wochen: {},          // 'JJJJ-Wkw' → { angebote: { mid: { an, mir } }, satz, abgeschlossen }
-    einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach', zeige_schlaf: true, zeige_essen: true, zeige_trinken: true },
+    einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach', zeige_schlaf: true, zeige_essen: true, zeige_trinken: true, arbeitstage: [1, 2, 3, 4, 5] },
   };
 }
 
@@ -213,22 +218,25 @@ function renderHeute() {
   const spalte = art => {
     const w = (S[art] ||= {})[k];
     return `<div class="kachel rahmen spalte abend${w ? ' gefuellt' : ''}" data-sonder="${art}">
-      <span class="kachel-symbol" aria-hidden="true">${pikto(WAHL[art].icon, 'pikto', 1.4)}</span>
       <span class="kachel-name">${WAHL[art].name}</span>
       <div class="wahl" role="group" aria-label="${WAHL[art].name}, gefühlt">
         ${WAHL[art].werte.map(([v, t]) => `<button type="button" data-wahl="${art}" data-wert="${v}" class="${w === v ? 'an' : ''}" aria-pressed="${w === v}">${t}</button>`).join('')}
       </div></div>`;
   };
-  const arten = Object.keys(WAHL).filter(wahlAn);
+  const arten = Object.keys(WAHL).filter(a => !WAHL[a].frei && wahlAn(a));
+  const arbeitstag = istArbeitstag(new Date());
   const sonder = $('#sonder-kacheln');
   sonder.style.setProperty('--spalten', arten.length + 1);
-  sonder.innerHTML = arten.map(spalte).join('') + `
-    <button class="kachel rahmen spalte abend${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Feierabend${fa ? ' ' + fa : ''}">
-      <span class="kachel-symbol" aria-hidden="true">${pikto('feierabend', 'pikto', 1.4)}</span>
-      <span class="kachel-name">Feierabend</span>
-      <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : '<span class="spalte-leise">tippen</span>'}</span>
+  // Spalte „Arbeit“: an Arbeitstagen das Ende als Uhrzeit, an freien Tagen etwas · halber Tag · ganzer Tag
+  const arbeitSpalte = !arbeitstag ? spalte('arbeit') : `
+    <button class="kachel rahmen spalte abend${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Arbeit, ${fa ? 'Ende ' + fa : 'Ende tippen'}">
+      <span class="kachel-name">Arbeit</span>
+      <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : '<span class="spalte-leise">Ende tippen</span>'}</span>
       ${ringSVG()}
     </button>`;
+  // Reihenfolge: Schlaf (die Nacht davor), dann der laufende Tag: Arbeit, Essen, Trinken
+  const nachArbeit = arten.filter(a => a !== 'schlaf');
+  sonder.innerHTML = (arten.includes('schlaf') ? spalte('schlaf') : '') + arbeitSpalte + nachArbeit.map(spalte).join('');
 
   // Momente
   const proMoment = {};
@@ -431,19 +439,26 @@ function renderWoche() {
       <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p></div>`);
 
   // Rahmen des Tages: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
+  // Reihenfolge wie auf Heute: Schlaf, dann Arbeit (Feierabend, an freien Tagen als Notiz), Essen, Trinken
   const rahmen = [];
-  for (const art of Object.keys(WAHL)) {
+  const gefuehltZeile = art => {
     const werte = tage.map(d => (S[art] || {})[tagKey(d)]).filter(Boolean);
-    if (!werte.length) continue;
+    if (!werte.length) return;
     const pos = w => { const i = WAHL[art].werte.findIndex(x => x[0] === w); return i < 0 ? 0.5 : 1 - i / 2; };
     const mitte = werte.reduce((n, w) => n + pos(w), 0) / werte.length;
     const wort = WAHL[art].werte[mitte >= 0.75 ? 0 : mitte <= 0.25 ? 2 : 1][1];
     rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">${WAHL[art].name}</span>${skala(art, werte, pos, mitte, wort)}<span class="rahmen-kurz">${werte.length > 1 ? 'eher ' : ''}${wort}</span></div>`);
-  }
+  };
+  gefuehltZeile('schlaf');
   if (abende.length) {
     const kurz = abende.length > 1 ? `meist ${median(abende.map(a => zuMin(a.z)))}` : abende[0].z;
     rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Feierabend</span>${abendMini(abende)}<span class="rahmen-kurz">${kurz}</span></div>`);
   }
+  // Arbeit an freien Tagen: nur eine kleine Notiz, keine Summe
+  const freiArbeit = tage.filter(d => (S.arbeit || {})[tagKey(d)]).map(d => `${TAGE_KURZ[d.getDay()]} ${WAHL_TEXT('arbeit', S.arbeit[tagKey(d)])}`);
+  if (freiArbeit.length) rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Arbeit</span><span class="rahmen-notiz">${freiArbeit.join(' · ')}</span><span class="rahmen-kurz">an freien Tagen</span></div>`);
+  gefuehltZeile('essen');
+  gefuehltZeile('trinken');
   if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Rahmen des Tages</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
 
   // Woche abschließen: der eine Ort zum Nachdenken. Angebote nur, wenn es diese Woche welche gab.
@@ -639,7 +654,9 @@ function renderVerwaltung() {
       : `<button class="gm-gruppe" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} bearbeiten"><span class="nm">${esc(name)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
     return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="moment-zeile gm-neu" type="button" data-neu-moment="${esc(g)}"><span class="sym" aria-hidden="true"><span class="plus-kreis">+</span></span><span class="nm">Moment hinzufügen</span></button>` : ''}</div>`;
   }).join('');
-  for (const art of Object.keys(WAHL)) $('#zeige-' + art).checked = wahlAn(art);
+  for (const art of Object.keys(WAHL).filter(a => !WAHL[a].frei)) $('#zeige-' + art).checked = wahlAn(art);
+  const at = S.einstellungen.arbeitstage || [1, 2, 3, 4, 5];
+  $('#arbeitstage').innerHTML = [1, 2, 3, 4, 5, 6, 0].map(t => `<button type="button" class="btn-klein${at.includes(t) ? ' an' : ''}" data-tag="${t}" aria-pressed="${at.includes(t)}">${TAGE_KURZ[t]}</button>`).join('');
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.classList.toggle('an', b.dataset.stil === S.einstellungen.balanceStil));
@@ -857,12 +874,18 @@ function verbinden() {
   };
   $('#korridor-von').onchange = korridorNeu;
   $('#korridor-bis').onchange = korridorNeu;
-  for (const art of Object.keys(WAHL)) $('#zeige-' + art).onchange = e => { S.einstellungen['zeige_' + art] = e.target.checked; speichern(); renderHeute(); };
+  $('#arbeitstage').onclick = e => {
+    const b = e.target.closest('[data-tag]'); if (!b) return;
+    const t = +b.dataset.tag, at = new Set(S.einstellungen.arbeitstage || [1, 2, 3, 4, 5]);
+    at.has(t) ? at.delete(t) : at.add(t);
+    S.einstellungen.arbeitstage = [...at].sort(); speichern(); renderVerwaltung(); renderHeute();
+  };
+  for (const art of Object.keys(WAHL).filter(a => !WAHL[a].frei)) $('#zeige-' + art).onchange = e => { S.einstellungen['zeige_' + art] = e.target.checked; speichern(); renderHeute(); };
   document.querySelectorAll('#seg-balance-stil button').forEach(b => b.onclick = () => { S.einstellungen.balanceStil = b.dataset.stil; speichern(); renderVerwaltung(); });
   $('#btn-alles-loeschen').onclick = () => {
     sheet('Alle Einträge löschen', `<p class="card-text">Gezählte Momente, Feierabende und Schlaf-Einträge werden von diesem Gerät gelöscht. Die Momente selbst und die Einstellungen bleiben. Das lässt sich nicht rückgängig machen.</p>
       <div class="btn-reihe"><button class="btn-primary" id="del-ja" type="button">Einträge löschen</button><button class="btn-leise" id="del-nein" type="button">Abbrechen</button></div>`);
-    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; S.essen = {}; S.trinken = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
+    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; S.essen = {}; S.trinken = {}; S.arbeit = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
     $('#del-nein').onclick = sheetZu;
   };
 

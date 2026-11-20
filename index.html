@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
 
@@ -68,7 +68,7 @@
 
       <div class="card">
         <div class="card-header"><h2>Rahmen des Tages</h2></div>
-        <p class="card-text">Was du auf Heute neben dem Feierabend festhalten möchtest, nur gefühlt. Ausgeschaltetes verschwindet von Heute, Einträge bleiben erhalten.</p>
+        <p class="card-text">Was du auf Heute neben der Arbeit festhalten möchtest, nur gefühlt. Ausgeschaltetes verschwindet von Heute, Einträge bleiben erhalten.</p>
         <div class="schalter-liste">
           <label class="schalter-zeile" for="zeige-schlaf"><input type="checkbox" id="zeige-schlaf"><span>Schlaf</span></label>
           <label class="schalter-zeile" for="zeige-essen"><input type="checkbox" id="zeige-essen"><span>Essen</span></label>
@@ -77,8 +77,10 @@
       </div>
 
       <div class="card">
-        <div class="card-header"><h2>Feierabend-Korridor</h2></div>
-        <p class="card-text">Wann soll dein Arbeitstag ungefähr enden? Also der Moment, in dem du „Feierabend“ tippst, zum Beispiel 17:30 bis 19:00. Kein Muss: In der Woche erscheint der Korridor als weiches Band hinter deinen Feierabenden.</p>
+        <div class="card-header"><h2>Arbeitstage &amp; Feierabend</h2></div>
+        <p class="card-text">Auf Heute zeigt die Spalte „Arbeit“ an Arbeitstagen, wann die Arbeit endete. An freien Tagen fragt sie nur, ob und wie viel: Ohne Wahl ist der Tag frei.</p>
+        <div class="tage-wahl" id="arbeitstage" role="group" aria-label="Arbeitstage"></div>
+        <p class="card-text">Wann soll dein Arbeitstag ungefähr enden? Also der Moment, in dem du bei „Arbeit“ das Ende tippst, zum Beispiel 17:30 bis 19:00. Kein Muss: In der Woche erscheint der Korridor als weiches Band hinter deinen Feierabenden.</p>
         <div class="zeit-reihe">
           <div class="form-group"><label for="korridor-von">Arbeitstag endet ab</label><input type="time" id="korridor-von"></div>
           <div class="form-group"><label for="korridor-bis">spätestens gegen</label><input type="time" id="korridor-bis"></div>
@@ -150,8 +152,9 @@
           <div class="modal-section-title">Heute</div>
           <ul class="hilfe-liste">
             <li><strong>Tippen</strong> zählt einen Moment mit seiner üblichen Dauer. <strong>Kurz halten</strong>, bis der Ring voll ist, nimmt den letzten Tipp zurück.</li>
-            <li>Oben steht der <strong>Rahmen des Tages</strong>, nur gefühlt und ohne richtig oder falsch: <strong>Schlaf</strong> (erholt, mittel, kurz) hältst du morgens fest, <strong>Essen</strong> (frisch, gemischt, gegönnt) und <strong>Trinken</strong> (viel, mittel, wenig; gemeint sind Wasser, Tee und Ähnliches) wann du magst. Gegönnt ist Genuss, kein Ausrutscher. Nochmal tippen hebt die Wahl auf.</li>
-            <li><strong>Feierabend</strong> merkt sich die Uhrzeit, wenn dein Arbeitstag endet. Vergessen ist in Ordnung: später antippen und anpassen.</li>
+            <li>Oben steht der <strong>Rahmen des Tages</strong>, nur gefühlt und ohne richtig oder falsch. Zuerst <strong>Schlaf</strong> (erholt, mittel, kurz), den hältst du morgens für die Nacht davor fest. Danach der laufende Tag: Arbeit, <strong>Essen</strong> (frisch, gemischt, gegönnt) und <strong>Trinken</strong> (viel, mittel, wenig; gemeint sind Wasser, Tee und Ähnliches) wann du magst. Gegönnt ist Genuss, kein Ausrutscher. Nochmal tippen hebt die Wahl auf.</li>
+            <li><strong>Arbeit</strong> merkt sich an Arbeitstagen die Uhrzeit deines Feierabends: „Ende tippen“, wenn die Arbeit endet. Vergessen ist in Ordnung: später antippen und anpassen.</li>
+            <li>An <strong>freien Tagen</strong> (zum Beispiel am Wochenende) zeigt <strong>Arbeit</strong> drei Wahlknöpfe. Ohne Wahl ist der Tag einfach frei. Hast du doch gearbeitet, tippst du an, wie viel: <strong>etwas</strong> (ein, zwei Stunden), <strong>halber Tag</strong> oder <strong>ganzer Tag</strong>. Das fließt nicht in die Balance ein.</li>
             <li><strong>Schnell wischen</strong> hält an jeder Gruppe, sie steht dann oben.</li>
             <li>Die Momente stehen nach Gruppen. Ein kleines <strong>Herz</strong> zeigt ein Angebot für andere.</li>
             <li>Die <strong>Balance</strong> oben zeigt, ob der Tag eher aktiv oder eher erholsam war. Ohne Zahl, ohne Ziel.</li>
@@ -164,7 +167,7 @@
             <li>Eine Woche geht von <strong>Montag bis Sonntag</strong>. Mit ‹ und › blätterst du zu anderen Wochen. Monat und Jahr kommen später dazu.</li>
             <li><strong>Momente:</strong> je Gruppe ein Balken, warm für aktiv, kühl für erholsam. Tippen öffnet die Gruppe, „▸ Alle“ öffnet alle.</li>
             <li><strong>Über den Tag:</strong> wann deine Momente lagen, hell für erholsam, türkis für aktiv für mich, bernstein für aktiv. Die Wolke liegt auf der Mitte des Moments und ist so lang, wie er gedauert hat. Der Strich zeigt den Feierabend.</li>
-            <li><strong>Rahmen des Tages:</strong> wie Schlaf, Essen und Trinken sich anfühlten und wann die Arbeit endete. Ein Punkt je Tag, der Ring zeigt die Mitte der Woche.</li>
+            <li><strong>Rahmen des Tages:</strong> wie Schlaf, Essen und Trinken sich anfühlten und wann die Arbeit endete. Ein Punkt je Tag, der Ring zeigt die Mitte der Woche. Arbeit an freien Tagen steht als kurze Notiz darunter, zum Beispiel „Sa halber Tag“. Zeilen ohne Einträge erscheinen erst, wenn es etwas zu zeigen gibt.</li>
             <li><strong>Woche abschließen</strong>, zum Beispiel am Sonntagabend: kurz zurückschauen, bei Angeboten festhalten, wie es ankam, wenn du magst ein Satz. Danach ist nichts mehr offen. Eine vergangene Woche lässt sich auch später noch abschließen.</li>
           </ul>
         </div>
@@ -175,7 +178,8 @@
             <li><strong>Gruppen &amp; Momente</strong> anlegen, umbenennen, sortieren und entfernen. Die Reihenfolge gilt überall.</li>
             <li>Ob ein Moment <strong>erholsam, aktiv für mich oder aktiv</strong> ist, legt der Moment fest. Sport oder Musik machen ist aktiv für mich, Hausarbeit eher aktiv. Üben mit den Kindern kann Family und aktiv sein, Familienzeit Family und erholsam.</li>
             <li><strong>Angebot für andere</strong>, <strong>Richtwert</strong> (etwa so oft, kein Soll) und <strong>genug ab</strong> stellst du beim Moment ein.</li>
-            <li>Der <strong>Feierabend-Korridor</strong> ist das Zeitfenster, in dem dein Arbeitstag ungefähr enden soll.</li>
+            <li><strong>Rahmen des Tages:</strong> Schlaf, Essen und Trinken lassen sich einzeln ausblenden.</li>
+            <li><strong>Arbeitstage</strong> legst du fest (voreingestellt Mo–Fr). Der <strong>Feierabend-Korridor</strong> ist das Zeitfenster, in dem dein Arbeitstag ungefähr enden soll.</li>
           </ul>
         </div>
         <div class="modal-divider"></div>
@@ -190,13 +194,13 @@
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 22</p>
+        <p class="modal-meta modal-meta-build">Version 25</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=25"></script>
 </body>
 </html>

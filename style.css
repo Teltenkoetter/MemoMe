@@ -200,16 +200,15 @@ main {
 
 /* Rahmen des Tages: schmale Spalten, die Wahl steht senkrecht */
 .kachel.spalte { min-height: 0; padding: 0.7rem 0.45rem 0.55rem; justify-content: flex-start; gap: 0.5rem; text-align: center; align-items: stretch; }
-.kachel.spalte .kachel-symbol { width: 2.9rem; height: 2.9rem; right: -0.45rem; top: -0.45rem; }
-.kachel.spalte .kachel-name { font-size: 0.78rem; text-align: left; padding-left: 0.2rem; }
+.kachel.spalte .kachel-name { font-size: 0.78rem; text-align: center; }
 .kachel.spalte .kachel-wert { flex: 1; justify-content: center; align-items: center; min-height: 0; }
 .kachel.spalte .kachel-zahl { font-size: 1.55rem; }
 .spalte-leise { font-size: 0.72rem; color: var(--hint); }
 .wahl { position: relative; display: flex; flex-direction: column; gap: 0.3rem; }
 .wahl button {
-  padding: 0.42rem 0.1rem; border-radius: 999px;
+  padding: 0.42rem 0; border-radius: 999px;
   background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-  color: var(--text-dim); font-size: 0.72rem; font-weight: 600; cursor: pointer;
+  color: var(--text-dim); font-size: 0.69rem; letter-spacing: -0.15px; font-weight: 600; cursor: pointer;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .wahl button.an { background: rgba(var(--abend-rgb), 0.22); border-color: rgba(var(--abend-rgb), 0.55); color: var(--text); }
@@ -218,7 +217,8 @@ main {
 html.snap-heute { scroll-snap-type: y mandatory; scroll-padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 0.6rem); }
 html.snap-heute #view-heute .tag-kopf { scroll-snap-align: start; scroll-margin-top: 100vh; }
 html.snap-heute .gruppe-block { scroll-snap-align: start; scroll-snap-stop: always; }
-html.snap-heute .raster-hinweis { scroll-snap-align: end; }
+/* auch die letzte Gruppe kann ganz nach oben; darunter bleibt einfach Freiraum */
+html.snap-heute .gruppe-block:last-child { min-height: calc(100dvh - var(--header-h) - env(safe-area-inset-top) - var(--nav-h) - max(env(safe-area-inset-bottom), 12px) - 4.5rem); }
 html.snap-heute body::after {
   content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; pointer-events: none;
   height: calc(var(--nav-h) + max(env(safe-area-inset-bottom), 12px) + 3.5rem);
@@ -617,3 +617,8 @@ select:disabled { opacity: 0.45; }
 .tag-filter .filter-mich::before { background: var(--reg); }
 .tag-filter .filter-akt::before  { background: var(--akt); }
 .schalter-liste { display: flex; flex-direction: column; gap: 0.7rem; }
+
+/* Arbeitstage und Arbeit an freien Tagen */
+.tage-wahl { display: flex; gap: 0.3rem; margin-bottom: 0.9rem; }
+.tage-wahl .btn-klein { flex: 1 1 0; min-width: 0; padding-left: 0; padding-right: 0; justify-content: center; text-align: center; }
+.rahmen-notiz { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; }
