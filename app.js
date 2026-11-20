@@ -18,6 +18,11 @@ function pikto(name, cls = 'pikto', strich = 1.75) {
   const p = PIKTO[name]; if (!p) return '';
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strich}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
+// Herz für „Angebot für andere“: Umriss grau = offen, gefüllt = angekommen
+const HERZ = '<svg class="herz" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.7-7.6-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.7c0 5.5-7.6 10.2-7.6 10.2Z"/></svg>';
+const herzHTML = (voll, extra = '') => `<span class="herz-wrap${voll ? ' voll' : ''}${extra}">${HERZ}</span>`;
+const wochenKey = d => `${d.getFullYear()}-W${kw(d)}`;
+
 // Piktogramm, sonst eigenes Zeichen
 // Piktogramm; ältere Momente können noch ein eigenes Zeichen haben; „kein Piktogramm“ zeigt nichts
 const hatSymbol = m => !!((m.icon && PIKTO[m.icon]) || (m.icon !== 'kein' && m.symbol));
@@ -46,6 +51,7 @@ function startZustand() {
     taps: [],            // { id, mid, ts, min }
     feierabend: {},      // 'JJJJ-MM-TT' → 'HH:MM'
     schlaf: {},          // 'JJJJ-MM-TT' → 'erholt' | 'mittel' | 'kurz'
+    wochen: {},          // 'JJJJ-Wkw' → { angebote: { mid: { an, mir } }, satz, abgeschlossen }
     einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach' },
   };
 }
@@ -226,7 +232,7 @@ function renderHeute() {
     return `<button class="kachel ${m.modus}${p ? ' gefuellt' : ''}${hatSymbol(m) ? '' : ' ohne-pikto'}" data-mid="${esc(m.id)}" type="button" aria-label="${esc(m.name)}${p ? ', heute ' + p.n + ' mal' : ''}">
       <span class="kachel-symbol" aria-hidden="true">${symbolHTML(m, 1.4)}</span>
       <span class="kachel-wert">${wert}</span>
-      <span><span class="kachel-name">${esc(m.name)}</span>${zusatz ? '<br>' + zusatz : ''}</span>
+      <span><span class="kachel-name">${esc(m.name)}${m.angebot ? herzHTML(false, ' kachel-herz') : ''}</span>${zusatz ? '<br>' + zusatz : ''}</span>
       ${ringSVG()}
     </button>`;
   };
@@ -341,6 +347,8 @@ function renderWoche() {
 
   const taps = tapsZwischen(start, ende);
   const b = balance(taps);
+  const wk = wochenKey(start);
+  const notiz = (S.wochen ||= {})[wk] || {};
   const tage = []; for (let i = 0; i < 7; i++) { const d = new Date(start); d.setDate(d.getDate() + i); tage.push(d); }
   const abende = tage.map(d => ({ d, z: S.feierabend[tagKey(d)] })).filter(x => x.z);
   const schlaf = {}; tage.forEach(d => { const s = S.schlaf[tagKey(d)]; if (s) schlaf[s] = (schlaf[s] || 0) + 1; });
@@ -374,7 +382,7 @@ function renderWoche() {
       }
       return `<div class="summe">
         <span class="summe-symbol" aria-hidden="true">${symbolHTML(m)}</span>
-        <span class="summe-name">${esc(m.name)}</span>
+        <span class="summe-name">${esc(m.name)}${m.angebot ? herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an), ' summe-herz') : ''}</span>
         <span class="summe-wert"><strong>${p.n} ×</strong>${p.min ? ' · ' + fmtDauer(p.min) : ''}</span>
         ${band}</div>`;
     };
@@ -402,6 +410,14 @@ function renderWoche() {
       <div class="band-legende"><span class="akt">aktiv</span><span class="reg">regenerativ</span></div></div>`);
   }
 
+  // Über den Tag: wann die Momente lagen (Leuchtpunkte, Größe = Dauer, Strich = Feierabend)
+  if (taps.length) teile.push(`<div class="card"><div class="card-header"><h2>Über den Tag</h2>
+      <span class="rechts tag-filter" role="group" aria-label="Momente zeigen">
+        <button type="button" class="btn-klein${heatFilter.erholsam ? ' an' : ''}" data-filter="erholsam" aria-pressed="${heatFilter.erholsam}">erholsam</button>
+        <button type="button" class="btn-klein${heatFilter.aktiv ? ' an' : ''}" data-filter="aktiv" aria-pressed="${heatFilter.aktiv}">aktiv</button></span></div>
+      <div id="tag-karte">${tagKarte(taps, tage)}</div>
+      <p class="tag-legende">Größe = Dauer · Strich = Feierabend</p></div>`);
+
   // Feierabend & Schlaf: je eine schmale Grafik direkt in der Zeile, ohne Aufklappen
   const rahmen = [];
   if (abende.length) {
@@ -416,7 +432,53 @@ function renderWoche() {
   }
   if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Feierabend &amp; Schlaf</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
 
+  // Woche abschließen: der eine Ort zum Nachdenken. Angebote nur, wenn es diese Woche welche gab.
+  const angebote = S.momente.filter(m => m.angebot && taps.some(t => t.mid === m.id));
+  const seg = (mid, feld, optionen) => `<div class="seg klein" data-mid="${esc(mid)}" data-feld="${feld}">${optionen.map(([w, t]) =>
+    `<button type="button" data-wert="${w}" class="${notiz.angebote?.[mid]?.[feld] === w ? 'an' : ''}">${t}</button>`).join('')}</div>`;
+  const frage = REFLEXION[kw(start) % REFLEXION.length];
+  teile.push(`<div class="card"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
+      <span class="gruppe-name">Woche abschließen</span><span class="rahmen-kurz" id="abschluss-stand">${notiz.abgeschlossen ? 'abgeschlossen' : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
+    <div class="abschluss-inhalt">
+      ${angebote.length ? `<div class="label">Angebote</div>${angebote.map(m => `<div class="angebot" data-angebot="${esc(m.id)}">
+        <div class="angebot-name">${herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an))} ${esc(m.name)}</div>
+        <div class="angebot-frage">Wie kam es an?</div>${seg(m.id, 'an', [['offen', 'offen'], ['angekommen', 'angekommen'], ['getragen', 'hat getragen']])}
+        <div class="angebot-frage">Hat es mir auch etwas gegeben?</div>${seg(m.id, 'mir', [['wenig', 'wenig'], ['etwas', 'etwas'], ['viel', 'viel']])}
+      </div>`).join('')}` : ''}
+      <div class="label">Eine Frage</div>
+      <p class="reflexion">${frage}</p>
+      <textarea id="abschluss-satz" rows="3" maxlength="400" placeholder="Wenn du magst, ein Satz. Kann auch leer bleiben.">${esc(notiz.satz || '')}</textarea>
+      <button class="btn-primary" id="btn-abschluss" type="button">${notiz.abgeschlossen ? 'Gespeichert' : 'Woche abschließen'}</button>
+    </div></details></div>`);
+
   $('#woche-inhalt').innerHTML = teile.join('');
+
+  // Über den Tag: erholsam / aktiv ein- und ausblenden (ohne die übrigen Karten neu zu zeichnen)
+  document.querySelectorAll('#woche-inhalt [data-filter]').forEach(btn => btn.onclick = () => {
+    const f = btn.dataset.filter; heatFilter[f] = !heatFilter[f];
+    btn.classList.toggle('an', heatFilter[f]); btn.setAttribute('aria-pressed', heatFilter[f]);
+    $('#tag-karte').innerHTML = tagKarte(taps, tage);
+  });
+  // Woche abschließen
+  const notizSchreiben = () => (S.wochen[wk] ||= {});
+  document.querySelectorAll('#woche-inhalt .abschluss .seg').forEach(sg => sg.addEventListener('click', e => {
+    const bt = e.target.closest('[data-wert]'); if (!bt) return;
+    const n = notizSchreiben(), a = (n.angebote ||= {})[sg.dataset.mid] ||= {};
+    a[sg.dataset.feld] = a[sg.dataset.feld] === bt.dataset.wert ? undefined : bt.dataset.wert;
+    sg.querySelectorAll('button').forEach(x => x.classList.toggle('an', x.dataset.wert === a[sg.dataset.feld]));
+    const voll = ['angekommen', 'getragen'].includes(a.an);
+    sg.closest('.angebot').querySelector('.herz-wrap').classList.toggle('voll', voll);
+    speichern();
+  }));
+  const satz = $('#abschluss-satz');
+  if (satz) satz.oninput = () => { notizSchreiben().satz = satz.value.trim() || undefined; speichern(); };
+  const btnAb = $('#btn-abschluss');
+  if (btnAb) btnAb.onclick = () => {
+    notizSchreiben().abgeschlossen = Date.now(); speichern();
+    btnAb.textContent = 'Gespeichert'; $('#abschluss-stand').textContent = 'abgeschlossen';
+    btnAb.closest('details').open = false;
+    toast('Woche abgeschlossen. Es ist nichts mehr offen.');
+  };
   // „▸ Alle“: öffnet bzw. schließt alle Zeilen einer Karte; passt sich an, wenn Zeilen einzeln geöffnet werden
   document.querySelectorAll('#woche-inhalt .btn-alle').forEach(btn => {
     const zeilen = [...btn.closest('.card').querySelectorAll('details.wgruppe')];
@@ -430,6 +492,35 @@ function renderWoche() {
     zeilen.forEach(d => d.addEventListener('toggle', anzeigen));
     anzeigen();
   });
+}
+
+// ── Über den Tag ──
+const heatFilter = { erholsam: true, aktiv: false };
+const REFLEXION = ['Was hat dir diese Woche gutgetan?', 'Welche Ruheinsel möchtest du behalten?', 'Was darf nächste Woche etwas weniger sein?', 'Wofür bist du diese Woche dankbar?'];
+function tagKarte(taps, tage) {
+  const W = 320, H = 300, L = 30, R = 8, T = 10, B = 26;
+  const pts = taps.map(t => ({ t, m: moment(t.mid), d: new Date(t.ts) }))
+    .filter(p => p.m && (p.m.modus === 'akt' ? heatFilter.aktiv : heatFilter.erholsam));
+  const stunde = d => d.getHours() + d.getMinutes() / 60;
+  const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => ({ i: x.i, h: zuMin(x.z) / 60 }));
+  const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h)];
+  const hMin = Math.min(7, Math.floor(Math.min(...alle, 24)) - 1), hMax = Math.max(23, Math.ceil(Math.max(...alle, 0)) + 1);
+  const spalte = (W - L - R) / 7;
+  const x = i => L + (i + 0.5) * spalte, y = h => T + (h - hMin) / (hMax - hMin) * (H - T - B);
+  const tagNamen = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  let achsen = tagNamen.map((n, i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="tag-achse">${n}</text>`).join('');
+  for (let h = Math.ceil(hMin / 4) * 4; h <= hMax; h += 4) achsen += `<text x="${L - 8}" y="${(y(h) + 3).toFixed(1)}" text-anchor="end" class="tag-achse">${h}</text>`;
+  const striche = fa.map(f => `<line x1="${(x(f.i) - spalte * 0.32).toFixed(1)}" x2="${(x(f.i) + spalte * 0.32).toFixed(1)}" y1="${y(f.h).toFixed(1)}" y2="${y(f.h).toFixed(1)}" class="tag-feierabend"/>`).join('');
+  const glow = pts.map(p => {
+    const i = (p.d.getDay() + 6) % 7, r = 3 + Math.sqrt(p.t.min || 10) * 1.05;
+    const art = p.m.modus === 'akt' ? 'akt' : 'reg';
+    return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), r, art };
+  });
+  const schein = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${(g.r * 2).toFixed(1)}" class="tag-schein ${g.art}"/>`).join('');
+  const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${(g.r * 0.55).toFixed(1)}" class="tag-kern ${g.art}"/>`).join('');
+  return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
+    <defs><filter id="tag-blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>
+    ${achsen}${striche}<g filter="url(#tag-blur)">${schein}</g>${kerne}</svg>`;
 }
 
 // Feierabend als schmale Zeitachse: Korridor als weiches Band, ein Punkt pro Abend, nur die Endstunden beschriftet
@@ -543,6 +634,8 @@ function momentSheet(id, gruppeVorwahl) {
       <p class="form-hinweis">Ohne Piktogramm steht der Name größer auf der Kachel.</p></div>
     <div class="form-group"><label>Modus</label><div class="seg modus-seg" id="m-modus">${segM}</div>
       <p class="form-hinweis">Warm für Aktivierung, kühl für Regeneration.</p></div>
+    <div class="form-group"><label class="schalter-zeile" for="m-angebot"><input type="checkbox" id="m-angebot"${m.angebot ? ' checked' : ''}><span>Angebot für andere</span></label>
+      <p class="form-hinweis">Zeigt ein kleines Herz. Beim Wochenabschluss kannst du festhalten, wie es ankam.</p></div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="form-group"><label for="m-dauer">Dauer (min)</label><input type="number" id="m-dauer" min="0" max="600" step="5" value="${m.dauer || 0}"></div>
@@ -572,7 +665,8 @@ function momentSheet(id, gruppeVorwahl) {
     const zahl = v => { const n = parseInt(v, 10); return n > 0 ? n : undefined; };
     delete m.unter;
     Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, modus, gruppe: $('#m-gruppe').value,
-      dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value) });
+      dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value),
+      angebot: $('#m-angebot').checked || undefined });
     if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
     speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
   };

@@ -198,9 +198,9 @@ main {
 .rahmen-strich { border: 0; border-top: 1px solid var(--border); margin: 0.15rem 0; }
 
 /* Momente nach Gruppe */
-.momente-gruppen { display: flex; flex-direction: column; gap: 0.9rem; }
+.momente-gruppen { display: flex; flex-direction: column; gap: 1.5rem; }
 .gruppe-block { display: flex; flex-direction: column; gap: 0.5rem; }
-.gruppe-label { padding-left: 0.2rem; }
+.gruppe-label { padding-left: 0.2rem; font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.7px; }
 .kachel-wert { position: relative; display: flex; align-items: baseline; gap: 0.45rem; min-height: 2.2rem; }
 .kachel-zahl { font-family: var(--serif); font-size: 2.3rem; line-height: 1; color: rgba(var(--m-rgb), 1); }
 .kachel-dauer { font-size: 0.8rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -541,3 +541,32 @@ select:disabled { opacity: 0.45; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Angebot für andere: kleines Herz, Umriss grau = offen, gefüllt = angekommen */
+.herz-wrap { display: inline-flex; vertical-align: -2px; margin-left: 0.35rem; }
+.herz { width: 14px; height: 14px; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linejoin: round; }
+.herz-wrap.voll .herz { fill: #c98f86; stroke: #c98f86; }
+.kachel-herz .herz { width: 13px; height: 13px; }
+.schalter-zeile { display: flex !important; align-items: center; gap: 0.6rem; text-transform: none !important; letter-spacing: 0 !important; font-size: 0.92rem !important; font-weight: 600 !important; color: var(--text) !important; cursor: pointer; }
+.schalter-zeile input { width: 20px; height: 20px; accent-color: #c98f86; }
+
+/* Über den Tag: Leuchtpunkte auf dunklem Grund, ohne Raster */
+.tag-filter { display: flex; gap: 0.35rem; }
+.tag-svg { display: block; width: 100%; height: auto; border-radius: 12px; background: radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.025), transparent 70%); }
+.tag-achse { fill: var(--hint); font-size: 10px; font-family: 'Inter', sans-serif; }
+.tag-feierabend { stroke: rgba(var(--abend-rgb), 0.75); stroke-width: 2; stroke-linecap: round; }
+.tag-schein.reg { fill: rgba(245, 238, 225, 0.35); }
+.tag-kern.reg { fill: rgba(250, 246, 238, 0.95); }
+.tag-schein.akt { fill: rgba(var(--akt-rgb), 0.3); }
+.tag-kern.akt { fill: rgba(var(--akt-rgb), 0.85); }
+.tag-legende { font-size: 0.72rem; color: var(--hint); margin-top: 0.5rem; text-align: center; }
+
+/* Woche abschließen */
+.abschluss-inhalt { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.4rem 0 0.6rem; }
+.angebot { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.angebot-name { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.2rem; }
+.angebot-name .herz-wrap { margin-left: 0; }
+.angebot-frage { font-size: 0.78rem; color: var(--hint); }
+.reflexion { font-family: var(--serif); font-style: italic; font-size: 1.2rem; line-height: 1.35; }
+#abschluss-satz { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface2); color: var(--text); font: inherit; font-size: 0.95rem; resize: vertical; }
+#abschluss-satz:focus { outline: none; border-color: rgba(255,255,255,0.35); }
