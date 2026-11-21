@@ -459,7 +459,7 @@ function momentZeitSheet(mid) {
 }
 
 // Tippen und langer Druck
-const DRUCK_MS = 600;   // langer Druck: Moment-Fenster (Nachtragen, ändern, zurücknehmen) bzw. Feierabend anpassen
+const DRUCK_MS = 1100;   // Ring: 0,2 s warten + 0,8 s füllen, dann kurz voll stehen lassen;   // langer Druck: Moment-Fenster (Nachtragen, ändern, zurücknehmen) bzw. Feierabend anpassen
 let druck = null;
 function druckStart(e) {
   const el = e.target.closest('.kachel[data-mid], .kachel[data-sonder="feierabend"]');

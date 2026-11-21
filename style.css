@@ -257,8 +257,9 @@ html.snap-heute body::after {
 .kachel-ring circle { fill: none; stroke-width: 4; }
 .kachel-ring .spur { stroke: rgba(255,255,255,0.1); }
 .kachel-ring .fuell { stroke: rgba(var(--m-rgb), 0.95); stroke-linecap: round; stroke-dasharray: 176; stroke-dashoffset: 176; }
-.kachel.drueckt .kachel-ring { opacity: 1; }
-.kachel.drueckt .kachel-ring .fuell { stroke-dashoffset: 0; transition: stroke-dashoffset 0.6s linear; }
+/* erst nach 0,2 s sichtbar (kurzes Tippen blitzt nicht), dann füllt er sich in 0,8 s; das Fenster öffnet, wenn er voll ist */
+.kachel.drueckt .kachel-ring { opacity: 1; transition: opacity 0.15s 0.2s; }
+.kachel.drueckt .kachel-ring .fuell { stroke-dashoffset: 0; transition: stroke-dashoffset 0.8s linear 0.2s; }
 
 /* Schlaf-Wahl in der Kachel */
 .schlaf-wahl { position: relative; display: flex; gap: 0.3rem; flex-wrap: wrap; }
