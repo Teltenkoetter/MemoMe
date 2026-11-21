@@ -286,7 +286,9 @@ html.snap-heute body::after {
 .summen-liste { display: flex; flex-direction: column; gap: 1rem; }
 .summen-gruppe { display: flex; flex-direction: column; gap: 0.75rem; }
 .summe { display: grid; grid-template-columns: 1.7rem 1fr auto; align-items: center; gap: 0.2rem 0.6rem; }
-.summe-symbol { font-size: 1.15rem; display: flex; justify-content: center; color: var(--text-dim); }
+.summe-symbol { font-size: 1.15rem; display: flex; justify-content: center; align-items: center; color: var(--text-dim); background: none; border: 1px solid transparent; border-radius: 50%; width: 1.9rem; height: 1.9rem; padding: 0; margin-left: -0.1rem; cursor: pointer; transition: color 0.2s, background 0.2s, border-color 0.2s; }
+.summe-symbol.licht { color: rgb(240, 200, 110); background: rgba(240, 200, 110, 0.14); border-color: rgba(240, 200, 110, 0.5); }
+.summe-symbol.licht + .summe-name { color: rgb(240, 200, 110); }
 .summe-symbol .pikto, .moment-zeile .sym .pikto { width: 20px; height: 20px; display: block; }
 .summe-name { font-size: 0.9rem; font-weight: 600; min-width: 0; }
 .summe-wert { font-size: 0.82rem; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
@@ -592,6 +594,7 @@ select:disabled { opacity: 0.45; }
 .tag-schein.akt { fill: rgba(var(--akt-rgb), 0.18); }
 .tag-kern.akt { fill: rgba(var(--akt-rgb), 0.7); }
 .tag-kern.mich { fill: rgba(var(--reg-rgb), 0.8); }
+.tag-kern.licht { fill: rgba(255, 232, 180, 0.95); }
 #tag-karte { position: relative; border-radius: 12px; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .tag-namen { position: absolute; inset: 0; overflow: hidden; border-radius: 12px; pointer-events: none; }
 .tag-namen span { position: absolute; transform: translate(-50%, -50%); padding: 0.18rem 0.5rem; border-radius: 8px; background: rgba(22, 22, 28, 0.78); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; font-weight: 600; line-height: 1.2; white-space: nowrap; color: var(--text); }
@@ -628,9 +631,11 @@ select:disabled { opacity: 0.45; }
 .tag-filter .filter-reg::before  { background: rgb(246, 240, 228); }
 .tag-filter .filter-mich::before { background: var(--reg); }
 .tag-filter .filter-akt::before  { background: var(--akt); }
+.tag-filter .filter-alle::before { display: none; }
 .schalter-liste { display: flex; flex-direction: column; gap: 0.7rem; }
 
 /* Arbeitstage und Arbeit an freien Tagen */
 .tage-wahl { display: flex; gap: 0.3rem; margin-bottom: 0.9rem; }
 .tage-wahl .btn-klein { flex: 1 1 0; min-width: 0; padding-left: 0; padding-right: 0; justify-content: center; text-align: center; }
 .rahmen-notiz { font-size: 0.8rem; color: var(--text-dim); line-height: 1.35; }
+.summe-punkt { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }

@@ -415,7 +415,7 @@ function renderWoche() {
           <div class="richtband-text">Richtwert etwa ${m.etwa} × pro Woche</div>`;
       }
       return `<div class="summe">
-        <span class="summe-symbol" aria-hidden="true">${symbolHTML(m)}</span>
+        <button type="button" class="summe-symbol${licht.has(m.id) ? ' licht' : ''}" data-licht="${esc(m.id)}" aria-pressed="${licht.has(m.id)}" aria-label="${esc(m.name)} in „Über den Tag“ hervorheben">${symbolHTML(m) || '<span class="summe-punkt"></span>'}</button>
         <span class="summe-name">${esc(m.name)}${m.angebot ? herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an), ' summe-herz') : ''}</span>
         <span class="summe-wert"><strong>${p.n} ×</strong>${p.min ? ' · ' + fmtDauer(p.min) : ''}</span>
         ${band}</div>`;
@@ -447,7 +447,8 @@ function renderWoche() {
   // Über den Tag: wann die Momente lagen (Leuchtpunkte, Größe = Dauer, Strich = Feierabend)
   if (taps.length) teile.push(`<div class="card"><div class="card-header"><h2>Über den Tag</h2></div>
       <div class="tag-filter" role="group" aria-label="Momente zeigen">
-        ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}</div>
+        ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
+        <button type="button" class="btn-klein filter-alle${alleAn() ? ' an' : ''}" data-filter="alle" aria-pressed="${alleAn()}">Alle</button></div>
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
       <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p>
       <p class="tag-legende leise">Mehr sehen: zwei Finger aufziehen oder lange drücken</p></div>`);
@@ -498,10 +499,23 @@ function renderWoche() {
   tagKarteGesten($('#tag-karte'));
 
   // Über den Tag: erholsam / aktiv ein- und ausblenden (ohne die übrigen Karten neu zu zeichnen)
+  const karteNeu = () => { const s = $('#tag-karte .tag-svg'); if (s) s.outerHTML = tagKarte(taps, tage); };
   document.querySelectorAll('#woche-inhalt [data-filter]').forEach(btn => btn.onclick = () => {
-    const f = btn.dataset.filter; heatFilter[f] = !heatFilter[f];
-    btn.classList.toggle('an', heatFilter[f]); btn.setAttribute('aria-pressed', heatFilter[f]);
-    $('#tag-karte .tag-svg').outerHTML = tagKarte(taps, tage);
+    const f = btn.dataset.filter;
+    if (f === 'alle') Object.assign(heatFilter, alleAn() ? HEAT_START : { erholsam: true, fuermich: true, aktiv: true });   // nochmal: zurück zum Anfang
+    else heatFilter[f] = !heatFilter[f];
+    document.querySelectorAll('#woche-inhalt [data-filter]').forEach(b => {
+      const an = b.dataset.filter === 'alle' ? alleAn() : heatFilter[b.dataset.filter];
+      b.classList.toggle('an', an); b.setAttribute('aria-pressed', an);
+    });
+    karteNeu();
+  });
+  // Scheinwerfer: Moment in „Momente“ antippen, seine Wolken leuchten golden, die übrigen werden blass
+  document.querySelectorAll('#woche-inhalt [data-licht]').forEach(el => el.onclick = () => {
+    const id = el.dataset.licht;
+    licht.has(id) ? licht.delete(id) : licht.add(id);
+    document.querySelectorAll(`#woche-inhalt [data-licht="${CSS.escape(id)}"]`).forEach(x => { x.classList.toggle('licht', licht.has(id)); x.setAttribute('aria-pressed', licht.has(id)); });
+    karteNeu();
   });
   // Woche abschließen
   const notizSchreiben = () => (S.wochen[wk] ||= {});
@@ -539,17 +553,25 @@ function renderWoche() {
 }
 
 // ── Über den Tag ──
-const heatFilter = { erholsam: true, fuermich: true, aktiv: false };
+const HEAT_START = { erholsam: true, fuermich: true, aktiv: false };
+const heatFilter = { ...HEAT_START };
+const alleAn = () => heatFilter.erholsam && heatFilter.fuermich && heatFilter.aktiv;
+// Scheinwerfer: hervorgehobene Momente (nur bis zum nächsten Wechsel zwischen Heute und Verlauf)
+const licht = new Set();
+// Bedeutung eines Moments: verändert nur das Aussehen (Breite und Leuchten), nie Balance, Anzahl oder Richtwert
+const BEDEUTUNG = { normal: 'normal', mehr: 'mehr', stark: 'stark' };
+const BREITE = { normal: 10, mehr: 12.5, stark: 15 };
 const REFLEXION = ['Was hat dir diese Woche gutgetan?', 'Welche Ruheinsel möchtest du behalten?', 'Was darf nächste Woche etwas weniger sein?', 'Wofür bist du diese Woche dankbar?'];
 // Art eines Moments in der Karte: erholsam, aktiv für mich oder aktiv
 const ART = { reg: 'reg', beides: 'mich', akt: 'akt' };
 const ART_FILTER = { reg: 'erholsam', mich: 'fuermich', akt: 'aktiv' };
 const WOLKE_RGB = { reg: '246,240,228', mich: '134,189,181', akt: '217,163,106' };
+const LICHT_RGB = '240,200,110';
 function tagKarte(taps, tage) {
   const W = 320, H = 300, L = 30, R = 8, T = 10, B = 26;
   // getippt wird am Ende: die Wolke liegt auf der Mitte des Moments
   const pts = runden(taps).map(t => { const m = moment(t.mid); return { t, m, art: m && (ART[m.modus] || 'reg'), d: new Date(t.ts - (t.min || 0) * 30000) }; })
-    .filter(p => p.m && heatFilter[ART_FILTER[p.art]]);
+    .filter(p => p.m && (heatFilter[ART_FILTER[p.art]] || licht.has(p.m.id)));
   const stunde = d => d.getHours() + d.getMinutes() / 60;
   const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => ({ i: x.i, h: zuMin(x.z) / 60 }));
   const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h)];
@@ -567,14 +589,23 @@ function tagKarte(taps, tage) {
     const i = (p.d.getDay() + 6) % 7, halb = (p.t.min || 0) / 120 * proStunde;
     const von = new Date(p.t.ts - (p.t.min || 0) * 60000), bis = new Date(p.t.ts);
     const zeit = `${tagNamen[i]} ${pad(von.getHours())}:${pad(von.getMinutes())}${p.t.min ? `–${pad(bis.getHours())}:${pad(bis.getMinutes())}` : ''}`;
-    return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), rx: 10, ry: halb + 8, art: p.art, name: p.m.name, zeit };
-  }).sort((a, b) => RANG[a.art] - RANG[b.art]);   // aktiv unten, erholsam oben
-  const schein = glow.map(g => `<ellipse cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" rx="${g.rx}" ry="${g.ry.toFixed(1)}" fill="url(#wolke-${g.art})"/>`).join('');
+    const gew = BEDEUTUNG[p.m.gewicht] || 'normal';
+    return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), rx: BREITE[gew], ry: halb + 8, gew, art: p.art, licht: licht.has(p.m.id), name: p.m.name, zeit };
+  }).sort((a, b) => (a.licht - b.licht) || (RANG[a.art] - RANG[b.art]));   // aktiv unten, erholsam oben, Scheinwerfer ganz oben
+  // Länge = Dauer, Breite und Leuchten = Bedeutung. Bedeutende Momente bekommen einen feinen Hof, wie kleine Leuchttürme.
+  const blass = licht.size > 0;
+  const wolke = g => {
+    const f = g.licht ? 'licht' : g.art, op = blass && !g.licht ? ' opacity="0.28"' : '';
+    const hof = g.gew === 'normal' ? '' : `<ellipse cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" rx="${Math.min(19, g.rx * 1.5).toFixed(1)}" ry="${(g.ry + 7).toFixed(1)}" fill="url(#wolke-${f})" opacity="${g.gew === 'stark' ? 0.5 : 0.3}"/>`;
+    const kern = `<ellipse cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" rx="${g.rx}" ry="${g.ry.toFixed(1)}" fill="url(#wolke-${f})"/>`;
+    return `<g${op}>${hof}${kern}${g.gew === 'stark' ? kern : ''}</g>`;
+  };
+  const schein = glow.map(wolke).join('');
   tagWolken = glow;
-  const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="1.3" class="tag-kern ${g.art}"/>`).join('');
-  const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
+  const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${g.gew === 'stark' ? 2 : g.gew === 'mehr' ? 1.6 : 1.3}" class="tag-kern ${g.licht ? 'licht' : g.art}"${blass && !g.licht ? ' opacity="0.3"' : ''}/>`).join('');
+  const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
-    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}</defs>
+    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}</defs>
     ${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
@@ -777,7 +808,7 @@ function renderVerwaltung() {
   $('#btn-sort').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
   $('#btn-sort').classList.toggle('an', sort);
   $('#sort-hinweis').classList.toggle('hidden', !sort);
-  const info = m => [MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : ''].filter(Boolean).join(' · ');
+  const info = m => [MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : '', m.gewicht ? `Bedeutung ${m.gewicht}` : ''].filter(Boolean).join(' · ');
   const zeile = (m, i, liste) => sort
     ? `<div class="moment-zeile sortieren">
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
@@ -816,6 +847,8 @@ function momentSheet(id, gruppeVorwahl) {
       <p class="form-hinweis">Ohne Piktogramm steht der Name größer auf der Kachel.</p></div>
     <div class="form-group"><label>Modus</label><div class="seg modus-seg" id="m-modus">${segM}</div>
       <p class="form-hinweis">Warm für Aktivierung, kühl für Regeneration.</p></div>
+    <div class="form-group"><label>Bedeutung</label><div class="seg" id="m-gewicht">${Object.entries(BEDEUTUNG).map(([k, t]) => `<button type="button" data-wert="${k}" class="${(m.gewicht || 'normal') === k ? 'an' : ''}">${t}</button>`).join('')}</div>
+      <p class="form-hinweis">Bedeutende Momente leuchten im Verlauf breiter und heller, wie kleine Leuchttürme, auch wenn sie kurz waren. Zählt nicht in die Balance.</p></div>
     <div class="form-group"><label class="schalter-zeile" for="m-angebot"><input type="checkbox" id="m-angebot"${m.angebot ? ' checked' : ''}><span>Angebot für andere</span></label>
       <p class="form-hinweis">Zeigt ein kleines Herz. Beim Wochenabschluss kannst du festhalten, wie es ankam.</p></div>
     <div class="form-reihe">
@@ -836,6 +869,10 @@ function momentSheet(id, gruppeVorwahl) {
   document.querySelectorAll('#m-modus button').forEach(b => b.onclick = () => {
     modus = b.dataset.wert; document.querySelectorAll('#m-modus button').forEach(x => x.classList.toggle('an', x === b));
   });
+  let gewicht = m.gewicht || 'normal';
+  document.querySelectorAll('#m-gewicht button').forEach(b => b.onclick = () => {
+    gewicht = b.dataset.wert; document.querySelectorAll('#m-gewicht button').forEach(x => x.classList.toggle('an', x === b));
+  });
   let icon = m.icon;
   document.querySelectorAll('#m-pikto button').forEach(b => b.onclick = () => {
     icon = b.dataset.icon;
@@ -848,7 +885,7 @@ function momentSheet(id, gruppeVorwahl) {
     delete m.unter;
     Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, modus, gruppe: $('#m-gruppe').value,
       dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value),
-      angebot: $('#m-angebot').checked || undefined });
+      angebot: $('#m-angebot').checked || undefined, gewicht: gewicht === 'normal' ? undefined : gewicht });
     if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
     speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
   };
@@ -937,6 +974,7 @@ let ansicht = 'heute', vorAnsicht = 'heute';
 function zeige(v) {
   if (v === 'verwaltung' && ansicht !== 'verwaltung') vorAnsicht = ansicht;
   if (v !== 'verwaltung') sortiermodus = false;
+  if (v !== ansicht) licht.clear();   // Wechsel zwischen Heute und Verlauf: Scheinwerfer aus, Gruppen zu
   ansicht = v;
   document.documentElement.classList.toggle('snap-heute', v === 'heute');   // Heute: schnelles Wischen hält an jeder Gruppe
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
