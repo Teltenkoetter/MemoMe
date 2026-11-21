@@ -312,6 +312,17 @@ function puls(el) { el.classList.remove('puls'); void el.offsetWidth; el.classLi
 
 function zaehlen(mid) {
   const m = moment(mid); if (!m) return;
+  // Tagesmoment (z. B. Urlaub): Tippen schaltet den Tag an und wieder aus
+  if (istTagesmoment(m)) {
+    const heute = new Set(tapsHeute().filter(t => t.mid === mid).map(t => t.id));
+    if (heute.size) {
+      const vorher = [...S.taps];
+      S.taps = S.taps.filter(t => !heute.has(t.id));
+      speichern(); renderHeute();
+      toast(`${m.name}: heute aus`, () => { S.taps = vorher; speichern(); renderHeute(); toast('Wiederhergestellt'); });
+      return;
+    }
+  }
   S.taps.push({ id: uid(), mid, ts: Date.now(), min: m.dauer || 0 });
   speichern(); renderHeute();
   const el = document.querySelector(`.kachel[data-mid="${CSS.escape(mid)}"]`);
@@ -649,7 +660,7 @@ function tagKarte(taps, tage) {
       }
     });
     if (!st) return '';
-    return `<rect x="${(x(i) - spalte / 2 + 1.5).toFixed(1)}" y="${T}" width="${(spalte - 3).toFixed(1)}" height="${H - T - B}" rx="14" fill="url(#schleier-${art})" opacity="${(st * 0.2).toFixed(3)}" class="tag-schleier"/>`;
+    return `<rect x="${(x(i) - spalte * 0.32).toFixed(1)}" y="${T}" width="${(spalte * 0.64).toFixed(1)}" height="${H - T - B}" rx="14" fill="url(#schleier-${art})" opacity="${(st * 0.09).toFixed(3)}" filter="url(#schleier-weich)" class="tag-schleier"/>`;
   }).join('');
   const striche = fa.map(f => `<line x1="${(x(f.i) - spalte * 0.32).toFixed(1)}" x2="${(x(f.i) + spalte * 0.32).toFixed(1)}" y1="${y(f.h).toFixed(1)}" y2="${y(f.h).toFixed(1)}" class="tag-feierabend"/>`).join('');
   // gleiche Breite für alle, die Länge folgt der Dauer: lange Momente überdecken kurze nicht mehr
@@ -674,7 +685,7 @@ function tagKarte(taps, tage) {
   const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${g.gew === 'stark' ? 2 : g.gew === 'mehr' ? 1.6 : 1.3}" class="tag-kern ${g.licht ? 'licht' : g.art}"${blass && !g.licht ? ' opacity="0.3"' : ''}/>`).join('');
   const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
-    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
+    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}<filter id="schleier-weich" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="5"/></filter>${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
     ${schleier}${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
