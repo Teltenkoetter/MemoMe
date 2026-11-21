@@ -663,3 +663,12 @@ select:disabled { opacity: 0.45; }
 .hz { display: flex; gap: 0.75rem; align-items: flex-start; }
 .hz-t { font-size: 0.86rem; line-height: 1.45; color: var(--text-dim); padding-top: 0.12rem; }
 .hz-t strong { color: var(--text); font-weight: 600; }
+/* Moment-Fenster (langer Druck): Nachtragen, Einträge des Tages */
+.chip-reihe { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.chip-reihe .btn-klein { flex: 1 1 0; justify-content: center; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; white-space: nowrap; }
+.eintrag-liste { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.4rem 0 0.6rem; }
+.eintrag { display: flex; align-items: center; gap: 0.4rem; }
+.eintrag-zeit { flex: 1; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.8rem; color: var(--text); font: inherit; font-size: 0.9rem; font-variant-numeric: tabular-nums; cursor: pointer; }
+.eintrag-zeit:disabled { cursor: default; }
+.eintrag.an .eintrag-zeit { border-color: rgba(var(--reg-rgb), 0.55); background: rgba(var(--reg-rgb), 0.12); }
+.eintrag-weg { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: none; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 0.85rem; }

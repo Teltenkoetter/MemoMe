@@ -323,8 +323,11 @@ function zaehlen(mid) {
       return;
     }
   }
-  S.taps.push({ id: uid(), mid, ts: Date.now(), min: m.dauer || 0 });
+  const neu = { id: uid(), mid, ts: Date.now(), min: m.dauer || 0 };
+  S.taps.push(neu);
   speichern(); renderHeute();
+  // kurz „Rückgängig“ anbieten, falls daneben getippt
+  toast(m.name, () => { S.taps = S.taps.filter(t => t.id !== neu.id); speichern(); renderHeute(); toast('Zurückgenommen'); });
   const el = document.querySelector(`.kachel[data-mid="${CSS.escape(mid)}"]`);
   if (el) puls(el);
   if (navigator.vibrate) navigator.vibrate(8);
@@ -376,21 +379,100 @@ function feierabendSheet() {
   $('#fa-weg').onclick = () => { delete S.feierabend[tagSel.value]; speichern(); sheetZu(); renderAlles(); toast('Eintrag entfernt'); };
 }
 
+// Langer Druck auf einen Moment: mehr zu diesem Moment. Nachtragen (Ende, Dauer, heute/gestern),
+// die Einträge des Tages ändern oder entfernen, den letzten zurücknehmen. Keine versteckte Wischgeste.
+function momentZeitSheet(mid) {
+  const m = moment(mid); if (!m) return;
+  const tagesm = istTagesmoment(m);
+  const fak = EINHEIT[m.einheit === 'std' ? 'std' : 'min'][1], einh = fak === 60 ? 'Std' : 'min';
+  const jetzt = new Date(), hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  let tag = 0, bearbeite = null;   // 0 = heute, 1 = gestern
+  const tagBeginn = () => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - tag); return d; };
+  const eintraege = () => { const a = tagBeginn(), b = new Date(a); b.setDate(b.getDate() + 1); return tapsZwischen(a, b).filter(t => t.mid === mid).sort((x, y) => x.ts - y.ts); };
+  sheet(m.name, `
+    <div class="form-group"><label>Tag</label><div class="seg klein" id="nz-tag"><button type="button" data-wert="0" class="an">heute</button><button type="button" data-wert="1">gestern</button></div></div>
+    ${tagesm ? '' : `<div class="form-group"><label>Nachtragen · Ende</label>
+      <div class="chip-reihe" id="nz-chips">${[[0, 'jetzt'], [30, 'vor 30 min'], [60, 'vor 1 h'], [120, 'vor 2 h']].map(([v, t]) => `<button type="button" class="btn-klein" data-vor="${v}">${t}</button>`).join('')}</div>
+      <div class="form-reihe" style="margin-top:0.55rem">
+        <div class="form-group"><label for="nz-zeit">Uhrzeit</label><input type="time" id="nz-zeit" value="${hhmm(jetzt)}"></div>
+        <div class="form-group"><label for="nz-dauer">Dauer (${einh})</label><input type="number" id="nz-dauer" min="0" step="any" inputmode="decimal" value="${+((m.dauer || 0) / fak).toFixed(2)}"></div>
+      </div></div>`}
+    <div class="btn-reihe"><button class="btn-primary" id="nz-ok" type="button">${tagesm ? 'Diesen Tag eintragen' : 'Nachtragen'}</button></div>
+    <div class="label" id="nz-titel" style="margin-top:1.1rem">Heute bisher</div>
+    <div class="eintrag-liste" id="nz-liste"></div>
+    <button class="btn-leise" id="nz-zurueck" type="button">Letzten zurücknehmen</button>`);
+  const formZuruecksetzen = () => {
+    bearbeite = null; $('#nz-ok').textContent = tagesm ? 'Diesen Tag eintragen' : 'Nachtragen';
+    if (!tagesm) { $('#nz-zeit').value = hhmm(new Date()); $('#nz-dauer').value = +((m.dauer || 0) / fak).toFixed(2); }
+  };
+  const liste = () => {
+    const e = eintraege();
+    $('#nz-titel').textContent = tag ? 'Gestern' : 'Heute bisher';
+    $('#nz-liste').innerHTML = e.length ? e.map(t => {
+      const von = new Date(t.ts - (t.min || 0) * 60000), bis = new Date(t.ts);
+      const zeit = tagesm ? 'ganzer Tag' : `${t.min ? hhmm(von) + '–' : ''}${hhmm(bis)}${t.min ? ' · ' + fmtDauer(t.min) : ''}`;
+      return `<div class="eintrag${bearbeite === t.id ? ' an' : ''}"><button type="button" class="eintrag-zeit" data-aendern="${t.id}"${tagesm ? ' disabled' : ''}>${zeit}</button>
+        <button type="button" class="eintrag-weg" data-weg="${t.id}" aria-label="Eintrag ${zeit} entfernen">✕</button></div>`;
+    }).join('') : '<p class="form-hinweis">Noch nichts.</p>';
+    $('#nz-zurueck').classList.toggle('hidden', !e.length);
+    document.querySelectorAll('#nz-liste [data-aendern]').forEach(b => b.onclick = () => {
+      const t = S.taps.find(x => x.id === b.dataset.aendern); if (!t) return;
+      bearbeite = t.id; $('#nz-zeit').value = hhmm(new Date(t.ts)); $('#nz-dauer').value = +((t.min || 0) / fak).toFixed(2);
+      $('#nz-ok').textContent = 'Änderung speichern'; liste();
+    });
+    document.querySelectorAll('#nz-liste [data-weg]').forEach(b => b.onclick = () => entfernen(b.dataset.weg));
+  };
+  const entfernen = id => {
+    const i = S.taps.findIndex(t => t.id === id); if (i < 0) return;
+    const [weg] = S.taps.splice(i, 1); speichern(); renderHeute(); if (bearbeite === id) formZuruecksetzen(); liste();
+    toast(`${m.name}: Eintrag entfernt`, () => { S.taps.splice(i, 0, weg); speichern(); renderHeute(); if ($('#nz-liste')) liste(); toast('Wiederhergestellt'); });
+  };
+  document.querySelectorAll('#nz-tag button').forEach(b => b.onclick = () => {
+    tag = +b.dataset.wert; document.querySelectorAll('#nz-tag button').forEach(x => x.classList.toggle('an', x === b));
+    formZuruecksetzen(); liste();
+  });
+  document.querySelectorAll('#nz-chips [data-vor]').forEach(b => b.onclick = () => {
+    $('#nz-zeit').value = hhmm(new Date(Date.now() - b.dataset.vor * 60000));
+  });
+  $('#nz-ok').onclick = () => {
+    let ts, min;
+    if (tagesm) {
+      if (eintraege().length) { toast(`${m.name} ist an diesem Tag schon eingetragen`); return; }
+      const d = tagBeginn(); d.setHours(12); ts = d.getTime(); min = m.dauer || 1440;
+    } else {
+      const [h, mi] = ($('#nz-zeit').value || hhmm(new Date())).split(':').map(Number);
+      const d = tagBeginn(); d.setHours(h, mi, 0, 0); ts = d.getTime();
+      min = Math.max(0, Math.round((parseFloat(String($('#nz-dauer').value).replace(',', '.')) || 0) * fak));
+    }
+    if (bearbeite) {
+      const t = S.taps.find(x => x.id === bearbeite); const alt = { ...t };
+      Object.assign(t, { ts, min }); speichern(); renderHeute(); sheetZu();
+      toast(`${m.name}: geändert`, () => { Object.assign(t, alt); speichern(); renderHeute(); toast('Wiederhergestellt'); });
+      return;
+    }
+    const neu = { id: uid(), mid, ts, min };
+    S.taps.push(neu); speichern(); renderHeute(); sheetZu();
+    toast(`${m.name} nachgetragen${tagesm ? '' : ' · ' + hhmm(new Date(ts))}`, () => { S.taps = S.taps.filter(t => t.id !== neu.id); speichern(); renderHeute(); toast('Zurückgenommen'); });
+  };
+  $('#nz-zurueck').onclick = () => { const e = eintraege(); if (e.length) entfernen(e.reduce((a, b) => (a.ts > b.ts ? a : b)).id); };
+  liste();
+}
+
 // Tippen und langer Druck
-const DRUCK_MS = 600;   // langer Druck zum Zurücknehmen (vorher 1 s, war zu lang)
+const DRUCK_MS = 600;   // langer Druck: Moment-Fenster (Nachtragen, ändern, zurücknehmen) bzw. Feierabend anpassen
 let druck = null;
 function druckStart(e) {
   const el = e.target.closest('.kachel[data-mid], .kachel[data-sonder="feierabend"]');
   if (!el || (e.button !== undefined && e.button !== 0)) return;
   const mid = el.dataset.mid;
-  const kannZurueck = mid ? tapsHeute().some(t => t.mid === mid) : true;
+  const kannZurueck = true;   // langer Druck öffnet immer das Fenster, auch ohne Eintrag (zum Nachtragen)
   druck = { el, mid, x: e.clientX, y: e.clientY, lang: false };
   if (kannZurueck) {
     el.classList.add('drueckt');
     druck.timer = setTimeout(() => {
       druck.lang = true; el.classList.remove('drueckt');
       if (navigator.vibrate) navigator.vibrate(15);
-      if (mid) zuruecknehmen(mid); else feierabendSheet();
+      if (mid) momentZeitSheet(mid); else feierabendSheet();
     }, DRUCK_MS);
   }
 }
