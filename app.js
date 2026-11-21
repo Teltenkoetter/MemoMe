@@ -29,10 +29,20 @@ function pikto(name, cls = 'pikto', strich = 1.75) {
   const p = PIKTO[name]; if (!p) return '';
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strich}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
+// Hilfe: schlichte Liniensymbole, wo vorhanden aus den Piktogrammen der App
+const HZ = {"heute": "<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/>", "tippen": "<circle cx=\"12\" cy=\"12\" r=\"2.5\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/>", "halten": "<path d=\"M4.5 12a7.5 7.5 0 1 0 2.2-5.3\"/><path d=\"M4.5 4.5v4h4\"/>", "runden": "<path d=\"M16.5 3l3 3-3 3\"/><path d=\"M4.5 11V9.5A3.5 3.5 0 0 1 8 6h11.5\"/><path d=\"M7.5 21l-3-3 3-3\"/><path d=\"M19.5 13v1.5A3.5 3.5 0 0 1 16 18H4.5\"/>", "rahmen": "<rect x=\"3.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"10\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"16.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/>", "frei": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/>", "herz": "<path d=\"M12 19.5s-7-4.3-7-9.6A3.9 3.9 0 0 1 12 7.6a3.9 3.9 0 0 1 7 2.3c0 5.3-7 9.6-7 9.6Z\"/>", "balance": "<path d=\"M12 4v16M7 20h10M5.5 8h13\"/><path d=\"M5.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/><path d=\"M18.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/>", "wischen": "<path d=\"M12 3.5v12\"/><path d=\"M7.5 11l4.5 4.5 4.5-4.5\"/><path d=\"M5 20.5h14\"/>", "woche": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2.5\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/>", "gruppen": "<path d=\"M4 7h11M4 12h16M4 17h7\"/>", "licht": "<path d=\"M12 3.5l2 5.5 5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2Z\"/>", "wolke": "<ellipse cx=\"12\" cy=\"12\" rx=\"4.5\" ry=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"0.9\"/>", "filter": "<path d=\"M4 5.5h16l-6 7v5.5l-4 2v-7.5Z\"/>", "zoom": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"M15.5 15.5l5 5M10.5 8v5M8 10.5h5\"/>", "druck": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21\"/>", "schirm": "<path d=\"M3.5 11.5a8.5 8.5 0 0 1 17 0Z\"/><path d=\"M12 11.5v7a2 2 0 0 1-4 0\"/>", "abschluss": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "rueckschau": "<path d=\"M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5Z\"/><path d=\"M5 20.5v-15M19 18v3H7.5\"/>", "zahnrad": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1\"/>", "modus": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 4a8 8 0 0 1 0 16Z\" fill=\"currentColor\" stroke=\"none\" opacity=\"0.45\"/>", "dauer": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 7.5V12l3 2\"/>", "leuchtturm": "<path d=\"M10 21l.9-11h2.2l.9 11Z\"/><path d=\"M8.5 21h7M10.5 10V7.5h3V10M12 7.5V5.5\"/><path d=\"M4.5 6l3.5 1.5M19.5 6L16 7.5\"/>", "geraet": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.5\"/><path d=\"M11 18.5h2\"/>", "sichern": "<path d=\"M12 3.5v10.5\"/><path d=\"M8 10l4 4 4-4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "laden": "<path d=\"M12 14V3.5\"/><path d=\"M8 7.5l4-4 4 4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "update": "<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"/><path d=\"M19.5 4.5v4h-4\"/>", "loeschen": "<path d=\"M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13\"/>", "werkzeug": "<path d=\"M14.5 4a5 5 0 0 0-4.3 7.2L4 17.4V20h2.6l6.2-6.2A5 5 0 0 0 20 9.5l-2.8 1.1-2-2L16.3 5.8A5 5 0 0 0 14.5 4Z\"/>"};
+const hzIcon = name => { const p = HZ[name] || PIKTO[name]; return p ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>` : ''; };
 // Herz für „Angebot für andere“: Umriss grau = offen, gefüllt = angekommen
 const HERZ = '<svg class="herz" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.7-7.6-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.7c0 5.5-7.6 10.2-7.6 10.2Z"/></svg>';
 const herzHTML = (voll, extra = '') => `<span class="herz-wrap${voll ? ' voll' : ''}${extra}">${HERZ}</span>`;
 const wochenKey = d => `${d.getFullYear()}-W${kw(d)}`;
+// ältere Einträge ohne gespeicherten Start: Montag der Woche aus dem Schlüssel „2026-W47“
+function wocheAusKey(k) {
+  const [j, w] = k.split('-W').map(Number);
+  const jan4 = new Date(j, 0, 4), mo = wocheStart(jan4);
+  mo.setDate(mo.getDate() + (w - 1) * 7);
+  return mo.getTime();
+}
 
 // Piktogramm, sonst eigenes Zeichen
 // Piktogramm; ältere Momente können noch ein eigenes Zeichen haben; „kein Piktogramm“ zeigt nichts
@@ -128,6 +138,21 @@ function fmtDauer(min) {
   return `${h} h ${r}`;
 }
 
+// Tagesmomente (Dauer in Tagen, z. B. Urlaub): eine Eigenschaft des Tages, keine Dauer im Tag.
+// Sie zählen nicht in die Balance, erscheinen in „Über den Tag“ als Schleier mit leisem Nachklang.
+const EINHEIT = { min: ['min', 1], std: ['Std', 60], tag: ['Tage', 1440] };
+const istTagesmoment = m => m?.einheit === 'tag';
+const tageText = n => n === 1 ? '1 Tag' : `${n} Tage`;
+const dauerText = m => istTagesmoment(m) ? tageText(Math.max(1, Math.round((m.dauer || 1440) / 1440))) : fmtDauer(m.dauer);
+const tagMit = (mid, d) => { const a = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), b = a + 86400000; return S.taps.some(t => t.mid === mid && t.ts >= a && t.ts < b); };
+// der wievielte Tag in Folge (für „Tag 3“ auf der Kachel)
+function tagInFolge(mid, d) {
+  let n = 0; const x = new Date(d);
+  while (tagMit(mid, x) && n < 400) { n++; x.setDate(x.getDate() - 1); }
+  return n;
+}
+const tagesmomentAn = d => S.momente.some(m => istTagesmoment(m) && tagMit(m.id, d));
+
 function wocheStart(d) {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
@@ -166,7 +191,7 @@ function tapsHeute() {
 function balance(taps) {
   let akt = 0, reg = 0;
   for (const t of taps) {
-    const m = moment(t.mid); if (!m) continue;
+    const m = moment(t.mid); if (!m || istTagesmoment(m)) continue;   // Tagesmomente zählen nicht in die Balance
     const w = t.min || 10; // Momente ohne Dauer zählen leicht mit
     if (m.modus === 'akt') akt += w;
     else if (m.modus === 'reg') reg += w;
@@ -237,7 +262,7 @@ function renderHeute() {
       </div></div>`;
   };
   const arten = Object.keys(WAHL).filter(a => !WAHL[a].frei && wahlAn(a));
-  const arbeitstag = istArbeitstag(new Date());
+  const arbeitstag = istArbeitstag(new Date()) && !tagesmomentAn(new Date());   // Urlaub & Co.: Arbeit wie an freien Tagen
   const sonder = $('#sonder-kacheln');
   sonder.style.setProperty('--spalten', arten.length + 1);
   // Spalte „Arbeit“: an Arbeitstagen das Ende als Uhrzeit, an freien Tagen etwas · halber Tag · ganzer Tag
@@ -257,7 +282,9 @@ function renderHeute() {
   const kachel = m => {
     const p = proMoment[m.id];
     let wert = '', zusatz = '';
-    if (p) {
+    if (p && istTagesmoment(m)) {
+      wert = `<span class="kachel-zahl">Tag ${tagInFolge(m.id, new Date())}</span>`;
+    } else if (p) {
       wert = m.dauer > 0
         ? `<span class="kachel-zahl">${fmtDauer(p.min)}</span><span class="kachel-dauer">${p.n}×</span>`
         : `<span class="kachel-zahl">${p.n}×</span>`;
@@ -388,7 +415,7 @@ function renderWoche() {
   const gefuehlt = Object.keys(WAHL).some(art => tage.some(d => (S[art] || {})[tagKey(d)]));
 
   const teile = [];
-  const gesamtMin = taps.reduce((s, t) => s + (t.min || 0), 0);
+  const gesamtMin = taps.reduce((s, t) => s + (istTagesmoment(moment(t.mid)) ? 0 : t.min || 0), 0);
   teile.push(`<div class="card">${balanceHTML(b, S.einstellungen.balanceStil, 'Balance der Woche')}
     ${taps.length ? `<p class="card-text" style="margin:0.75rem 0 0">${runden(taps).length} Momente${gesamtMin ? ` · ${fmtDauer(gesamtMin)} gesammelt` : ''}</p>` : ''}</div>`);
 
@@ -417,21 +444,22 @@ function renderWoche() {
       return `<div class="summe">
         <button type="button" class="summe-symbol${licht.has(m.id) ? ' licht' : ''}" data-licht="${esc(m.id)}" aria-pressed="${licht.has(m.id)}" aria-label="${esc(m.name)} in „Über den Tag“ hervorheben">${symbolHTML(m) || '<span class="summe-punkt"></span>'}</button>
         <span class="summe-name">${esc(m.name)}${m.angebot ? herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an), ' summe-herz') : ''}</span>
-        <span class="summe-wert"><strong>${p.n} ×</strong>${p.min ? ' · ' + fmtDauer(p.min) : ''}</span>
+        <span class="summe-wert">${istTagesmoment(m) ? `<strong>${tage.filter(d => tagMit(m.id, d)).length}</strong> ${tage.filter(d => tagMit(m.id, d)).length === 1 ? 'Tag' : 'Tage'}` : `<strong>${p.n} ×</strong>${p.min ? ' · ' + fmtDauer(p.min) : ''}`}</span>
         ${band}</div>`;
     };
     // je Gruppe: aktiver und regenerativer Anteil (beides halb/halb)
     const pg = {};
     for (const t of taps) {
-      const m = moment(t.mid), w = t.min || 10, g = GRUPPEN[m.gruppe] ? m.gruppe : '';
+      const m = moment(t.mid), w = istTagesmoment(m) ? 0 : t.min || 10, g = GRUPPEN[m.gruppe] ? m.gruppe : '';
       const e = pg[g] ||= { akt: 0, reg: 0, min: 0 };
+      if (istTagesmoment(m)) continue;   // sichtbar in der Liste, aber ohne Gewicht im Balken
       if (m.modus === 'akt') e.akt += w; else if (m.modus === 'reg') e.reg += w; else { e.akt += w / 2; e.reg += w / 2; }
       e.min += t.min || 0;
     }
-    const maxG = Math.max(...Object.values(pg).map(e => e.akt + e.reg));
+    const maxG = Math.max(1, ...Object.values(pg).map(e => e.akt + e.reg));
     // Gruppen in der eingestellten Reihenfolge, geschlossen; darin die Momente in ihrer Reihenfolge
     const gz = [...Object.keys(GRUPPEN), ''].filter(g => pg[g]).map(g => {
-      const e = pg[g], breite = Math.max(6, (e.akt + e.reg) / maxG * 100);
+      const e = pg[g], breite = e.akt + e.reg ? Math.max(6, (e.akt + e.reg) / maxG * 100) : 0;
       const liste = S.momente.filter(m => pm[m.id] && (g ? m.gruppe === g : !GRUPPEN[m.gruppe]));
       return `<details class="wgruppe"><summary class="gruppe-zeile">
         <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}<span class="gruppe-anzahl">${liste.length === 1 ? '1 Moment' : liste.length + ' Momente'}</span></span>
@@ -480,7 +508,8 @@ function renderWoche() {
   const angebote = S.momente.filter(m => m.angebot && taps.some(t => t.mid === m.id));
   const seg = (mid, feld, optionen) => `<div class="seg klein" data-mid="${esc(mid)}" data-feld="${feld}">${optionen.map(([w, t]) =>
     `<button type="button" data-wert="${w}" class="${notiz.angebote?.[mid]?.[feld] === w ? 'an' : ''}">${t}</button>`).join('')}</div>`;
-  const frage = REFLEXION[kw(start) % REFLEXION.length];
+  const tagesM = S.momente.find(m => istTagesmoment(m) && tage.some(d => tagMit(m.id, d)));
+  const frage = tagesM ? `Was möchtest du von „${esc(tagesM.name)}“ in die nächsten Tage mitnehmen?` : REFLEXION[kw(start) % REFLEXION.length];
   teile.push(`<div class="card"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
       <span class="gruppe-name">Woche abschließen</span><span class="rahmen-kurz" id="abschluss-stand">${notiz.abgeschlossen ? 'abgeschlossen' : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
     <div class="abschluss-inhalt">
@@ -495,7 +524,25 @@ function renderWoche() {
       <button class="btn-primary" id="btn-abschluss" type="button">${notiz.abgeschlossen ? 'Gespeichert' : 'Woche abschließen'}</button>
     </div></details></div>`);
 
+  // Rückschau: die eigenen Sätze aus „Woche abschließen“, neueste zuerst. Wochen ohne Satz fehlen einfach.
+  const saetze = Object.entries(S.wochen || {}).filter(([, n]) => n.satz).map(([k, n]) => ({ k, n, st: n.start || wocheAusKey(k) })).sort((a, b) => b.st - a.st);
+  if (saetze.length) teile.push(`<div class="card"><details class="wgruppe rueckschau"><summary class="gruppe-zeile rueck-zeile">
+      <span class="gruppe-name">Rückschau<span class="gruppe-anzahl">${saetze.length === 1 ? 'ein Satz' : saetze.length + ' Sätze'}</span></span><span class="auf" aria-hidden="true">›</span></summary>
+    <div class="rueckschau-liste">${saetze.map(({ k, n, st }) => {
+      const a = new Date(st), e = new Date(st); e.setDate(e.getDate() + 6);
+      const f = { day: 'numeric', month: 'short' };
+      return `<button type="button" class="rueckschau-eintrag${k === wk ? ' diese' : ''}" data-woche="${st}">
+        <span class="rueckschau-kw">KW ${kw(a)} · ${a.toLocaleDateString('de-DE', f)} – ${e.toLocaleDateString('de-DE', f)}</span>
+        <span class="rueckschau-frage">${n.frage || REFLEXION[kw(a) % REFLEXION.length]}</span>
+        <span class="rueckschau-satz">${esc(n.satz)}</span></button>`;
+    }).join('')}</div></details></div>`);
+
   $('#woche-inhalt').innerHTML = teile.join('');
+  // Eintrag antippen: zu dieser Woche springen
+  document.querySelectorAll('#woche-inhalt [data-woche]').forEach(b => b.onclick = () => {
+    wocheVersatz = Math.round((+b.dataset.woche - wocheStart(new Date()).getTime()) / (7 * 86400000));
+    renderWoche(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
   tagKarteGesten($('#tag-karte'));
 
   // Über den Tag: erholsam / aktiv ein- und ausblenden (ohne die übrigen Karten neu zu zeichnen)
@@ -529,7 +576,8 @@ function renderWoche() {
     speichern();
   }));
   const satz = $('#abschluss-satz');
-  if (satz) satz.oninput = () => { notizSchreiben().satz = satz.value.trim() || undefined; speichern(); };
+  // der Satz merkt sich seine Frage und die Woche, damit die Rückschau sie später zeigen kann
+  if (satz) satz.oninput = () => { const n = notizSchreiben(); n.satz = satz.value.trim() || undefined; n.frage = frage; n.start = start.getTime(); speichern(); };
   const btnAb = $('#btn-abschluss');
   if (btnAb) btnAb.onclick = () => {
     notizSchreiben().abgeschlossen = Date.now(); speichern();
@@ -578,7 +626,7 @@ function tagKarte(taps, tage) {
   const W = 320, H = 300, L = 30, R = 8, T = 10, B = 26;
   // getippt wird am Ende: die Wolke liegt auf der Mitte des Moments
   const pts = runden(taps).map(t => { const m = moment(t.mid); return { t, m, art: m && (ART[m.modus] || 'reg'), d: new Date(t.ts - (t.min || 0) * 30000) }; })
-    .filter(p => p.m && (heatFilter[ART_FILTER[p.art]] || licht.has(p.m.id)));
+    .filter(p => p.m && !istTagesmoment(p.m) && (heatFilter[ART_FILTER[p.art]] || licht.has(p.m.id)));
   const stunde = d => d.getHours() + d.getMinutes() / 60;
   const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => ({ i: x.i, h: zuMin(x.z) / 60 }));
   const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h)];
@@ -589,6 +637,20 @@ function tagKarte(taps, tage) {
   const tagNamen = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
   let achsen = tagNamen.map((n, i) => `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="middle" class="tag-achse">${n}</text>`).join('');
   for (let h = Math.ceil(hMin / 4) * 4; h <= hMax; h += 4) achsen += `<text x="${L - 8}" y="${(y(h) + 3).toFixed(1)}" text-anchor="end" class="tag-achse">${h}</text>`;
+  // Tagesmomente als Schleier über der ganzen Spalte, danach ein leiser Nachklang über drei Tage
+  const NACH = [1, 0.55, 0.3, 0.12];
+  const schleier = tage.map((d, i) => {
+    let st = 0, art = 'reg';
+    if (d > new Date()) return '';   // kein Nachklang in die Zukunft
+    S.momente.filter(istTagesmoment).forEach(m => {
+      for (let k = 0; k < NACH.length; k++) {
+        const v = new Date(d); v.setDate(v.getDate() - k);
+        if (tagMit(m.id, v)) { if (NACH[k] > st) { st = NACH[k]; art = ART[m.modus] || 'reg'; } break; }
+      }
+    });
+    if (!st) return '';
+    return `<rect x="${(x(i) - spalte / 2 + 1.5).toFixed(1)}" y="${T}" width="${(spalte - 3).toFixed(1)}" height="${H - T - B}" rx="14" fill="url(#schleier-${art})" opacity="${(st * 0.2).toFixed(3)}" class="tag-schleier"/>`;
+  }).join('');
   const striche = fa.map(f => `<line x1="${(x(f.i) - spalte * 0.32).toFixed(1)}" x2="${(x(f.i) + spalte * 0.32).toFixed(1)}" y1="${y(f.h).toFixed(1)}" y2="${y(f.h).toFixed(1)}" class="tag-feierabend"/>`).join('');
   // gleiche Breite für alle, die Länge folgt der Dauer: lange Momente überdecken kurze nicht mehr
   const RANG = { akt: 0, mich: 1, reg: 2 };
@@ -612,8 +674,8 @@ function tagKarte(taps, tage) {
   const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${g.gew === 'stark' ? 2 : g.gew === 'mehr' ? 1.6 : 1.3}" class="tag-kern ${g.licht ? 'licht' : g.art}"${blass && !g.licht ? ' opacity="0.3"' : ''}/>`).join('');
   const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
-    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}</defs>
-    ${achsen}${striche}${schein}${kerne}</svg>`;
+    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
+    ${schleier}${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
 // Hineinzoomen mit zwei Fingern: die Karte wird als Vektor neu gezeichnet (bleibt scharf),
@@ -815,7 +877,7 @@ function renderVerwaltung() {
   $('#btn-sort').textContent = sort ? 'Fertig' : 'Reihenfolge ändern';
   $('#btn-sort').classList.toggle('an', sort);
   $('#sort-hinweis').classList.toggle('hidden', !sort);
-  const info = m => [MODI[m.modus], m.dauer ? fmtDauer(m.dauer) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : '', m.gewicht ? `Bedeutung ${m.gewicht}` : ''].filter(Boolean).join(' · ');
+  const info = m => [MODI[m.modus], m.dauer ? dauerText(m) : '', m.etwa ? `etwa ${m.etwa} × pro Woche` : '', m.gewicht ? `Bedeutung ${m.gewicht}` : ''].filter(Boolean).join(' · ');
   const zeile = (m, i, liste) => sort
     ? `<div class="moment-zeile sortieren">
       <span class="sym" aria-hidden="true">${symbolHTML(m)}</span>
@@ -860,7 +922,8 @@ function momentSheet(id, gruppeVorwahl) {
       <p class="form-hinweis">Zeigt ein kleines Herz. Beim Wochenabschluss kannst du festhalten, wie es ankam.</p></div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-gruppe">Gruppe</label><select id="m-gruppe">${Object.entries(GRUPPEN).map(([k, t]) => `<option value="${k}"${m.gruppe === k ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-      <div class="form-group"><label for="m-dauer">Dauer (min)</label><input type="number" id="m-dauer" min="0" max="600" step="5" value="${m.dauer || 0}"></div>
+      <div class="form-group"><label for="m-dauer">Dauer</label><input type="number" id="m-dauer" min="0" max="9999" step="any" inputmode="decimal" value="${+((m.dauer || 0) / EINHEIT[m.einheit || 'min'][1]).toFixed(2)}">
+        <div class="seg klein einheit-seg" id="m-einheit">${Object.entries(EINHEIT).map(([k, [t]]) => `<button type="button" data-wert="${k}" class="${(m.einheit || 'min') === k ? 'an' : ''}">${t}</button>`).join('')}</div></div>
     </div>
     <div class="form-reihe">
       <div class="form-group"><label for="m-etwa">Richtwert / Woche</label><input type="number" id="m-etwa" min="0" max="50" value="${m.etwa || ''}" placeholder="frei">
@@ -875,6 +938,14 @@ function momentSheet(id, gruppeVorwahl) {
   let modus = m.modus;
   document.querySelectorAll('#m-modus button').forEach(b => b.onclick = () => {
     modus = b.dataset.wert; document.querySelectorAll('#m-modus button').forEach(x => x.classList.toggle('an', x === b));
+  });
+  let einheit = m.einheit || 'min';
+  document.querySelectorAll('#m-einheit button').forEach(b => b.onclick = () => {
+    // umrechnen, wenn es aufgeht (1440 min → 1 Tag); sonst bleibt die Zahl (30 min → 30 Std wäre Unsinn → 0,5 Std)
+    const feld = $('#m-dauer'), alt = parseFloat(String(feld.value).replace(',', '.')) || 0;
+    const neu = alt * EINHEIT[einheit][1] / EINHEIT[b.dataset.wert][1];
+    if (alt && neu >= 0.25) feld.value = +neu.toFixed(2);
+    einheit = b.dataset.wert; document.querySelectorAll('#m-einheit button').forEach(x => x.classList.toggle('an', x === b));
   });
   let gewicht = m.gewicht || 'normal';
   document.querySelectorAll('#m-gewicht button').forEach(b => b.onclick = () => {
@@ -891,7 +962,7 @@ function momentSheet(id, gruppeVorwahl) {
     const zahl = v => { const n = parseInt(v, 10); return n > 0 ? n : undefined; };
     delete m.unter;
     Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, modus, gruppe: $('#m-gruppe').value,
-      dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value),
+      dauer: Math.round((parseFloat(String($('#m-dauer').value).replace(',', '.')) || 0) * EINHEIT[einheit][1]), einheit: einheit === 'min' ? undefined : einheit, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value),
       angebot: $('#m-angebot').checked || undefined });
     const vorher = m.gewicht || 'normal';
     const fertig = rueckwirkend => {
@@ -1041,6 +1112,7 @@ function verbinden() {
   // Einstellungen: Zahnrad oben rechts öffnet und schließt, „‹ Zurück“ führt zur vorigen Ansicht
   $('#btn-einstellungen').onclick = () => zeige(ansicht === 'verwaltung' ? vorAnsicht : 'verwaltung');
   $('#btn-zurueck').onclick = () => zeige(vorAnsicht);
+  document.querySelectorAll('#hilfe .hz-i').forEach(el => { el.innerHTML = hzIcon(el.dataset.i); });
   $('#btn-info').onclick = () => $('#hilfe').classList.remove('hidden');
   $('#hilfe-zu').onclick = () => $('#hilfe').classList.add('hidden');
   $('#sheet-zu').onclick = sheetZu;

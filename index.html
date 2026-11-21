@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
 
@@ -149,59 +149,81 @@
           <p><em>Anhalten. Auftanken. Weiter im eigenen Takt.</em></p>
         </aside>
         <div class="modal-section">
-          <div class="modal-section-title">Heute</div>
-          <ul class="hilfe-liste">
-            <li><strong>Tippen</strong> zählt einen Moment mit seiner üblichen Dauer. <strong>Kurz halten</strong>, bis der Ring voll ist, nimmt den letzten Tipp zurück.</li>
-            <li>Gezählt werden <strong>Runden</strong>, nicht Tipps. Tippst du denselben Moment wieder, solange seine Zeit noch läuft (bei 15 min also nach 14 min, oder dreimal gleich hintereinander), wird daraus eine längere Runde. Die Dauer zählt voll mit: dreimal 15 min sind eine Runde mit 45 min.</li>
-            <li>Oben steht der <strong>Rahmen des Tages</strong>, nur gefühlt und ohne richtig oder falsch. Zuerst <strong>Schlaf</strong> (erholt, mittel, kurz), den hältst du morgens für die Nacht davor fest. Schlaf ist leise in der Farbe der Regeneration hinterlegt, Arbeit in der der Aktivität. Danach der laufende Tag: Arbeit, <strong>Essen</strong> (frisch, gemischt, gegönnt) und <strong>Trinken</strong> (viel, mittel, wenig; gemeint sind Wasser, Tee und Ähnliches) wann du magst. Gegönnt ist Genuss, kein Ausrutscher. Nochmal tippen hebt die Wahl auf.</li>
-            <li><strong>Arbeit</strong> merkt sich an Arbeitstagen die Uhrzeit deines Feierabends: „Ende tippen“, wenn die Arbeit endet. Vergessen ist in Ordnung: später antippen und anpassen.</li>
-            <li>An <strong>freien Tagen</strong> (zum Beispiel am Wochenende) zeigt <strong>Arbeit</strong> drei Wahlknöpfe. Ohne Wahl ist der Tag einfach frei. Hast du doch gearbeitet, tippst du an, wie viel: <strong>etwas</strong> (ein, zwei Stunden), <strong>halber Tag</strong> oder <strong>ganzer Tag</strong>. Das fließt nicht in die Balance ein.</li>
-            <li><strong>Schnell wischen</strong> hält an jeder Gruppe, sie steht dann oben.</li>
-            <li>Die Momente stehen nach Gruppen. Ein kleines <strong>Herz</strong> zeigt ein Angebot für andere.</li>
-            <li>Die <strong>Balance</strong> oben zeigt, ob der Tag eher aktiv oder eher erholsam war. Ohne Zahl, ohne Ziel.</li>
-          </ul>
+          <div class="modal-section-title"><span class="hz-i klein" data-i="heute"></span>Heute</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="tippen" data-ton="reg"></span><div class="hz-t"><strong>Tippen</strong> — Moment zählen, mit seiner üblichen Dauer</div></div>
+            <div class="hz"><span class="hz-i" data-i="halten" data-ton=""></span><div class="hz-t"><strong>Halten</strong> — Ring füllt sich → letzter Tipp zurück</div></div>
+            <div class="hz"><span class="hz-i" data-i="runden" data-ton="reg"></span><div class="hz-t"><strong>Runden</strong> — erneut tippen, solange die Zeit läuft → eine längere Runde · 3 × 15 min = 45 min · 1×</div></div>
+            <div class="hz"><span class="hz-i" data-i="rahmen" data-ton=""></span><div class="hz-t"><strong>Rahmen des Tages</strong> — Schlaf · Arbeit · Essen · Trinken · nur gefühlt · erneut tippen hebt die Wahl auf</div></div>
+            <div class="hz"><span class="hz-i" data-i="schlaf" data-ton="reg"></span><div class="hz-t"><strong>Schlaf</strong> — morgens, für die Nacht davor · erholt · mittel · kurz</div></div>
+            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeit</strong> — Arbeitstag: „Ende tippen“ → Uhrzeit · später antippen zum Anpassen</div></div>
+            <div class="hz"><span class="hz-i" data-i="frei" data-ton="akt"></span><div class="hz-t"><strong>Freier Tag</strong> — etwas (1–2 h) · halber Tag · ganzer Tag · ohne Wahl frei · nicht in der Balance</div></div>
+            <div class="hz"><span class="hz-i" data-i="essen" data-ton=""></span><div class="hz-t"><strong>Essen</strong> — frisch · gemischt · gegönnt (Genuss, kein Ausrutscher)</div></div>
+            <div class="hz"><span class="hz-i" data-i="trinken" data-ton=""></span><div class="hz-t"><strong>Trinken</strong> — viel · mittel · wenig · Wasser, Tee &amp; Co.</div></div>
+            <div class="hz"><span class="hz-i" data-i="herz" data-ton=""></span><div class="hz-t"><strong>Herz</strong> — Angebot für andere</div></div>
+            <div class="hz"><span class="hz-i" data-i="balance" data-ton=""></span><div class="hz-t"><strong>Balance</strong> — eher aktiv oder eher erholsam · ohne Zahl, ohne Ziel</div></div>
+            <div class="hz"><span class="hz-i" data-i="wischen" data-ton=""></span><div class="hz-t"><strong>Schnell wischen</strong> — stoppt an jeder Gruppe</div></div>
+          </div>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Verlauf</div>
-          <ul class="hilfe-liste">
-            <li>Eine Woche geht von <strong>Montag bis Sonntag</strong>. Mit ‹ und › blätterst du zu anderen Wochen. Monat und Jahr kommen später dazu.</li>
-            <li><strong>Momente:</strong> je Gruppe ein Balken, warm für aktiv, kühl für erholsam. Tippen öffnet die Gruppe, „▸ Alle“ öffnet alle. Ein Tipp auf das Symbol eines Moments hebt ihn in „Über den Tag“ golden hervor, die übrigen werden blass; nochmal tippen nimmt es zurück. Beim Wechsel zu Heute ist alles wieder wie vorher.</li>
-            <li><strong>Über den Tag:</strong> wann deine Momente lagen, hell für erholsam, türkis für aktiv für mich, bernstein für aktiv. Die Wolke liegt auf der Mitte des Moments und ist so lang, wie er gedauert hat. Bedeutende Momente sind breiter und leuchten heller, wie kleine Leuchttürme. Oben wählst du, was du sehen magst, „Alle“ zeigt alles. Der Strich zeigt den Feierabend. Mit zwei Fingern kannst du hineinzoomen, dann erscheinen die Namen der Momente; beim Loslassen federt die Karte zurück. Ein langer Druck auf eine Wolke zeigt Name und Uhrzeit.</li>
-            <li><strong>Rahmen des Tages:</strong> wie Schlaf, Essen und Trinken sich anfühlten und wann die Arbeit endete. Ein Punkt je Tag, der Ring zeigt die Mitte der Woche. Arbeit an freien Tagen steht als kurze Notiz darunter, zum Beispiel „Sa halber Tag“. Zeilen ohne Einträge erscheinen erst, wenn es etwas zu zeigen gibt.</li>
-            <li><strong>Woche abschließen</strong>, zum Beispiel am Sonntagabend: kurz zurückschauen, bei Angeboten festhalten, wie es ankam, wenn du magst ein Satz. Danach ist nichts mehr offen. Eine vergangene Woche lässt sich auch später noch abschließen.</li>
-          </ul>
+          <div class="modal-section-title"><span class="hz-i klein" data-i="woche"></span>Verlauf</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="woche" data-ton=""></span><div class="hz-t"><strong>Woche</strong> — Mo–So · ‹ › blättern</div></div>
+            <div class="hz"><span class="hz-i" data-i="gruppen" data-ton=""></span><div class="hz-t"><strong>Momente</strong> — Balken je Gruppe · warm = aktiv, kühl = erholsam · antippen → Gruppe öffnet sich · ▸ Alle</div></div>
+            <div class="hz"><span class="hz-i" data-i="licht" data-ton="licht"></span><div class="hz-t"><strong>Scheinwerfer</strong> — Symbol eines Moments antippen → seine Wolken golden, der Rest blass · zurück zu Heute → aus</div></div>
+            <div class="hz"><span class="hz-i" data-i="wolke" data-ton="reg"></span><div class="hz-t"><strong>Über den Tag</strong> — eine Wolke je Runde · Länge = Dauer · Breite &amp; Leuchten = Bedeutung · Strich = Feierabend</div></div>
+            <div class="hz"><span class="hz-i" data-i="filter" data-ton=""></span><div class="hz-t"><strong>Filter</strong> — erholsam · für mich · aktiv · Alle</div></div>
+            <div class="hz"><span class="hz-i" data-i="zoom" data-ton=""></span><div class="hz-t"><strong>Zoomen</strong> — zwei Finger aufziehen → Namen erscheinen · loslassen → federt zurück</div></div>
+            <div class="hz"><span class="hz-i" data-i="druck" data-ton=""></span><div class="hz-t"><strong>Langer Druck</strong> — auf eine Wolke → Name und Uhrzeit</div></div>
+            <div class="hz"><span class="hz-i" data-i="schirm" data-ton="reg"></span><div class="hz-t"><strong>Ganze Tage</strong> — z. B. Urlaub · Schleier über dem Tag · klingt drei Tage nach</div></div>
+            <div class="hz"><span class="hz-i" data-i="rahmen" data-ton=""></span><div class="hz-t"><strong>Rahmen des Tages</strong> — ein Punkt je Tag · Ring = Mitte der Woche · erscheint erst mit Einträgen</div></div>
+            <div class="hz"><span class="hz-i" data-i="abschluss" data-ton=""></span><div class="hz-t"><strong>Woche abschließen</strong> — Angebote · eine Frage · ein Satz, wenn gewünscht · auch später möglich</div></div>
+            <div class="hz"><span class="hz-i" data-i="rueckschau" data-ton=""></span><div class="hz-t"><strong>Rückschau</strong> — alle Sätze mit Frage · neueste zuerst · antippen → Woche öffnet sich</div></div>
+          </div>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Einstellungen (Zahnrad oben rechts)</div>
-          <ul class="hilfe-liste">
-            <li><strong>Gruppen &amp; Momente</strong> anlegen, umbenennen, sortieren und entfernen. Die Reihenfolge gilt überall. Jeder Moment kann eine <strong>Bedeutung</strong> haben (normal, mehr, stark). Sie verändert nur, wie er im Verlauf leuchtet, nicht die Balance. Änderst du sie bei einem Moment mit Einträgen, fragt MemoMe, ob sie ab jetzt gilt oder auch für frühere Einträge.</li>
-            <li>Ob ein Moment <strong>erholsam, aktiv für mich oder aktiv</strong> ist, legt der Moment fest. Sport oder Musik machen ist aktiv für mich, Hausarbeit eher aktiv. Üben mit den Kindern kann Family und aktiv sein, Familienzeit Family und erholsam.</li>
-            <li><strong>Angebot für andere</strong>, <strong>Richtwert</strong> (etwa so oft, kein Soll) und <strong>genug ab</strong> stellst du beim Moment ein.</li>
-            <li><strong>Rahmen des Tages:</strong> Schlaf, Essen und Trinken lassen sich einzeln ausblenden.</li>
-            <li><strong>Arbeitstage</strong> legst du fest (voreingestellt Mo–Fr). Der <strong>Feierabend-Korridor</strong> ist das Zeitfenster, in dem dein Arbeitstag ungefähr enden soll.</li>
-          </ul>
+          <div class="modal-section-title"><span class="hz-i klein" data-i="zahnrad"></span>Einstellungen · Zahnrad oben rechts</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="gruppen" data-ton=""></span><div class="hz-t"><strong>Gruppen &amp; Momente</strong> — anlegen · umbenennen · sortieren ↑↓ · entfernen · Reihenfolge gilt überall</div></div>
+            <div class="hz"><span class="hz-i" data-i="modus" data-ton="mich"></span><div class="hz-t"><strong>Modus</strong> — erholsam · aktiv für mich (Sport, Musik) · aktiv (Hausarbeit)</div></div>
+            <div class="hz"><span class="hz-i" data-i="dauer" data-ton=""></span><div class="hz-t"><strong>Dauer</strong> — min · Std · Tage · Tage = ganzer Tag (Urlaub): Kachel „Tag 3“, nicht in der Balance, Arbeit wie am freien Tag</div></div>
+            <div class="hz"><span class="hz-i" data-i="leuchtturm" data-ton="licht"></span><div class="hz-t"><strong>Bedeutung</strong> — normal · mehr · stark · nur das Leuchten, nie die Balance · bei Änderung: ab jetzt oder auch rückwirkend</div></div>
+            <div class="hz"><span class="hz-i" data-i="herz" data-ton=""></span><div class="hz-t"><strong>Angebot · Richtwert · Genug ab</strong> — Herz · etwa so oft, kein Soll · leise „genug für heute“</div></div>
+            <div class="hz"><span class="hz-i" data-i="rahmen" data-ton=""></span><div class="hz-t"><strong>Rahmen des Tages</strong> — Schlaf · Essen · Trinken einzeln ausblenden</div></div>
+            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeitstage &amp; Korridor</strong> — Arbeitstage wählen (Mo–Fr) · Korridor = ungefähres Ende des Arbeitstags</div></div>
+          </div>
         </div>
         <div class="modal-divider"></div>
         <div class="modal-section">
-          <div class="modal-section-title">Daten &amp; Updates</div>
-          <ul class="hilfe-liste">
-            <li>Alles bleibt <strong>auf diesem Gerät</strong>, nichts wird übertragen.</li>
-            <li><strong>Daten sichern</strong> erzeugt eine Datei. Mit „Sicherung laden“ ziehst du auf ein anderes Gerät um.</li>
-            <li>„Browserdaten löschen“ in den Einstellungen von Handy oder Browser entfernt auch MemoMe. Sichere deshalb ab und zu.</li>
-            <li>Bei einer neuen Version erscheint unten „Neue Version verfügbar“. Ein Tipp auf „Neu laden“ genügt.</li>
-          </ul>
+          <div class="modal-section-title"><span class="hz-i klein" data-i="sichern"></span>Daten &amp; Backup</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="geraet" data-ton=""></span><div class="hz-t"><strong>Nur auf diesem Gerät</strong> — nichts wird übertragen</div></div>
+            <div class="hz"><span class="hz-i" data-i="sichern" data-ton=""></span><div class="hz-t"><strong>Daten sichern</strong> — erzeugt eine Datei · ab und zu sichern</div></div>
+            <div class="hz"><span class="hz-i" data-i="laden" data-ton=""></span><div class="hz-t"><strong>Sicherung laden</strong> — Umzug auf ein anderes Gerät</div></div>
+            <div class="hz"><span class="hz-i" data-i="update" data-ton=""></span><div class="hz-t"><strong>Neue Version</strong> — Hinweis unten → „Neu laden“</div></div>
+          </div>
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-section">
+          <div class="modal-section-title"><span class="hz-i klein" data-i="werkzeug"></span>Probleme &amp; Lösungen</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="loeschen" data-ton=""></span><div class="hz-t"><strong>Daten weg?</strong> — „Browserdaten löschen“ entfernt auch MemoMe → Sicherung laden</div></div>
+            <div class="hz"><span class="hz-i" data-i="update" data-ton=""></span><div class="hz-t"><strong>Alte Version sichtbar?</strong> — App schließen und neu öffnen · oder „Neu laden“ im Hinweis</div></div>
+            <div class="hz"><span class="hz-i" data-i="geraet" data-ton=""></span><div class="hz-t"><strong>Home-Bildschirm &amp; Safari</strong> — getrennte Speicher · immer die App vom Home-Bildschirm nutzen</div></div>
+            <div class="hz"><span class="hz-i" data-i="tippen" data-ton=""></span><div class="hz-t"><strong>Versehentlich getippt?</strong> — Kachel halten → zurück · oder „Rückgängig“ im Hinweis unten</div></div>
+          </div>
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 30 · Klaus Teltenkötter 2026</p>
+        <p class="modal-meta modal-meta-build">Version 33 · Klaus Teltenkötter 2026</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=33"></script>
 </body>
 </html>
