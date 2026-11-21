@@ -561,6 +561,13 @@ const licht = new Set();
 // Bedeutung eines Moments: verändert nur das Aussehen (Breite und Leuchten), nie Balance, Anzahl oder Richtwert
 const BEDEUTUNG = { normal: 'normal', mehr: 'mehr', stark: 'stark' };
 const BREITE = { normal: 10, mehr: 12.5, stark: 15 };
+// Bedeutung zum Zeitpunkt eines Eintrags: gewichtAb merkt sich, ab wann welche Bedeutung gilt („ab jetzt“).
+// Ohne Liste gilt die aktuelle Bedeutung für alle Einträge („auch für frühere“).
+function gewichtZu(m, ts) {
+  let g = m.gewicht || 'normal';
+  if (m.gewichtAb?.length) { g = m.gewichtAb[0].g; for (const e of m.gewichtAb) if (e.ab <= ts) g = e.g; }
+  return BEDEUTUNG[g] ? g : 'normal';
+}
 const REFLEXION = ['Was hat dir diese Woche gutgetan?', 'Welche Ruheinsel möchtest du behalten?', 'Was darf nächste Woche etwas weniger sein?', 'Wofür bist du diese Woche dankbar?'];
 // Art eines Moments in der Karte: erholsam, aktiv für mich oder aktiv
 const ART = { reg: 'reg', beides: 'mich', akt: 'akt' };
@@ -589,7 +596,7 @@ function tagKarte(taps, tage) {
     const i = (p.d.getDay() + 6) % 7, halb = (p.t.min || 0) / 120 * proStunde;
     const von = new Date(p.t.ts - (p.t.min || 0) * 60000), bis = new Date(p.t.ts);
     const zeit = `${tagNamen[i]} ${pad(von.getHours())}:${pad(von.getMinutes())}${p.t.min ? `–${pad(bis.getHours())}:${pad(bis.getMinutes())}` : ''}`;
-    const gew = BEDEUTUNG[p.m.gewicht] || 'normal';
+    const gew = gewichtZu(p.m, p.t.ts);
     return { cx: x(i) + ((p.t.ts / 60000) % 7 - 3) * 0.9, cy: y(stunde(p.d)), rx: BREITE[gew], ry: halb + 8, gew, art: p.art, licht: licht.has(p.m.id), name: p.m.name, zeit };
   }).sort((a, b) => (a.licht - b.licht) || (RANG[a.art] - RANG[b.art]));   // aktiv unten, erholsam oben, Scheinwerfer ganz oben
   // Länge = Dauer, Breite und Leuchten = Bedeutung. Bedeutende Momente bekommen einen feinen Hof, wie kleine Leuchttürme.
@@ -885,9 +892,23 @@ function momentSheet(id, gruppeVorwahl) {
     delete m.unter;
     Object.assign(m, { name, icon: icon || 'kein', symbol: icon && icon !== 'kein' ? '' : m.symbol, modus, gruppe: $('#m-gruppe').value,
       dauer: zahl($('#m-dauer').value) || 0, etwa: zahl($('#m-etwa').value), genugTag: zahl($('#m-genug').value),
-      angebot: $('#m-angebot').checked || undefined, gewicht: gewicht === 'normal' ? undefined : gewicht });
-    if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
-    speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
+      angebot: $('#m-angebot').checked || undefined });
+    const vorher = m.gewicht || 'normal';
+    const fertig = rueckwirkend => {
+      if (gewicht !== vorher) {
+        if (rueckwirkend) delete m.gewichtAb;
+        else m.gewichtAb = [...(m.gewichtAb?.length ? m.gewichtAb : [{ ab: 0, g: vorher }]), { ab: Date.now(), g: gewicht }];
+      }
+      m.gewicht = gewicht === 'normal' ? undefined : gewicht;
+      if (neu) S.momente.push(m); else S.momente[S.momente.findIndex(x => x.id === m.id)] = m;
+      speichern(); sheetZu(); renderAlles(); toast(neu ? `${name} angelegt` : 'Gespeichert');
+    };
+    // nur fragen, wenn sich die Bedeutung ändert und es schon Einträge gibt
+    if (neu || gewicht === vorher || !S.taps.some(t => t.mid === m.id)) return fertig(true);
+    sheet('Bedeutung', `<p class="card-text">„${esc(name)}“ hat jetzt die Bedeutung <strong>${gewicht}</strong>. Ab wann soll das gelten?</p>
+      <div class="btn-reihe"><button class="btn-primary" id="gew-jetzt" type="button">Ab jetzt</button><button class="btn-leise" id="gew-alle" type="button">Auch für frühere Einträge</button></div>`);
+    $('#gew-jetzt').onclick = () => fertig(false);
+    $('#gew-alle').onclick = () => fertig(true);
   };
   if (!neu) $('#m-weg').onclick = () => {
     const n = S.taps.filter(t => t.mid === m.id).length;
