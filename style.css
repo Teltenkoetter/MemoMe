@@ -673,3 +673,32 @@ select:disabled { opacity: 0.45; }
 .eintrag-zeit:disabled { cursor: default; }
 .eintrag.an .eintrag-zeit { border-color: rgba(var(--reg-rgb), 0.55); background: rgba(var(--reg-rgb), 0.12); }
 .eintrag-weg { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: none; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 0.85rem; }
+/* Heute: Datum antippbar (gestern ansehen) */
+button.tag-datum { background: none; border: 0; padding: 0; color: var(--text); text-align: left; cursor: pointer; }
+html.heute-gestern button.tag-datum { color: rgb(var(--abend-rgb)); }
+.link-heute { background: none; border: 0; padding: 0; font: inherit; color: rgb(var(--abend-rgb)); cursor: pointer; }
+/* Verlauf: Zähler unter „Momente“, Arbeit-Schalter an der Balance */
+.h2-sub { display: block; font-size: 0.74rem; font-weight: 500; color: var(--hint); margin-top: 0.15rem; letter-spacing: 0; }
+.arbeit-schalter { margin-top: 0.8rem; }
+.arbeit-schalter button { flex: 1; }
+/* Einstellungen: Regler */
+.regler-reihe { display: flex; align-items: center; gap: 0.6rem; font-size: 0.75rem; color: var(--hint); }
+.regler-reihe input[type="range"] { flex: 1; accent-color: rgb(var(--akt-rgb)); }
+/* Über den Tag im Vollbild */
+html.voll-offen, html.voll-offen body { overflow: hidden; }
+#tag-voll { position: fixed; inset: 0; z-index: 450; background: var(--bg); background-image: var(--bg-grad); display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 0.6rem) 1rem calc(env(safe-area-inset-bottom) + 0.6rem); animation: vollAuf 0.25s ease-out; }
+@keyframes vollAuf { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: none; } }
+.voll-kopf { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.6rem; }
+.voll-kopf h2 { font-size: 1.05rem; font-weight: 700; }
+.voll-sub { font-size: 0.74rem; color: var(--hint); margin-top: 0.15rem; }
+#tag-voll .tag-filter { margin: 0 0 0.6rem; }
+.voll-flaeche { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.6rem 1fr; grid-template-rows: 1fr 1.4rem; }
+.voll-karte { position: relative; border-radius: 12px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform 0.2s; }
+.voll-karte .tag-svg { width: 100%; height: 100%; }
+.voll-y, .voll-x { position: relative; }
+.voll-y span { position: absolute; right: 0.35rem; transform: translateY(-50%); font-size: 10px; color: var(--hint); font-variant-numeric: tabular-nums; }
+.voll-x span { position: absolute; top: 0.25rem; transform: translateX(-50%); font-size: 10px; color: var(--hint); }
+#tag-voll .tag-legende { margin-top: 0.4rem; }
+.btn-voll { font-size: 0.95rem; line-height: 1; padding: 0.3rem 0.55rem; }
+#tag-karte { cursor: zoom-in; }
