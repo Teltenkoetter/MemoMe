@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=46">
 </head>
 <body>
 
@@ -82,7 +82,7 @@
         <p class="card-text">Auf Heute zeigt die Spalte „Arbeit“ an Arbeitstagen, wann die Arbeit endete. An freien Tagen fragt sie nur, ob und wie viel: Ohne Wahl ist der Tag frei.</p>
         <div class="tage-wahl" id="arbeitstage" role="group" aria-label="Arbeitstage"></div>
         <div class="form-group" style="margin-top:1rem"><label for="arbeit-gewicht">Arbeit in der Balance</label>
-          <div class="regler-reihe"><span>leise</span><input type="range" id="arbeit-gewicht" min="1" max="6" step="0.5"><span>stark</span></div>
+          <div class="regler-reihe"><span>weniger Einfluss</span><input type="range" id="arbeit-gewicht" min="1" max="6" step="0.5"><span>mehr Einfluss</span></div>
           <p class="form-hinweis" id="arbeit-gewicht-text"></p></div>
         <div class="form-group"><label for="tag-wechsel">Tageswechsel</label>
           <select id="tag-wechsel"><option value="0">Mitternacht</option><option value="1">1 Uhr nachts</option><option value="2">2 Uhr nachts</option><option value="3">3 Uhr nachts</option><option value="4">4 Uhr nachts</option><option value="5">5 Uhr nachts</option><option value="6">6 Uhr nachts</option></select>
@@ -169,7 +169,7 @@
             <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeit</strong> — Arbeitstag: „Ende tippen“ → Uhrzeit · halten → anpassen, Tag war leicht · normal · viel (ohne Wahl normal)</div></div>
             <div class="hz"><span class="hz-i" data-i="frei" data-ton="akt"></span><div class="hz-t"><strong>Freier Tag</strong> — etwas (1–2 h) · halber Tag · ganzer Tag · ohne Wahl frei · nicht in der Balance</div></div>
             <div class="hz"><span class="hz-i" data-i="essen" data-ton=""></span><div class="hz-t"><strong>Essen</strong> — frisch · gemischt · gegönnt (Genuss, kein Ausrutscher)</div></div>
-            <div class="hz"><span class="hz-i" data-i="trinken" data-ton=""></span><div class="hz-t"><strong>Trinken</strong> — viel · mittel · wenig · Wasser, Tee &amp; Co.</div></div>
+            <div class="hz"><span class="hz-i" data-i="trinken" data-ton=""></span><div class="hz-t"><strong>Trinken</strong> — reichlich · mittel · wenig · Wasser, Tee &amp; Co.</div></div>
             <div class="hz"><span class="hz-i" data-i="herz" data-ton=""></span><div class="hz-t"><strong>Herz</strong> — Angebot für andere</div></div>
             <div class="hz"><span class="hz-i" data-i="balance" data-ton=""></span><div class="hz-t"><strong>Balance</strong> — eher aktiv oder eher erholsam · Arbeit zählt gedämpft mit · ohne Zahl, ohne Ziel</div></div>
             <div class="hz"><span class="hz-i" data-i="wischen" data-ton=""></span><div class="hz-t"><strong>Schnell wischen</strong> — stoppt an jeder Gruppe</div></div>
@@ -203,7 +203,7 @@
             <div class="hz"><span class="hz-i" data-i="leuchtturm" data-ton="licht"></span><div class="hz-t"><strong>Bedeutung</strong> — normal · mehr · stark · nur das Leuchten, nie die Balance · bei Änderung: ab jetzt oder auch rückwirkend</div></div>
             <div class="hz"><span class="hz-i" data-i="herz" data-ton=""></span><div class="hz-t"><strong>Angebot · Richtwert · Genug ab</strong> — Herz · etwa so oft, kein Soll · leise „genug für heute“</div></div>
             <div class="hz"><span class="hz-i" data-i="rahmen" data-ton=""></span><div class="hz-t"><strong>Rahmen des Tages</strong> — Schlaf · Essen · Trinken einzeln ausblenden</div></div>
-            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeitstage &amp; Korridor</strong> — Arbeitstage wählen (Mo–Fr) · Regler: wie stark Arbeit in der Balance zählt · Tageswechsel (4 Uhr) · Korridor = ungefähres Ende des Arbeitstags</div></div>
+            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeitstage &amp; Korridor</strong> — Arbeitstage wählen (Mo–Fr) · Regler: weniger oder mehr Einfluss der Arbeit auf die Balance · Tageswechsel (4 Uhr) · Korridor = ungefähres Ende des Arbeitstags</div></div>
           </div>
         </div>
         <div class="modal-divider"></div>
@@ -235,6 +235,6 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=45"></script>
+  <script src="app.js?v=46"></script>
 </body>
 </html>

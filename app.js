@@ -14,7 +14,7 @@ const MODI = { akt: 'Aktivierung', reg: 'Regeneration', beides: 'aktiv für mich
 const WAHL = {
   schlaf:  { name: 'Schlaf',  icon: 'schlaf',  werte: [['erholt', 'erholt'], ['mittel', 'mittel'], ['kurz', 'kurz']] },
   essen:   { name: 'Essen',   icon: 'essen',   werte: [['frisch', 'frisch'], ['gemischt', 'gemischt'], ['gegoennt', 'gegönnt']] },
-  trinken: { name: 'Trinken', icon: 'trinken', werte: [['viel', 'viel'], ['mittel', 'mittel'], ['wenig', 'wenig']] },
+  trinken: { name: 'Trinken', icon: 'trinken', werte: [['viel', 'reichlich'], ['mittel', 'mittel'], ['wenig', 'wenig']] },   // Schlüssel bleibt 'viel', angezeigt „reichlich“
   // nur an freien Tagen statt Feierabend: wie viel vom freien Tag die Arbeit genommen hat; ohne Wahl ist der Tag frei
   arbeit:  { name: 'Arbeit',  icon: 'feierabend', frei: true, werte: [['etwas', 'etwas'], ['halb', 'halber Tag'], ['ganz', 'ganzer Tag']] },
 };
@@ -218,7 +218,7 @@ const ARBEIT_STUFE = { leicht: 2 / 3, normal: 1, viel: 4 / 3 };
 const ARBEIT_FREI = { etwas: 1 / 3, halb: 2 / 3, ganz: 1 };
 const arbeitMitzaehlen = () => S.einstellungen.arbeitInBalance !== false;
 const stundenText = h => `${String(h).replace('.', ',')} ${h === 1 ? 'Stunde' : 'Stunden'}`;
-const gewichtText = n => `Ein normaler Arbeitstag zählt wie ${stundenText(n)} Aktivität (leicht ${stundenText(Math.round(n * 2 / 3 * 2) / 2)}, viel ${stundenText(Math.round(n * 4 / 3 * 2) / 2)}). Am Wochenende: etwas · halber · ganzer Tag.`;
+const gewichtText = n => `Ein normaler Arbeitstag zählt wie ${stundenText(n)} Aktivität, ein leichter wie ${stundenText(Math.round(n * 2 / 3 * 2) / 2)}, ein Tag mit viel Arbeit wie ${stundenText(Math.round(n * 4 / 3 * 2) / 2)}. Mehr Einfluss heißt: Arbeit wiegt in der Balance schwerer.`;
 function arbeitMin(d) {
   const heute = logTag();
   if (d > heute) return 0;
@@ -647,8 +647,8 @@ function renderWoche() {
     rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Feierabend</span>${abendMini(abende)}<span class="rahmen-kurz">${kurz}</span></div>`);
   }
   // Arbeit an freien Tagen: nur eine kleine Notiz, keine Summe
-  const freiArbeit = tage.filter(d => (S.arbeit || {})[tagKey(d)]).map(d => `${TAGE_KURZ[d.getDay()]} ${WAHL_TEXT('arbeit', S.arbeit[tagKey(d)])}`);
-  if (freiArbeit.length) rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Arbeit</span><span class="rahmen-notiz">${freiArbeit.join(' · ')}</span><span class="rahmen-kurz">an freien Tagen</span></div>`);
+  const freiArbeit = tage.filter(d => (S.arbeit || {})[tagKey(d)]).map(d => { const w = S.arbeit[tagKey(d)]; return `<span class="nowrap">${TAGE_KURZ[d.getDay()]} · ${w === 'etwas' ? 'etwas gearbeitet' : WAHL_TEXT('arbeit', w)}</span>`; });
+  if (freiArbeit.length) rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Arbeit am freien Tag</span><span class="rahmen-notiz breit">${freiArbeit.join(', ')}</span></div>`);
   gefuehltZeile('essen');
   gefuehltZeile('trinken');
   if (rahmen.length) teile.push(`<div class="card"><div class="card-header"><h2>Rahmen des Tages</h2></div><div class="rahmen-liste">${rahmen.join('')}</div></div>`);
