@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=39">
+  <link rel="stylesheet" href="style.css?v=43">
 </head>
 <body>
 
@@ -35,6 +35,7 @@
 
       <div class="rahmen-raster" id="sonder-kacheln" aria-label="Rahmen des Tages"></div>
       <hr class="rahmen-strich">
+      <p class="start-hinweis hidden" id="start-hinweis">Dies ist eine Starthilfe. In den Einstellungen kannst du alles umbenennen, entfernen oder Eigenes anlegen.</p>
       <div class="momente-gruppen" id="moment-kacheln"></div>
       <p class="raster-hinweis">Tippen zählt einen Moment. Lang drücken nimmt den letzten zurück.</p>
     </section>
@@ -94,14 +95,6 @@
       </div>
 
       <div class="card">
-        <div class="card-header"><h2>Balance zeigen als</h2></div>
-        <div class="seg" id="seg-balance-stil" role="group" aria-label="Balance-Darstellung">
-          <button type="button" data-stil="band">Band</button>
-          <button type="button" data-stil="waage">Waage</button>
-        </div>
-      </div>
-
-      <div class="card">
         <div class="card-header"><h2>Daten</h2></div>
         <p class="card-text">Alles bleibt auf diesem Gerät. Nichts wird übertragen. Mit einer Sicherungsdatei lassen sich die Daten auf ein anderes Gerät mitnehmen.</p>
         <div class="btn-reihe">
@@ -151,9 +144,19 @@
       <div class="modal-body">
         <aside class="haltung">
           <h4>Rhythm is it!</h4>
-          <p>Boxenstopps über den Tag bringen Regeneration und halten dich leistungsfähig. MemoMe zeigt, wie sich Aktivität und Regeneration bei dir verteilen, ohne Punkte, ohne Lücken, ohne Mahnung. Die Mischung macht’s.</p>
+          <p>Boxenstopps über den Tag bringen Regeneration und halten dich im Takt. MemoMe zeigt, wie sich Aktivität und Regeneration bei dir verteilen, ohne Punkte, ohne Lücken, ohne Mahnung. Die Mischung macht’s.</p>
           <p><em>Anhalten. Auftanken. Weiter im eigenen Takt.</em></p>
         </aside>
+        <div class="modal-section">
+          <div class="modal-section-title"><span class="hz-i klein" data-i="installieren"></span>Erste Schritte</div>
+          <div class="hz-liste">
+            <div class="hz"><span class="hz-i" data-i="browser" data-ton=""></span><div class="hz-t"><strong>Browser</strong> — iPhone und iPad: Safari · Android: Chrome oder Firefox · Computer: Safari, Firefox, Chrome oder Edge</div></div>
+            <div class="hz"><span class="hz-i" data-i="installieren" data-ton=""></span><div class="hz-t"><strong>Zuerst zum Home-Bildschirm</strong> — iPhone/iPad: Safari → Teilen □↑ → „Zum Home-Bildschirm“ · Android (Chrome): ⋮ oben rechts → ganz unten „Installieren und Verknüpfung erstellen“ (Firefox: Menü → „Installieren“) · bei der Warnung „Unsichere App blockiert“ (Play Protect): „Trotzdem installieren“, sie betrifft allgemein das von Chrome gebaute App-Paket, nicht MemoMe</div></div>
+            <div class="hz"><span class="hz-i" data-i="geraet" data-ton=""></span><div class="hz-t"><strong>Warum installieren?</strong> — danach startet MemoMe wie eine App, auch offline · ohne Installation kann der Browser die Daten nach etwa 7 Tagen ohne Nutzung löschen</div></div>
+            <div class="hz"><span class="hz-i" data-i="update" data-ton=""></span><div class="hz-t"><strong>Nach einem Update</strong> — App ganz schließen und neu öffnen · oder „Neu laden“ im Hinweis unten</div></div>
+          </div>
+        </div>
+        <div class="modal-divider"></div>
         <div class="modal-section">
           <div class="modal-section-title"><span class="hz-i klein" data-i="heute"></span>Heute</div>
           <div class="hz-liste">
@@ -194,7 +197,7 @@
         <div class="modal-section">
           <div class="modal-section-title"><span class="hz-i klein" data-i="zahnrad"></span>Einstellungen · Zahnrad oben rechts</div>
           <div class="hz-liste">
-            <div class="hz"><span class="hz-i" data-i="gruppen" data-ton=""></span><div class="hz-t"><strong>Gruppen &amp; Momente</strong> — anlegen · umbenennen · sortieren ↑↓ · entfernen · Reihenfolge gilt überall</div></div>
+            <div class="hz"><span class="hz-i" data-i="gruppen" data-ton=""></span><div class="hz-t"><strong>Gruppen &amp; Momente</strong> — Gruppe antippen → aufklappen · ✎ → umbenennen oder entfernen · Momente anlegen · sortieren ↑↓ · Reihenfolge gilt überall</div></div>
             <div class="hz"><span class="hz-i" data-i="modus" data-ton="mich"></span><div class="hz-t"><strong>Modus</strong> — erholsam · aktiv für mich (Sport, Musik) · aktiv (Hausarbeit)</div></div>
             <div class="hz"><span class="hz-i" data-i="dauer" data-ton=""></span><div class="hz-t"><strong>Dauer</strong> — min · Std · Tage · Tage = ganzer Tag (Urlaub): Kachel „Tag 3“ · erneut tippen → heute aus · nicht in der Balance · Arbeit wie am freien Tag</div></div>
             <div class="hz"><span class="hz-i" data-i="leuchtturm" data-ton="licht"></span><div class="hz-t"><strong>Bedeutung</strong> — normal · mehr · stark · nur das Leuchten, nie die Balance · bei Änderung: ab jetzt oder auch rückwirkend</div></div>
@@ -225,13 +228,13 @@
         </div>
         <div class="modal-divider"></div>
         <p class="modal-meta">Daten bleiben auf diesem Gerät. MemoMe ersetzt keine ärztliche oder psychologische Beratung.</p>
-        <p class="modal-meta modal-meta-build">Version 1.3 · Klaus Teltenkötter 2026</p>
+        <p class="modal-meta modal-meta-build">Version 1.4 · Klaus Teltenkötter 2026</p>
       </div>
     </div>
   </div>
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=39"></script>
+  <script src="app.js?v=43"></script>
 </body>
 </html>

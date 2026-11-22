@@ -147,8 +147,6 @@ main {
 .band-legende .reg { color: rgba(var(--reg-rgb), 0.9); }
 .band.klein { height: 8px; }
 
-.waage { display: block; width: 100%; max-width: 320px; height: auto; margin: 0 auto; }
-.waage .balken { transition: transform 0.7s cubic-bezier(.3,1.4,.5,1); }
 
 /* ── KACHELN ────────────────────────────────────────── */
 .kachel-raster { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
@@ -702,3 +700,17 @@ html.voll-offen, html.voll-offen body { overflow: hidden; }
 #tag-voll .tag-legende { margin-top: 0.4rem; }
 .btn-voll { font-size: 0.95rem; line-height: 1; padding: 0.3rem 0.55rem; }
 #tag-karte { cursor: zoom-in; }
+
+/* Einstellungen: Gruppen geschlossen, deutlich aufklappbar */
+.gm-kopf { display: flex; align-items: center; gap: 0.4rem; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,0.03); }
+.gm-kopf.auf { border-color: var(--border-strong); background: rgba(255,255,255,0.05); }
+.gm-kopf .gm-gruppe { flex: 1; border: 0; padding: 0.8rem 0.4rem 0.8rem 0.8rem; color: var(--text); font-size: 0.95rem; font-weight: 600; text-transform: none; letter-spacing: 0; justify-content: flex-start; }
+.gm-kopf .gm-gruppe .nm { flex: 1; }
+.gm-dreieck { display: inline-block; width: 1rem; color: var(--text-dim); font-size: 1.1rem; transition: transform 0.2s; }
+.gm-kopf.auf .gm-dreieck { transform: rotate(90deg); }
+.gm-anzahl { font-size: 0.75rem; font-weight: 500; color: var(--hint); }
+.gm-stift { flex: 0 0 auto; width: 2.4rem; height: 2.4rem; margin-right: 0.3rem; border-radius: 50%; background: none; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 0.9rem; }
+.gm-kopf .sort-pfeile { margin-right: 0.4rem; }
+.gm-inhalt { padding: 0.2rem 0 0.4rem 0.4rem; }
+.gm-liste { gap: 0.55rem; }
+.start-hinweis { font-size: 0.78rem; color: var(--hint); text-align: center; margin: 0.2rem 1rem 0.9rem; line-height: 1.45; }

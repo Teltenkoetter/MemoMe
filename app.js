@@ -4,7 +4,7 @@
 
 // ── Grunddaten ─────────────────────────────────────────
 // Gruppen liegen in S (selbst anlegbar, sortierbar). GRUPPEN ist daraus gebaut: id → Name, in der eingestellten Reihenfolge.
-const START_GRUPPEN = [ { id: 'family', name: 'Family' }, { id: 'social', name: 'Social' }, { id: 'metime', name: 'Me-Time' } ];
+const START_GRUPPEN = [ { id: 'family', name: 'Family' }, { id: 'metime', name: 'Me-Time' }, { id: 'social', name: 'Social' } ];
 let GRUPPEN = {};
 function gruppenAktualisieren() {
   GRUPPEN = {}; for (const g of S.gruppen) GRUPPEN[g.id] = g.name;
@@ -24,13 +24,15 @@ const WAHL_TEXT = (art, w) => (WAHL[art].werte.find(x => x[0] === w) || [w, w])[
 const wahlAn = art => S.einstellungen['zeige_' + art] !== false;
 
 // Piktogramme: 24er-Raster, Linie 1.75, runde Enden, currentColor (wie im MemoMe Design System)
-const PIKTO = {"kaffee":"<path d=\"M4 9h12v4.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5Z\"/><path d=\"M16 10.5h1.5a2.75 2.75 0 0 1 0 5.5H16\"/><path d=\"M8 3.5v2.5M12 3.5v2.5\"/><path d=\"M3 21.5h14\"/>","cello":"<path d=\"M12 7.4C9.8 7.4 8.4 8.5 8.4 10.3c0 1.2 1 1.8 1 2.8s-2 1.7-2 3.9c0 2.4 2 3.7 4.6 3.7s4.6-1.3 4.6-3.7c0-2.2-2-2.9-2-3.9s1-1.6 1-2.8c0-1.8-1.4-2.9-3.6-2.9Z\"/><path d=\"M12 16.2V1.8M10.9 3.4h2.2M10.4 16.2h3.2M12 20.7v2.3\"/>","sport":"<circle cx=\"15.5\" cy=\"4.2\" r=\"1.9\"/><path d=\"M13.6 8 10.6 13.6\"/><path d=\"M13.6 8l2.8 2.6 2.4-1.4\"/><path d=\"M13.6 8 10.2 8.6 8 10.8\"/><path d=\"M10.6 13.6l3.4 2.8-1 4.8\"/><path d=\"M10.6 13.6 8.4 17.2 4.6 17.6\"/>","meditation":"<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 8.4v6.2\"/><path d=\"M12 9.6l-4.4 4.6 3 2.2M12 9.6l4.4 4.6-3 2.2\"/><path d=\"M4 19.5c2.4-2.6 5.2-3.2 8-3.2s5.6.6 8 3.2Z\"/>","spaziergang":"<circle cx=\"12.6\" cy=\"4.2\" r=\"1.9\"/><path d=\"M12.2 8l-.8 6.2\"/><path d=\"M11.4 14.2l2.4 3.2.6 3.6M11.4 14.2l-1.8 3.4-1.4 3.4\"/><path d=\"M12.2 8.6l2.6 3.2M12.2 8.6 9.6 11.6\"/><path d=\"M17.4 11v10\"/>","lesen":"<path d=\"M3 5.6c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1Z\"/><path d=\"M12 6.6v13\"/>","offline":"<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.6\"/><path d=\"M10.6 5h2.8\"/><path d=\"M4 4l16 16\"/>","familie":"<circle cx=\"7\" cy=\"6\" r=\"2.2\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\"/><circle cx=\"12\" cy=\"12.6\" r=\"1.4\"/><path d=\"M3.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M13.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M10.6 20.5v-3a1.4 1.4 0 0 1 2.8 0v3\"/>","zuzweit":"<circle cx=\"9\" cy=\"12\" r=\"5.6\"/><circle cx=\"15\" cy=\"12\" r=\"5.6\"/>","freunde":"<g transform=\"rotate(-12 7.5 13)\"><path d=\"M4.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3H6.9a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><g transform=\"rotate(12 16.5 13)\"><path d=\"M13.6 8h5.8l-.9 10a1.4 1.4 0 0 1-1.4 1.3h-1.2a1.4 1.4 0 0 1-1.4-1.3Z\"/></g><path d=\"M12 2.5v2.2M9.4 3.3l.9 1.6M14.6 3.3l-.9 1.6\"/>","coding":"<path d=\"M8 7l-5 5 5 5M16 7l5 5-5 5M13.6 5l-3.2 14\"/>","brot":"<path d=\"M3 14c0-4 4-6.5 9-6.5s9 2.5 9 6.5c0 2-1.5 3.5-3.5 3.5h-11C4.5 17.5 3 16 3 14Z\"/><path d=\"M8 9.4l1.4 3.2M12 8.8v3.6M16 9.4l-1.4 3.2\"/><path d=\"M5 20.5h14\"/>","feierabend":"<path d=\"M5.5 21.5V3\"/><path d=\"M5.5 3.8h12.5l-2.6 4.2 2.6 4.2H5.5\"/>","schlaf":"<path d=\"M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1Z\"/>","kultur":"<path d=\"M4 9.5 12 4l8 5.5\"/><path d=\"M5 20.5h14M6.5 10.5v8M10 10.5v8M14 10.5v8M17.5 10.5v8\"/>","gruene":"<path d=\"M6 19c0-8 5-13 13-13 0 8-5 13-13 13Z\"/><path d=\"M4 21l9-9\"/>","kinder":"<circle cx=\"8\" cy=\"4.6\" r=\"1.9\"/><path d=\"M8 8.2v7.3M8 15.5l-2.2 5.5M8 15.5l2.2 5.5M8 10.2l4.6 2.8\"/><circle cx=\"16.5\" cy=\"10.8\" r=\"1.5\"/><path d=\"M16.5 13.6v4.2M16.5 17.8l-1.6 3.2M16.5 17.8l1.6 3.2M16.5 14.6l-3.9-1.6\"/>","orga":"<rect x=\"5\" y=\"4.5\" width=\"14\" height=\"16.5\" rx=\"2.5\"/><rect x=\"8.5\" y=\"2.6\" width=\"7\" height=\"3.8\" rx=\"1.3\"/><path d=\"M8.6 11.2h.4M11.8 11.2h3.8M8.6 14.6h.4M11.8 14.6h3.8M8.6 18h.4M11.8 18h3.8\"/>","haus":"<path d=\"M12 2.5v9\"/><path d=\"M7.5 11.5h9l1.6 9H5.9Z\"/><path d=\"M9.6 15v5.5M12 15v5.5M14.4 15v5.5\"/>","kraft":"<path d=\"M7 12h10\"/><rect x=\"3.5\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><rect x=\"17\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><path d=\"M2 10.5v3M22 10.5v3\"/>","musik":"<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/><rect x=\"16.8\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/>","wlanaus":"<path d=\"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\".9\"/><path d=\"M4 4l16 16\"/>","buehne":"<path d=\"M5 3.5h14v7.5a7 7 0 0 1-14 0Z\"/><path d=\"M8.3 9.2c.6-.8 1.6-.8 2.2 0M13.5 9.2c.6-.8 1.6-.8 2.2 0\"/><path d=\"M8.8 13.6a3.6 3.6 0 0 0 6.4 0\"/>","tee":"<path d=\"M4 10.5h16c0 4.7-3.6 8.5-8 8.5s-8-3.8-8-8.5Z\"/><path d=\"M9 19l-.6 2h7.2l-.6-2\"/><path d=\"M9.5 3.5c-1 1.2 1 2 0 3.3M14.5 3.5c-1 1.2 1 2 0 3.3\"/>","essen":"<circle cx=\"14\" cy=\"12.5\" r=\"6.8\"/><circle cx=\"14\" cy=\"12.5\" r=\"3.6\"/><path d=\"M2.8 3.5v4.2a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v17\"/>","trinken":"<path d=\"M5.5 3.5h13l-1.7 16.3a1.8 1.8 0 0 1-1.8 1.6H9a1.8 1.8 0 0 1-1.8-1.6Z\"/><path d=\"M6.4 11.2c1.9-.9 3.7-.9 5.6 0s3.7.9 5.6 0\"/>","gespraech":"<path d=\"M4.5 4h9a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H8.5L5.5 15v-2.5h-1a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M18 9h1.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1V20l-3-2.5h-4a2 2 0 0 1-2-1.6\"/>","urlaub":"<circle cx=\"12\" cy=\"9\" r=\"3.5\"/><path d=\"M12 2.5v1.5M6.3 4.3l1 1M17.7 4.3l-1 1M4 9h1.5M18.5 9H20\"/><path d=\"M3 15.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1\"/><path d=\"M6 19.5c1.2 0 1.2-.8 2.4-.8s1.2.8 2.4.8 1.2-.8 2.4-.8 1.2.8 2.4.8 1.2-.8 2.4-.8\"/>"};
+const PIKTO = {"kaffee":"<path d=\"M4 9h12v4.5A5.5 5.5 0 0 1 10.5 19h-1A5.5 5.5 0 0 1 4 13.5Z\"/><path d=\"M16 10.5h1.5a2.75 2.75 0 0 1 0 5.5H16\"/><path d=\"M8 3.5v2.5M12 3.5v2.5\"/><path d=\"M3 21.5h14\"/>","cello":"<path d=\"M12 7.4C9.8 7.4 8.4 8.5 8.4 10.3c0 1.2 1 1.8 1 2.8s-2 1.7-2 3.9c0 2.4 2 3.7 4.6 3.7s4.6-1.3 4.6-3.7c0-2.2-2-2.9-2-3.9s1-1.6 1-2.8c0-1.8-1.4-2.9-3.6-2.9Z\"/><path d=\"M12 16.2V1.8M10.9 3.4h2.2M10.4 16.2h3.2M12 20.7v2.3\"/>","sport":"<circle cx=\"15.5\" cy=\"4.2\" r=\"1.9\"/><path d=\"M13.6 8 10.6 13.6\"/><path d=\"M13.6 8l2.8 2.6 2.4-1.4\"/><path d=\"M13.6 8 10.2 8.6 8 10.8\"/><path d=\"M10.6 13.6l3.4 2.8-1 4.8\"/><path d=\"M10.6 13.6 8.4 17.2 4.6 17.6\"/>","meditation":"<circle cx=\"12\" cy=\"4.6\" r=\"2\"/><path d=\"M12 8.4v6.2\"/><path d=\"M12 9.6l-4.4 4.6 3 2.2M12 9.6l4.4 4.6-3 2.2\"/><path d=\"M4 19.5c2.4-2.6 5.2-3.2 8-3.2s5.6.6 8 3.2Z\"/>","spaziergang":"<circle cx=\"12.6\" cy=\"4.2\" r=\"1.9\"/><path d=\"M12.2 8l-.8 6.2\"/><path d=\"M11.4 14.2l2.4 3.2.6 3.6M11.4 14.2l-1.8 3.4-1.4 3.4\"/><path d=\"M12.2 8.6l2.6 3.2M12.2 8.6 9.6 11.6\"/><path d=\"M17.4 11v10\"/>","lesen":"<path d=\"M3 5.6c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1Z\"/><path d=\"M12 6.6v13\"/>","offline":"<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.6\"/><path d=\"M10.6 5h2.8\"/><path d=\"M4 4l16 16\"/>","familie":"<circle cx=\"7\" cy=\"6\" r=\"2.2\"/><circle cx=\"17\" cy=\"6\" r=\"2.2\"/><circle cx=\"12\" cy=\"12.6\" r=\"1.4\"/><path d=\"M3.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M13.5 20.5v-6a3.5 3.5 0 0 1 7 0v6M10.6 20.5v-3a1.4 1.4 0 0 1 2.8 0v3\"/>","zuzweit":"<circle cx=\"9\" cy=\"12\" r=\"5.6\"/><circle cx=\"15\" cy=\"12\" r=\"5.6\"/>","freunde":"<circle cx=\"6.5\" cy=\"4.6\" r=\"1.9\"/><path d=\"M6.5 8.2v7.3M6.5 15.5l-2 5.5M6.5 15.5l2 5.5M6.5 10.2l4.9-3.4\"/><circle cx=\"17.5\" cy=\"4.6\" r=\"1.9\"/><path d=\"M17.5 8.2v7.3M17.5 15.5l-2 5.5M17.5 15.5l2 5.5M17.5 10.2l-4.9-3.4\"/><path d=\"M12 2v1.6M10.2 2.6l.6 1M13.8 2.6l-.6 1\"/>","coding":"<path d=\"M8 7l-5 5 5 5M16 7l5 5-5 5M13.6 5l-3.2 14\"/>","brot":"<path d=\"M3 14c0-4 4-6.5 9-6.5s9 2.5 9 6.5c0 2-1.5 3.5-3.5 3.5h-11C4.5 17.5 3 16 3 14Z\"/><path d=\"M8 9.4l1.4 3.2M12 8.8v3.6M16 9.4l-1.4 3.2\"/><path d=\"M5 20.5h14\"/>","feierabend":"<path d=\"M5.5 21.5V3\"/><path d=\"M5.5 3.8h12.5l-2.6 4.2 2.6 4.2H5.5\"/>","schlaf":"<path d=\"M19.5 14.6A8 8 0 1 1 9.4 4.5a6.4 6.4 0 0 0 10.1 10.1Z\"/>","kultur":"<path d=\"M4 9.5 12 4l8 5.5\"/><path d=\"M5 20.5h14M6.5 10.5v8M10 10.5v8M14 10.5v8M17.5 10.5v8\"/>","gruene":"<path d=\"M6 19c0-8 5-13 13-13 0 8-5 13-13 13Z\"/><path d=\"M4 21l9-9\"/>","kinder":"<circle cx=\"8\" cy=\"4.6\" r=\"1.9\"/><path d=\"M8 8.2v7.3M8 15.5l-2.2 5.5M8 15.5l2.2 5.5M8 10.2l4.6 2.8\"/><circle cx=\"16.5\" cy=\"10.8\" r=\"1.5\"/><path d=\"M16.5 13.6v4.2M16.5 17.8l-1.6 3.2M16.5 17.8l1.6 3.2M16.5 14.6l-3.9-1.6\"/>","orga":"<rect x=\"5\" y=\"4.5\" width=\"14\" height=\"16.5\" rx=\"2.5\"/><rect x=\"8.5\" y=\"2.6\" width=\"7\" height=\"3.8\" rx=\"1.3\"/><path d=\"M8.6 11.2h.4M11.8 11.2h3.8M8.6 14.6h.4M11.8 14.6h3.8M8.6 18h.4M11.8 18h3.8\"/>","haus":"<path d=\"M12 2.5v9\"/><path d=\"M7.5 11.5h9l1.6 9H5.9Z\"/><path d=\"M9.6 15v5.5M12 15v5.5M14.4 15v5.5\"/>","kraft":"<path d=\"M7 12h10\"/><rect x=\"3.5\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><rect x=\"17\" y=\"7.5\" width=\"3.5\" height=\"9\" rx=\"1.2\"/><path d=\"M2 10.5v3M22 10.5v3\"/>","musik":"<path d=\"M4 15v-3a8 8 0 0 1 16 0v3\"/><rect x=\"3\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/><rect x=\"16.8\" y=\"14\" width=\"4.2\" height=\"6.5\" rx=\"1.8\"/>","wlanaus":"<path d=\"M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.5 16a5 5 0 0 1 7 0\"/><circle cx=\"12\" cy=\"19.4\" r=\".9\"/><path d=\"M4 4l16 16\"/>","buehne":"<path d=\"M5 3.5h14v7.5a7 7 0 0 1-14 0Z\"/><path d=\"M8.3 9.2c.6-.8 1.6-.8 2.2 0M13.5 9.2c.6-.8 1.6-.8 2.2 0\"/><path d=\"M8.8 13.6a3.6 3.6 0 0 0 6.4 0\"/>","tee":"<path d=\"M4 10.5h16c0 4.7-3.6 8.5-8 8.5s-8-3.8-8-8.5Z\"/><path d=\"M9 19l-.6 2h7.2l-.6-2\"/><path d=\"M9.5 3.5c-1 1.2 1 2 0 3.3M14.5 3.5c-1 1.2 1 2 0 3.3\"/>","essen":"<circle cx=\"14\" cy=\"12.5\" r=\"6.8\"/><circle cx=\"14\" cy=\"12.5\" r=\"3.6\"/><path d=\"M2.8 3.5v4.2a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v17\"/>","trinken":"<path d=\"M5.5 3.5h13l-1.7 16.3a1.8 1.8 0 0 1-1.8 1.6H9a1.8 1.8 0 0 1-1.8-1.6Z\"/><path d=\"M6.4 11.2c1.9-.9 3.7-.9 5.6 0s3.7.9 5.6 0\"/>","gespraech":"<path d=\"M4.5 4h9a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H8.5L5.5 15v-2.5h-1a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z\"/><path d=\"M18 9h1.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2h-1V20l-3-2.5h-4a2 2 0 0 1-2-1.6\"/>","urlaub":"<circle cx=\"12\" cy=\"9\" r=\"3.5\"/><path d=\"M12 2.5v1.5M6.3 4.3l1 1M17.7 4.3l-1 1M4 9h1.5M18.5 9H20\"/><path d=\"M3 15.5c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1\"/><path d=\"M6 19.5c1.2 0 1.2-.8 2.4-.8s1.2.8 2.4.8 1.2-.8 2.4-.8 1.2.8 2.4.8 1.2-.8 2.4-.8\"/>","telefon":"<path d=\"M6.6 3.5h2.6l1.6 4.2-2.1 1.5a11.5 11.5 0 0 0 6.1 6.1l1.5-2.1 4.2 1.6v2.6a2.1 2.1 0 0 1-2.2 2.1A16.4 16.4 0 0 1 4.5 5.7a2.1 2.1 0 0 1 2.1-2.2Z\"/>","nixtun":"<path d=\"M3 4v16.5M21 4v16.5\"/><path d=\"M3 6.5l3.2 4.8M21 6.5l-3.2 4.8\"/><path d=\"M6.2 11.3Q12 17.2 17.8 11.3\"/><circle cx=\"8.6\" cy=\"9.4\" r=\"1.6\"/><path d=\"M10.6 11.6Q13.6 13.4 16.4 10.9\"/>"};
+// nicht mehr in der Auswahl (bleiben für Schlaf, Arbeit und ältere Momente erhalten)
+const PIKTO_VERSTECKT = ['gruene', 'feierabend', 'schlaf'];
 function pikto(name, cls = 'pikto', strich = 1.75) {
   const p = PIKTO[name]; if (!p) return '';
   return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strich}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 }
 // Hilfe: schlichte Liniensymbole, wo vorhanden aus den Piktogrammen der App
-const HZ = {"heute": "<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/>", "tippen": "<circle cx=\"12\" cy=\"12\" r=\"2.5\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/>", "halten": "<path d=\"M4.5 12a7.5 7.5 0 1 0 2.2-5.3\"/><path d=\"M4.5 4.5v4h4\"/>", "runden": "<path d=\"M16.5 3l3 3-3 3\"/><path d=\"M4.5 11V9.5A3.5 3.5 0 0 1 8 6h11.5\"/><path d=\"M7.5 21l-3-3 3-3\"/><path d=\"M19.5 13v1.5A3.5 3.5 0 0 1 16 18H4.5\"/>", "rahmen": "<rect x=\"3.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"10\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"16.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/>", "frei": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/>", "herz": "<path d=\"M12 19.5s-7-4.3-7-9.6A3.9 3.9 0 0 1 12 7.6a3.9 3.9 0 0 1 7 2.3c0 5.3-7 9.6-7 9.6Z\"/>", "balance": "<path d=\"M12 4v16M7 20h10M5.5 8h13\"/><path d=\"M5.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/><path d=\"M18.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/>", "wischen": "<path d=\"M12 3.5v12\"/><path d=\"M7.5 11l4.5 4.5 4.5-4.5\"/><path d=\"M5 20.5h14\"/>", "woche": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2.5\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/>", "gruppen": "<path d=\"M4 7h11M4 12h16M4 17h7\"/>", "licht": "<path d=\"M12 3.5l2 5.5 5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2Z\"/>", "wolke": "<ellipse cx=\"12\" cy=\"12\" rx=\"4.5\" ry=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"0.9\"/>", "filter": "<path d=\"M4 5.5h16l-6 7v5.5l-4 2v-7.5Z\"/>", "zoom": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"M15.5 15.5l5 5M10.5 8v5M8 10.5h5\"/>", "druck": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21\"/>", "schirm": "<path d=\"M3.5 11.5a8.5 8.5 0 0 1 17 0Z\"/><path d=\"M12 11.5v7a2 2 0 0 1-4 0\"/>", "abschluss": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "rueckschau": "<path d=\"M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5Z\"/><path d=\"M5 20.5v-15M19 18v3H7.5\"/>", "zahnrad": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1\"/>", "modus": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 4a8 8 0 0 1 0 16Z\" fill=\"currentColor\" stroke=\"none\" opacity=\"0.45\"/>", "dauer": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 7.5V12l3 2\"/>", "leuchtturm": "<path d=\"M10 21l.9-11h2.2l.9 11Z\"/><path d=\"M8.5 21h7M10.5 10V7.5h3V10M12 7.5V5.5\"/><path d=\"M4.5 6l3.5 1.5M19.5 6L16 7.5\"/>", "geraet": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.5\"/><path d=\"M11 18.5h2\"/>", "sichern": "<path d=\"M12 3.5v10.5\"/><path d=\"M8 10l4 4 4-4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "laden": "<path d=\"M12 14V3.5\"/><path d=\"M8 7.5l4-4 4 4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "update": "<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"/><path d=\"M19.5 4.5v4h-4\"/>", "loeschen": "<path d=\"M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13\"/>", "werkzeug": "<path d=\"M14.5 4a5 5 0 0 0-4.3 7.2L4 17.4V20h2.6l6.2-6.2A5 5 0 0 0 20 9.5l-2.8 1.1-2-2L16.3 5.8A5 5 0 0 0 14.5 4Z\"/>"};
+const HZ = {"browser": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M3.5 12h17M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5S14.6 18.1 12 20.5M12 3.5C9.4 5.9 8.2 8.7 8.2 12s1.2 6.1 3.8 8.5\"/>", "installieren": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.5\"/><path d=\"M12 8v6M9 11h6\"/>", "heute": "<rect x=\"4\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"4\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"4\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13\" y=\"13\" width=\"7\" height=\"7\" rx=\"2\"/>", "tippen": "<circle cx=\"12\" cy=\"12\" r=\"2.5\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/>", "halten": "<path d=\"M4.5 12a7.5 7.5 0 1 0 2.2-5.3\"/><path d=\"M4.5 4.5v4h4\"/>", "runden": "<path d=\"M16.5 3l3 3-3 3\"/><path d=\"M4.5 11V9.5A3.5 3.5 0 0 1 8 6h11.5\"/><path d=\"M7.5 21l-3-3 3-3\"/><path d=\"M19.5 13v1.5A3.5 3.5 0 0 1 16 18H4.5\"/>", "rahmen": "<rect x=\"3.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"10\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/><rect x=\"16.5\" y=\"5\" width=\"4\" height=\"14\" rx=\"1.5\"/>", "frei": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/>", "herz": "<path d=\"M12 19.5s-7-4.3-7-9.6A3.9 3.9 0 0 1 12 7.6a3.9 3.9 0 0 1 7 2.3c0 5.3-7 9.6-7 9.6Z\"/>", "balance": "<path d=\"M12 4v16M7 20h10M5.5 8h13\"/><path d=\"M5.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/><path d=\"M18.5 8l-2.5 6a2.5 2.5 0 0 0 5 0Z\"/>", "wischen": "<path d=\"M12 3.5v12\"/><path d=\"M7.5 11l4.5 4.5 4.5-4.5\"/><path d=\"M5 20.5h14\"/>", "woche": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2.5\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/>", "gruppen": "<path d=\"M4 7h11M4 12h16M4 17h7\"/>", "licht": "<path d=\"M12 3.5l2 5.5 5.5 2-5.5 2-2 5.5-2-5.5-5.5-2 5.5-2Z\"/>", "wolke": "<ellipse cx=\"12\" cy=\"12\" rx=\"4.5\" ry=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"0.9\"/>", "filter": "<path d=\"M4 5.5h16l-6 7v5.5l-4 2v-7.5Z\"/>", "zoom": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"M15.5 15.5l5 5M10.5 8v5M8 10.5h5\"/>", "druck": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21\"/>", "schirm": "<path d=\"M3.5 11.5a8.5 8.5 0 0 1 17 0Z\"/><path d=\"M12 11.5v7a2 2 0 0 1-4 0\"/>", "abschluss": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "rueckschau": "<path d=\"M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5Z\"/><path d=\"M5 20.5v-15M19 18v3H7.5\"/>", "zahnrad": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1\"/>", "modus": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 4a8 8 0 0 1 0 16Z\" fill=\"currentColor\" stroke=\"none\" opacity=\"0.45\"/>", "dauer": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 7.5V12l3 2\"/>", "leuchtturm": "<path d=\"M10 21l.9-11h2.2l.9 11Z\"/><path d=\"M8.5 21h7M10.5 10V7.5h3V10M12 7.5V5.5\"/><path d=\"M4.5 6l3.5 1.5M19.5 6L16 7.5\"/>", "geraet": "<rect x=\"7\" y=\"2.5\" width=\"10\" height=\"19\" rx=\"2.5\"/><path d=\"M11 18.5h2\"/>", "sichern": "<path d=\"M12 3.5v10.5\"/><path d=\"M8 10l4 4 4-4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "laden": "<path d=\"M12 14V3.5\"/><path d=\"M8 7.5l4-4 4 4\"/><path d=\"M4.5 15v3.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V15\"/>", "update": "<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"/><path d=\"M19.5 4.5v4h-4\"/>", "loeschen": "<path d=\"M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13\"/>", "werkzeug": "<path d=\"M14.5 4a5 5 0 0 0-4.3 7.2L4 17.4V20h2.6l6.2-6.2A5 5 0 0 0 20 9.5l-2.8 1.1-2-2L16.3 5.8A5 5 0 0 0 14.5 4Z\"/>"};
 const hzIcon = name => { const p = HZ[name] || PIKTO[name]; return p ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>` : ''; };
 // Herz für „Angebot für andere“: Umriss grau = offen, gefüllt = angekommen
 const HERZ = '<svg class="herz" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.3s-7.6-4.7-7.6-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.6 2.7c0 5.5-7.6 10.2-7.6 10.2Z"/></svg>';
@@ -49,7 +51,23 @@ function wocheAusKey(k) {
 const hatSymbol = m => !!((m.icon && PIKTO[m.icon]) || (m.icon !== 'kein' && m.symbol));
 const symbolHTML = (m, strich) => (m.icon && PIKTO[m.icon]) ? pikto(m.icon, 'pikto', strich) : (m.icon !== 'kein' && m.symbol) ? `<span class="zeichen">${esc(m.symbol)}</span>` : '';
 
+// Startpaket für neue Nutzer: nur eine Starthilfe. Bestehende Daten bleiben bei Updates unberührt.
+// Alle drei Arten sind dabei (erholsam, aktiv für mich, aktiv), keine Richtwerte, keine Bedeutung, kein Tagesmoment.
 const START_MOMENTE = [
+  { id: 'familie',     name: 'Familienzeit',    icon: 'familie',     gruppe: 'family', modus: 'reg',    dauer: 60 },
+  { id: 'zuzweit',     name: 'Zeit zu zweit',   icon: 'zuzweit',     gruppe: 'family', modus: 'reg',    dauer: 60 },
+  { id: 'kinder',      name: 'Mit den Kindern', icon: 'kinder',      gruppe: 'family', modus: 'beides', dauer: 30 },
+  { id: 'haushalt',    name: 'Haushalt',        icon: 'haus',        gruppe: 'family', modus: 'akt',    dauer: 30 },
+  { id: 'spaziergang', name: 'Spaziergang',     icon: 'spaziergang', gruppe: 'metime', modus: 'reg',    dauer: 20 },
+  { id: 'lesen',       name: 'Lesen',           icon: 'lesen',       gruppe: 'metime', modus: 'reg',    dauer: 20 },
+  { id: 'sport',       name: 'Sport',           icon: 'sport',       gruppe: 'metime', modus: 'beides', dauer: 30 },
+  { id: 'nichtstun',   name: 'Nichts tun',      icon: 'nixtun',      gruppe: 'metime', modus: 'reg',    dauer: 10 },
+  { id: 'kaffee',      name: 'Kaffeepause',     icon: 'kaffee',      gruppe: 'social', modus: 'reg',    dauer: 15 },
+  { id: 'freunde',     name: 'Freunde treffen', icon: 'freunde',     gruppe: 'social', modus: 'beides', dauer: 60 },
+  { id: 'telefonat',   name: 'Telefonat',       icon: 'telefon',   gruppe: 'social', modus: 'reg',    dauer: 20 },
+];
+// frühere Startmomente: nur noch für die Umstellung sehr alter Daten (Piktogramme nachtragen)
+const FRUEHERE_MOMENTE = [
   { id: 'kaffee',      name: 'Kaffeepause',          symbol: '☕', icon: 'kaffee', gruppe: 'social', modus: 'reg',    dauer: 15 },
   { id: 'cello',       name: 'Cello',                symbol: '🎻', icon: 'cello', gruppe: 'metime', modus: 'reg',    dauer: 30 },
   { id: 'sport',       name: 'Sport / Joggen',       symbol: '🏃', icon: 'sport', gruppe: 'metime', modus: 'beides', dauer: 30 },
@@ -237,7 +255,7 @@ function balance(taps, tage) {
 function balanceHTML(b, stil, titel) {
   const kopf = `<div class="balance-kopf"><span class="label">${esc(titel)}</span>
     <span class="balance-wort${b.sum ? '' : ' leer'}">${esc(b.wort)}</span></div>`;
-  if (stil === 'waage') return kopf + waageSVG(b);
+  // nur noch das Band: die Waage kippt und wirkt wie eine Wertung
   const a = b.sum ? b.akt : 1, r = b.sum ? b.reg : 1;
   const leer = b.sum ? '' : ' style="opacity:.35"';
   return kopf + `<div class="band" role="img" aria-label="Balance: ${esc(b.wort)}"${leer}>
@@ -246,28 +264,6 @@ function balanceHTML(b, stil, titel) {
     <div class="band-legende"><span class="akt">Aktivität</span><span class="reg">Regeneration</span></div>`;
 }
 
-function waageSVG(b) {
-  const neig = b.sum ? (b.akt - b.reg) / b.sum : 0;     // >0: Aktivität schwerer
-  const a = -neig * 13 * Math.PI / 180;                  // links runter = gegen den Uhrzeigersinn
-  const cx = 160, cy = 34, L = 112;
-  const lx = cx - L * Math.cos(a), ly = cy - L * Math.sin(a);
-  const rx = cx + L * Math.cos(a), ry = cy + L * Math.sin(a);
-  const schale = (x, y, rgb, fuell) => `
-    <line x1="${x}" y1="${y}" x2="${x - 22}" y2="${y + 34}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
-    <line x1="${x}" y1="${y}" x2="${x + 22}" y2="${y + 34}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
-    <path d="M${x - 30} ${y + 34} Q ${x} ${y + 56} ${x + 30} ${y + 34} Z" fill="rgba(${rgb},${fuell})" stroke="rgba(${rgb},.9)" stroke-width="1.2"/>`;
-  const fa = b.sum ? 0.15 + 0.6 * (b.akt / b.sum) : 0.08, fr = b.sum ? 0.15 + 0.6 * (b.reg / b.sum) : 0.08;
-  return `<svg class="waage" viewBox="0 0 320 128" role="img" aria-label="Waage: ${esc(b.wort)}">
-    <path d="M${cx} ${cy} L ${cx - 16} 112 L ${cx + 16} 112 Z" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.18)"/>
-    <line x1="${cx - 40}" y1="114" x2="${cx + 40}" y2="114" stroke="rgba(255,255,255,.2)" stroke-width="2" stroke-linecap="round"/>
-    <line x1="${lx}" y1="${ly}" x2="${rx}" y2="${ry}" stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="${cx}" cy="${cy}" r="4.5" fill="#fafafa"/>
-    ${schale(lx, ly, '217,163,106', fa)}
-    ${schale(rx, ry, '134,189,181', fr)}
-    <text x="${lx}" y="${ly + 66}" text-anchor="middle" fill="rgba(217,163,106,.9)" font-size="11" font-family="Inter, sans-serif">Aktivität</text>
-    <text x="${rx}" y="${ry + 66}" text-anchor="middle" fill="rgba(134,189,181,.9)" font-size="11" font-family="Inter, sans-serif">Regeneration</text>
-  </svg>`;
-}
 
 // ── HEUTE ──────────────────────────────────────────────
 function renderHeute() {
@@ -328,6 +324,7 @@ function renderHeute() {
       ${ringSVG()}
     </button>`;
   };
+  $('#start-hinweis').classList.toggle('hidden', !istStartpaket());
   $('#moment-kacheln').innerHTML = [...Object.keys(GRUPPEN), ''].map(g => {
     const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
     if (!liste.length) return '';
@@ -337,6 +334,9 @@ function renderHeute() {
       <div class="kachel-raster">${liste.map(kachel).join('')}</div></section>`;
   }).join('');
 }
+// Starthilfe-Satz: nur solange Gruppen und Momente noch genau das Startpaket sind
+const istStartpaket = () => JSON.stringify(S.gruppen.map(g => [g.id, g.name])) === JSON.stringify(START_GRUPPEN.map(g => [g.id, g.name]))
+  && JSON.stringify(S.momente.map(m => [m.id, m.name, m.gruppe, m.modus, m.dauer, m.icon])) === JSON.stringify(START_MOMENTE.map(m => [m.id, m.name, m.gruppe, m.modus, m.dauer, m.icon]));
 const ringSVG = () => `<svg class="kachel-ring" viewBox="0 0 64 64" aria-hidden="true"><circle class="spur" cx="32" cy="32" r="28"/><circle class="fuell" cx="32" cy="32" r="28"/></svg>`;
 
 function puls(el) { el.classList.remove('puls'); void el.offsetWidth; el.classList.add('puls'); }
@@ -1130,6 +1130,7 @@ function abendSVG(abende) {
 }
 
 // ── VERWALTUNG ─────────────────────────────────────────
+const offeneGruppen = new Set();   // in den Einstellungen geöffnete Gruppen (beim Öffnen der Einstellungen wieder alle zu)
 function renderVerwaltung() {
   // Gruppen als Überschriften, darunter ihre Momente. Gleiche Reihenfolge wie auf Heute und in der Woche.
   const sort = sortiermodus;
@@ -1150,10 +1151,14 @@ function renderVerwaltung() {
     const liste = S.momente.filter(m => g ? m.gruppe === g : !GRUPPEN[m.gruppe]);
     if (!g && !liste.length) return '';
     const name = g ? GRUPPEN[g] : 'Ohne Gruppe';
-    const kopf = !g ? `<div class="gm-gruppe"><span class="nm">${esc(name)}</span></div>`
-      : sort ? `<div class="gm-gruppe sortieren"><span class="nm">${esc(name)}</span>${pfeile('g', g, gi, S.gruppen.length, name)}</div>`
-      : `<button class="gm-gruppe" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} bearbeiten"><span class="nm">${esc(name)}</span><span class="pfeil" aria-hidden="true">›</span></button>`;
-    return `<div class="gm-block">${kopf}${liste.map(zeile).join('')}${!sort && g ? `<button class="moment-zeile gm-neu" type="button" data-neu-moment="${esc(g)}"><span class="sym" aria-hidden="true"><span class="plus-kreis">+</span></span><span class="nm">Moment hinzufügen</span></button>` : ''}</div>`;
+    // Gruppen sind zu Beginn geschlossen: eine Zeile mit Pfeil und Anzahl, ✎ zum Umbenennen
+    const auf = offeneGruppen.has(g || '_ohne');
+    const anzahl = liste.length === 1 ? '1 Moment' : `${liste.length} Momente`;
+    const kopf = `<div class="gm-kopf${auf ? ' auf' : ''}">
+      <button class="gm-gruppe" type="button" data-gauf="${esc(g || '_ohne')}" aria-expanded="${auf}"><span class="gm-dreieck" aria-hidden="true">›</span><span class="nm">${esc(name)}</span><span class="gm-anzahl">${anzahl}</span></button>
+      ${!g ? '' : sort ? pfeile('g', g, gi, S.gruppen.length, name) : `<button class="gm-stift" type="button" data-gruppe="${esc(g)}" aria-label="Gruppe ${esc(name)} umbenennen oder entfernen">✎</button>`}</div>`;
+    const inhalt = auf ? `<div class="gm-inhalt">${liste.map(zeile).join('')}${!sort && g ? `<button class="moment-zeile gm-neu" type="button" data-neu-moment="${esc(g)}"><span class="sym" aria-hidden="true"><span class="plus-kreis">+</span></span><span class="nm">Moment hinzufügen</span></button>` : ''}</div>` : '';
+    return `<div class="gm-block">${kopf}${inhalt}</div>`;
   }).join('');
   for (const art of Object.keys(WAHL).filter(a => !WAHL[a].frei)) $('#zeige-' + art).checked = wahlAn(art);
   const at = S.einstellungen.arbeitstage || [1, 2, 3, 4, 5];
@@ -1163,17 +1168,17 @@ function renderVerwaltung() {
   $('#tag-wechsel').value = String(WECHSEL_H());
   $('#korridor-von').value = S.einstellungen.korridorVon;
   $('#korridor-bis').value = S.einstellungen.korridorBis;
-  document.querySelectorAll('#seg-balance-stil button').forEach(b => b.classList.toggle('an', b.dataset.stil === S.einstellungen.balanceStil));
+
 }
 
 function momentSheet(id, gruppeVorwahl) {
   const neu = !id;
-  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'gruene', gruppe: gruppeVorwahl || S.gruppen[0]?.id, modus: 'reg', dauer: 30 } : { ...moment(id) };
+  const m = neu ? { id: uid(), name: '', symbol: '', icon: 'kein', gruppe: gruppeVorwahl || S.gruppen[0]?.id, modus: 'reg', dauer: 30 } : { ...moment(id) };
   const segM = Object.entries(MODI).map(([k, t]) => `<button type="button" data-wert="${k}" class="${m.modus === k ? 'an' : ''}">${t}</button>`).join('');
   sheet(neu ? 'Neuer Moment' : m.name, `
     <div class="form-group"><label for="m-name">Name</label><input type="text" id="m-name" value="${esc(m.name)}" placeholder="z. B. Gartenzeit" maxlength="40"></div>
     <div class="form-group"><label>Piktogramm</label>
-      <div class="symbol-wahl" id="m-pikto">${Object.keys(PIKTO).map(k => `<button type="button" data-icon="${k}" class="${m.icon === k ? 'an' : ''}" aria-label="Piktogramm ${k}" aria-pressed="${m.icon === k}">${pikto(k)}</button>`).join('')}
+      <div class="symbol-wahl" id="m-pikto">${Object.keys(PIKTO).filter(k => !PIKTO_VERSTECKT.includes(k) || m.icon === k).map(k => `<button type="button" data-icon="${k}" class="${m.icon === k ? 'an' : ''}" aria-label="Piktogramm ${k}" aria-pressed="${m.icon === k}">${pikto(k)}</button>`).join('')}
         <button type="button" data-icon="kein" class="kein${hatSymbol(m) ? '' : ' an'}" aria-pressed="${!hatSymbol(m)}">kein Piktogramm</button></div>
       <p class="form-hinweis">Ohne Piktogramm steht der Name größer auf der Kachel.</p></div>
     <div class="form-group"><label>Modus</label><div class="seg modus-seg" id="m-modus">${segM}</div>
@@ -1326,7 +1331,7 @@ function toast(text, rueckgaengig) {
 
 let ansicht = 'heute', vorAnsicht = 'heute';
 function zeige(v) {
-  if (v === 'verwaltung' && ansicht !== 'verwaltung') vorAnsicht = ansicht;
+  if (v === 'verwaltung' && ansicht !== 'verwaltung') { vorAnsicht = ansicht; offeneGruppen.clear(); }
   if (v !== 'verwaltung') sortiermodus = false;
   if (v !== ansicht) { licht.clear(); heuteVersatz = 0; }   // Wechsel zwischen Heute und Verlauf: Scheinwerfer aus, Gruppen zu
   ansicht = v;
@@ -1396,6 +1401,8 @@ function verbinden() {
     if (gh) { verschieben(S.gruppen, gh.dataset.gHoch || gh.dataset.gRunter, gh.dataset.gHoch ? -1 : 1, () => true); return; }
     const neu = e.target.closest('[data-neu-moment]'); if (neu) { momentSheet(null, neu.dataset.neuMoment); return; }
     const b = e.target.closest('[data-edit]'); if (b) { momentSheet(b.dataset.edit); return; }
+    const ga = e.target.closest('[data-gauf]');
+    if (ga) { const k = ga.dataset.gauf; offeneGruppen.has(k) ? offeneGruppen.delete(k) : offeneGruppen.add(k); renderVerwaltung(); return; }
     const g = e.target.closest('[data-gruppe]'); if (g) gruppeSheet(g.dataset.gruppe);
   });
   $('#btn-sort').onclick = () => { sortiermodus = !sortiermodus; renderVerwaltung(); };
@@ -1422,7 +1429,7 @@ function verbinden() {
     S.einstellungen.arbeitstage = [...at].sort(); speichern(); renderVerwaltung(); renderHeute();
   };
   for (const art of Object.keys(WAHL).filter(a => !WAHL[a].frei)) $('#zeige-' + art).onchange = e => { S.einstellungen['zeige_' + art] = e.target.checked; speichern(); renderHeute(); };
-  document.querySelectorAll('#seg-balance-stil button').forEach(b => b.onclick = () => { S.einstellungen.balanceStil = b.dataset.stil; speichern(); renderVerwaltung(); });
+
   $('#btn-alles-loeschen').onclick = () => {
     sheet('Alle Einträge löschen', `<p class="card-text">Gezählte Momente, Feierabende und Schlaf-Einträge werden von diesem Gerät gelöscht. Die Momente selbst und die Einstellungen bleiben. Das lässt sich nicht rückgängig machen.</p>
       <div class="btn-reihe"><button class="btn-primary" id="del-ja" type="button">Einträge löschen</button><button class="btn-leise" id="del-nein" type="button">Abbrechen</button></div>`);
@@ -1468,7 +1475,7 @@ function zustandAus(alt) {
   const z = { ...startZustand(), ...alt, einstellungen: { ...startZustand().einstellungen, ...alt.einstellungen } };
   if (!(alt.stand >= 3)) {
     // Stand 3: Piktogramme für die Startmomente
-    for (const m of z.momente) { const st = START_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
+    for (const m of z.momente) { const st = FRUEHERE_MOMENTE.find(x => x.id === m.id); if (st && !m.icon) m.icon = st.icon; }
   }
   if (!(alt.stand >= 4)) {
     // Stand 4: Gruppen werden Daten
