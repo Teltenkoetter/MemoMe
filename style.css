@@ -664,6 +664,9 @@ select:disabled { opacity: 0.45; }
 .hz-t strong { color: var(--text); font-weight: 600; }
 /* Moment-Fenster (langer Druck): Nachtragen, Einträge des Tages */
 .chip-reihe { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.chip-reihe .btn-klein.an { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.45); color: var(--text); }
+@keyframes blitz { 0% { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.12); } 100% { } }
+input.blitz { animation: blitz 0.7s ease-out; }
 .chip-reihe .btn-klein { flex: 1 1 0; justify-content: center; text-align: center; padding-left: 0.3rem; padding-right: 0.3rem; white-space: nowrap; }
 .eintrag-liste { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.4rem 0 0.6rem; }
 .eintrag { display: flex; align-items: center; gap: 0.4rem; }
