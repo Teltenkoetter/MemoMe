@@ -15,8 +15,8 @@ const WAHL = {
   schlaf:  { name: 'Schlaf',  icon: 'schlaf',  werte: [['erholt', 'erholt'], ['mittel', 'mittel'], ['kurz', 'kurz']] },
   essen:   { name: 'Essen',   icon: 'essen',   werte: [['frisch', 'frisch'], ['gemischt', 'gemischt'], ['gegoennt', 'gegönnt']] },
   trinken: { name: 'Trinken', icon: 'trinken', werte: [['viel', 'reichlich'], ['mittel', 'mittel'], ['wenig', 'wenig']] },   // Schlüssel bleibt 'viel', angezeigt „reichlich“
-  // nur an freien Tagen statt Feierabend: wie viel vom freien Tag die Arbeit genommen hat; ohne Wahl ist der Tag frei
-  arbeit:  { name: 'Arbeit',  icon: 'feierabend', frei: true, werte: [['etwas', 'etwas'], ['halb', 'halber Tag'], ['ganz', 'ganzer Tag']] },
+  // Arbeit: eine Skala für alle Tage (gefühlt). Keine eigene Spalte, gewählt im Arbeitsfenster.
+  arbeit:  { name: 'Arbeit',  icon: 'feierabend', frei: true, werte: [['etwas', 'etwas'], ['halb', 'halb'], ['normal', 'normal'], ['viel', 'viel']] },
 };
 const TAGE_KURZ = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 const istArbeitstag = d => (S.einstellungen.arbeitstage || [1, 2, 3, 4, 5]).includes(d.getDay());
@@ -84,7 +84,7 @@ const FRUEHERE_MOMENTE = [
 function startZustand() {
   return {
     version: 1,
-    stand: 5,            // Datenstand: 5 = Gruppen und Momente in einer Liste, keine Untergruppen
+    stand: 6,            // Datenstand: 6 = Arbeit mit einer Skala (etwas · halb · normal · viel) und Zeitblöcken
     gruppen: START_GRUPPEN.map(g => ({ ...g })),
     momente: START_MOMENTE.map(m => ({ ...m })),
     taps: [],            // { id, mid, ts, min }
@@ -92,7 +92,9 @@ function startZustand() {
     schlaf: {},          // 'JJJJ-MM-TT' → 'erholt' | 'mittel' | 'kurz'
     essen: {},           // 'JJJJ-MM-TT' → 'frisch' | 'gemischt' | 'gegoennt'
     trinken: {},         // 'JJJJ-MM-TT' → 'viel' | 'mittel' | 'wenig'
-    arbeit: {},          // 'JJJJ-MM-TT' → 'etwas' | 'halb' | 'ganz' (nur an freien Tagen)
+    arbeit: {},          // früher: freie Tage (etwas | halb | ganz), seit Stand 6 in arbeitStufe
+    arbeitStufe: {},     // 'JJJJ-MM-TT' → 'etwas' | 'halb' | 'normal' | 'viel' (Arbeitstag ohne Wahl = normal, freier Tag ohne Wahl = frei)
+    arbeitZeit: {},      // 'JJJJ-MM-TT' → [{ von: 'HH:MM' | '', bis: 'HH:MM' | '' }] (mehrere Blöcke, alles freiwillig)
     wochen: {},          // 'JJJJ-Wkw' → { angebote: { mid: { an, mir } }, satz, abgeschlossen }
     einstellungen: { korridorVon: '17:30', korridorBis: '19:00', balanceStil: 'band', modus: 'einfach', zeige_schlaf: true, zeige_essen: true, zeige_trinken: true, arbeitstage: [1, 2, 3, 4, 5], arbeitGewicht: 3, arbeitInBalance: true, tagWechsel: 4 },
   };
@@ -194,7 +196,7 @@ function kw(d) {
 function einstiegTag() {
   let t = S.seit ? new Date(S.seit + 'T12:00').getTime() : Date.now();
   for (const x of S.taps) if (x.ts < t) t = x.ts;
-  for (const art of ['feierabend', 'schlaf', 'essen', 'trinken', 'arbeit', 'arbeitStufe'])
+  for (const art of ['feierabend', 'schlaf', 'essen', 'trinken', 'arbeit', 'arbeitStufe', 'arbeitZeit'])
     for (const k of Object.keys(S[art] || {})) { const d = new Date(k + 'T12:00').getTime(); if (d < t) t = d; }
   return new Date(t - WECHSEL_H() * 3600000);
 }
@@ -222,24 +224,37 @@ function tapsHeute() {
   return tapsZwischen(von, bis);
 }
 
-// Arbeit in der Balance: gefühlt in drei Stufen, gedämpft gewichtet (Regler in den Einstellungen).
-// Arbeitstag ohne Wahl = normal; heute erst, wenn Feierabend oder Stufe da ist. Freie Tage nach etwas · halber · ganzer Tag.
-const ARBEIT_STUFE = { leicht: 2 / 3, normal: 1, viel: 4 / 3 };
-const ARBEIT_FREI = { etwas: 1 / 3, halb: 2 / 3, ganz: 1 };
+// Arbeit in der Balance: gefühlt (etwas · halb · normal · viel), gedämpft gewichtet (Regler in den Einstellungen).
+// Die Uhrzeiten zählen nie mit, sie sind nur das Bild. Arbeitstag ohne Wahl = normal (heute erst, wenn etwas eingetragen ist),
+// freier Tag ohne Wahl = frei; mit Zeiten, aber ohne Wahl = etwas.
+const ARBEIT_STUFE = { etwas: 1 / 3, halb: 1 / 2, normal: 1, viel: 4 / 3 };
+const STUFEN = ['etwas', 'halb', 'normal', 'viel'];
+// Arbeitszeiten als Blöcke je Tag; Feierabend = Ende des letzten Blocks (für Korridor und Rahmen)
+const arbeitBloecke = k => (S.arbeitZeit || {})[k] || (S.feierabend[k] ? [{ von: '', bis: S.feierabend[k] }] : []);
+const zeitH = z => { const h = zuMin(z) / 60; return h < WECHSEL_H() ? h + 24 : h; };   // nach Mitternacht: 24, 25 …
+function arbeitSetzen(k, bl) {
+  bl = bl.filter(b => b.von || b.bis).map(b => ({ von: b.von || '', bis: b.bis || '' }))
+    .sort((a, b) => zeitH(a.von || a.bis) - zeitH(b.von || b.bis));
+  S.arbeitZeit ||= {};
+  if (bl.length) S.arbeitZeit[k] = bl; else delete S.arbeitZeit[k];
+  const letzt = bl[bl.length - 1];
+  if (letzt && letzt.bis) S.feierabend[k] = letzt.bis; else delete S.feierabend[k];
+}
+const freierTag = d => !(istArbeitstag(d) && !tagesmomentAn(d));
 const arbeitMitzaehlen = () => S.einstellungen.arbeitInBalance !== false;
 const stundenText = h => `${String(h).replace('.', ',')} ${h === 1 ? 'Stunde' : 'Stunden'}`;
-const gewichtText = n => `Ein normaler Arbeitstag zählt wie ${stundenText(n)} Aktivität, ein leichter wie ${stundenText(Math.round(n * 2 / 3 * 2) / 2)}, ein Tag mit viel Arbeit wie ${stundenText(Math.round(n * 4 / 3 * 2) / 2)}. Mehr Einfluss heißt: Arbeit wiegt in der Balance schwerer.`;
+const gewichtText = n => { const r = f => stundenText(Math.round(n * f * 2) / 2); return `Ein normaler Arbeitstag zählt wie ${stundenText(n)} Aktivität, ein halber wie ${r(1 / 2)}, etwas Arbeit wie ${r(1 / 3)}, viel Arbeit wie ${r(4 / 3)}. Mehr Einfluss heißt: Arbeit wiegt in der Balance schwerer.`; };
 function arbeitMin(d) {
   const heute = logTag();
   if (d > heute) return 0;
   const k = tagKey(d), N = (S.einstellungen.arbeitGewicht ?? 3) * 60;
-  if (istArbeitstag(d) && !tagesmomentAn(d)) {
-    const st = (S.arbeitStufe || {})[k];
-    if (k === tagKey(heute) && !st && !S.feierabend[k]) return 0;
-    return N * ARBEIT_STUFE[st || 'normal'];
+  const st = (S.arbeitStufe || {})[k], hat = arbeitBloecke(k).length > 0;
+  if (!freierTag(d)) {
+    if (k === tagKey(heute) && !st && !hat) return 0;
+    return N * (ARBEIT_STUFE[st] ?? 1);
   }
-  const f = (S.arbeit || {})[k];
-  return f ? N * (ARBEIT_FREI[f] || 0) : 0;
+  if (st) return N * (ARBEIT_STUFE[st] ?? 1);
+  return hat ? N * ARBEIT_STUFE.etwas : 0;
 }
 function balance(taps, tage) {
   let akt = 0, reg = 0;
@@ -288,7 +303,6 @@ function renderHeute() {
 
   // Sonderkacheln
   const k = heuteKey();
-  const fa = S.feierabend[k];
   const spalte = art => {
     const w = (S[art] ||= {})[k];
     const ton = { schlaf: 'reg ton', arbeit: 'akt ton' }[art] || 'neutral';
@@ -302,11 +316,18 @@ function renderHeute() {
   const arbeitstag = istArbeitstag(tagD) && !tagesmomentAn(tagD);   // Urlaub & Co.: Arbeit wie an freien Tagen
   const sonder = $('#sonder-kacheln');
   sonder.style.setProperty('--spalten', arten.length + 1);
-  // Spalte „Arbeit“: an Arbeitstagen das Ende als Uhrzeit, an freien Tagen etwas · halber Tag · ganzer Tag
-  const arbeitSpalte = !arbeitstag ? spalte('arbeit') : `
-    <button class="kachel rahmen spalte akt ton${fa ? ' gefuellt' : ''}" data-sonder="feierabend" type="button" aria-label="Arbeit, ${fa ? 'Ende ' + fa : 'Ende tippen'}">
+  // Spalte „Arbeit“: Tippen = Start, nochmal = Ende, danach wieder Start (mehrere Blöcke). Halten = Arbeitsfenster.
+  const bl = arbeitBloecke(k), letzt = bl[bl.length - 1], offen = !!(letzt && letzt.von && !letzt.bis);
+  const st = (S.arbeitStufe || {})[k];
+  const stufeZeile = st && !(arbeitstag && st === 'normal') ? `<span class="spalte-leise">${st}</span>` : '';
+  const arbeitWert = !bl.length ? `<span class="spalte-leise">${arbeitstag ? 'Start tippen' : 'frei'}</span>${stufeZeile}`
+    : offen ? `<span class="arbeit-zeiten"><span class="spalte-leise">seit</span><span class="kachel-zahl arbeit-zeit">${letzt.von}</span><span class="spalte-leise">Ende tippen</span></span>`
+    : `<span class="arbeit-zeiten">${bl[0].von ? `<span class="kachel-zahl arbeit-zeit">${bl[0].von}</span><span class="spalte-leise">bis</span>` : ''}<span class="kachel-zahl arbeit-zeit">${letzt.bis}</span>${stufeZeile}</span>`;
+  const arbeitLabel = !bl.length ? 'Start tippen' : offen ? `seit ${letzt.von}, Ende tippen` : `${bl[0].von ? bl[0].von + ' bis ' : 'Ende '}${letzt.bis}`;
+  const arbeitSpalte = `
+    <button class="kachel rahmen spalte akt ton${bl.length || st ? ' gefuellt' : ''}${offen ? ' laeuft' : ''}" data-sonder="feierabend" type="button" aria-label="Arbeit, ${arbeitLabel}">
       <span class="kachel-name">Arbeit</span>
-      <span class="kachel-wert">${fa ? `<span class="kachel-zahl">${fa}</span>` : '<span class="spalte-leise">Ende tippen</span>'}</span>
+      <span class="kachel-wert">${arbeitWert}</span>
       ${ringSVG()}
     </button>`;
   // Reihenfolge: Schlaf (die Nacht davor), dann der laufende Tag: Arbeit, Essen, Trinken
@@ -387,53 +408,71 @@ function zuruecknehmen(mid) {
   return true;
 }
 
-function feierabendJetzt() {
-  const d = new Date(), k = tagKey(logTag()), z = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  S.feierabend[k] = z; speichern(); renderHeute();
+function arbeitTippen() {
+  const d = new Date(), k = heuteKey(), z = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const vorher = arbeitBloecke(k).map(b => ({ ...b })), bl = vorher.map(b => ({ ...b }));
+  const letzt = bl[bl.length - 1], offen = !!(letzt && letzt.von && !letzt.bis);
+  if (offen) letzt.bis = z; else bl.push({ von: z, bis: '' });
+  arbeitSetzen(k, bl); speichern(); renderHeute();
   puls(document.querySelector('[data-sonder="feierabend"]'));
-  toast(`Feierabend um ${z}`, () => { delete S.feierabend[k]; speichern(); renderHeute(); });
+  toast(offen ? `Arbeit Ende ${z}` : `Arbeit Start ${z}`, () => { arbeitSetzen(k, vorher); speichern(); renderHeute(); });
 }
 
-function feierabendSheet() {
+// Arbeitsfenster (langer Druck): Zeiten als Blöcke ändern oder nachtragen, dazu gefühlt, wie der Tag war
+function arbeitSheet() {
   const tage = [];
   for (let i = 0; i < 7; i++) {
     const d = logTag(); d.setDate(d.getDate() - i);
     tage.push([tagKey(d), i === 0 ? 'heute' : i === 1 ? 'gestern' : d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'numeric' })]);
   }
-  const k0 = heuteKey();   // der angesehene Tag (heute oder gestern)
-  const jetzt = new Date();
-  const zeit = S.feierabend[k0] || `${pad(jetzt.getHours())}:${pad(jetzt.getMinutes())}`;
-  sheet('Feierabend', `
-    <p class="card-text">Vergessen ist in Ordnung. Hier lässt sich die Uhrzeit anpassen oder nachtragen.</p>
-    <div class="form-reihe">
-      <div class="form-group"><label for="fa-tag">Tag</label>
-        <select id="fa-tag">${tage.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
-      <div class="form-group"><label for="fa-zeit">Uhrzeit</label><input type="time" id="fa-zeit" value="${zeit}"></div>
-    </div>
-    <div class="form-group" id="fa-stufe-gruppe"><label>Der Arbeitstag war</label>
-      <div class="seg klein" id="fa-stufe">${['leicht', 'normal', 'viel'].map(w => `<button type="button" data-wert="${w}">${w}</button>`).join('')}</div>
-      <p class="form-hinweis">Gefühlt, keine Stunden. Ohne Wahl gilt normal.</p></div>
+  sheet('Arbeit', `
+    <p class="card-text">Start und Ende sind freiwillig. Mehrere Blöcke gehen, etwa 9–12 und 15–18. Nur das Ende? Start leer lassen.</p>
+    <div class="form-group"><label for="ar-tag">Tag</label>
+      <select id="ar-tag">${tage.map(([k, t]) => `<option value="${k}">${t}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Zeiten</label><div id="ar-bloecke" class="block-liste"></div>
+      <button class="btn-klein" id="ar-plus" type="button">+ Block</button></div>
+    <div class="form-group"><label>Der Tag war</label><div class="seg klein" id="ar-stufe"></div>
+      <p class="form-hinweis" id="ar-hinweis"></p></div>
     <div class="btn-reihe">
-      <button class="btn-primary" id="fa-ok" type="button">Übernehmen</button>
-      <button class="btn-leise" id="fa-weg" type="button">Eintrag für diesen Tag entfernen</button>
+      <button class="btn-primary" id="ar-ok" type="button">Übernehmen</button>
+      <button class="btn-leise" id="ar-weg" type="button">Alles für diesen Tag entfernen</button>
     </div>`);
-  const tagSel = $('#fa-tag'), zeitIn = $('#fa-zeit');
-  tagSel.value = k0;
-  const stufeZeigen = () => {
-    const [j, mo, t] = tagSel.value.split('-').map(Number), d = new Date(j, mo - 1, t);
-    $('#fa-stufe-gruppe').classList.toggle('hidden', !istArbeitstag(d));
-    const st = (S.arbeitStufe || {})[tagSel.value] || 'normal';
-    document.querySelectorAll('#fa-stufe button').forEach(b => b.classList.toggle('an', b.dataset.wert === st));
+  const tagSel = $('#ar-tag'); tagSel.value = heuteKey();
+  let bl = [], stufe = '';
+  const datum = () => { const [j, mo, t] = tagSel.value.split('-').map(Number); return new Date(j, mo - 1, t); };
+  const zeichnen = () => {
+    const frei = freierTag(datum());
+    $('#ar-bloecke').innerHTML = bl.map((b, i) => `<div class="block-zeile">
+      <input type="time" data-i="${i}" data-f="von" value="${b.von}" aria-label="Start">
+      <span class="block-bis">–</span>
+      <input type="time" data-i="${i}" data-f="bis" value="${b.bis}" aria-label="Ende">
+      <button type="button" class="eintrag-weg" data-weg="${i}" aria-label="Block entfernen">✕</button></div>`).join('');
+    document.querySelectorAll('#ar-bloecke input').forEach(inp => inp.oninput = () => { bl[+inp.dataset.i][inp.dataset.f] = inp.value; });
+    document.querySelectorAll('#ar-bloecke [data-weg]').forEach(b => b.onclick = () => { bl.splice(+b.dataset.weg, 1); if (!bl.length) bl.push({ von: '', bis: '' }); zeichnen(); });
+    const opts = frei ? ['', ...STUFEN] : STUFEN, an = stufe || (frei ? '' : 'normal');
+    $('#ar-stufe').innerHTML = opts.map(w => `<button type="button" data-wert="${w}" class="${w === an ? 'an' : ''}">${w || 'frei'}</button>`).join('');
+    document.querySelectorAll('#ar-stufe button').forEach(b => b.onclick = () => { stufe = b.dataset.wert; zeichnen(); });
+    $('#ar-hinweis').textContent = frei ? 'Gefühlt, keine Stunden. Freier Tag: ohne Wahl frei.' : 'Gefühlt, keine Stunden. Ohne Wahl gilt normal.';
   };
-  document.querySelectorAll('#fa-stufe button').forEach(b => b.onclick = () => {
-    const st = (S.arbeitStufe ||= {});
-    if (b.dataset.wert === 'normal') delete st[tagSel.value]; else st[tagSel.value] = b.dataset.wert;
-    speichern(); stufeZeigen(); renderHeute(); if (ansicht === 'woche') renderWoche();
-  });
-  const sync = () => { $('#fa-weg').classList.toggle('hidden', !S.feierabend[tagSel.value]); if (S.feierabend[tagSel.value]) zeitIn.value = S.feierabend[tagSel.value]; stufeZeigen(); };
-  tagSel.onchange = sync; sync();
-  $('#fa-ok').onclick = () => { if (!zeitIn.value) return; S.feierabend[tagSel.value] = zeitIn.value; speichern(); sheetZu(); renderAlles(); toast(`Feierabend ${zeitIn.value} gespeichert`); };
-  $('#fa-weg').onclick = () => { delete S.feierabend[tagSel.value]; speichern(); sheetZu(); renderAlles(); toast('Eintrag entfernt'); };
+  const laden = () => {
+    const k = tagSel.value;
+    bl = arbeitBloecke(k).map(b => ({ ...b })); if (!bl.length) bl.push({ von: '', bis: '' });
+    stufe = (S.arbeitStufe || {})[k] || '';
+    $('#ar-weg').classList.toggle('hidden', !arbeitBloecke(k).length && !stufe);
+    zeichnen();
+  };
+  tagSel.onchange = laden; laden();
+  $('#ar-plus').onclick = () => { bl.push({ von: '', bis: '' }); zeichnen(); };
+  $('#ar-ok').onclick = () => {
+    const k = tagSel.value, s2 = (S.arbeitStufe ||= {});
+    arbeitSetzen(k, bl);
+    if (!stufe || (stufe === 'normal' && !freierTag(datum()))) delete s2[k]; else s2[k] = stufe;
+    speichern(); sheetZu(); renderAlles(); toast('Arbeit gespeichert');
+  };
+  $('#ar-weg').onclick = () => {
+    const k = tagSel.value; arbeitSetzen(k, []); delete (S.arbeitStufe || {})[k];
+    speichern(); sheetZu(); renderAlles(); toast('Eintrag entfernt');
+  };
 }
 
 // Langer Druck auf einen Moment: mehr zu diesem Moment. Nachtragen (Ende, Dauer, heute/gestern),
@@ -536,7 +575,7 @@ function druckStart(e) {
     druck.timer = setTimeout(() => {
       druck.lang = true; el.classList.remove('drueckt');
       if (navigator.vibrate) navigator.vibrate(15);
-      if (mid) momentZeitSheet(mid); else feierabendSheet();
+      if (mid) momentZeitSheet(mid); else arbeitSheet();
     }, DRUCK_MS);
   }
 }
@@ -546,8 +585,8 @@ function druckEnde(e) {
   const d = druck; clearTimeout(d.timer); d.el.classList.remove('drueckt'); druck = null;
   if (d.lang) return;
   if (d.mid) zaehlen(d.mid);
-  else if (S.feierabend[heuteKey()] || heuteVersatz) feierabendSheet();
-  else feierabendJetzt();
+  else if (heuteVersatz) arbeitSheet();
+  else arbeitTippen();
 }
 function druckBewegt(e) { if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) > 12) druckAbbruch(); }
 
@@ -616,7 +655,7 @@ function renderWoche() {
   const b = balance(taps, tage);
   const wk = wochenKey(start);
   const notiz = (S.wochen ||= {})[wk] || {};
-  const abende = tage.map(d => ({ d, z: S.feierabend[tagKey(d)] })).filter(x => x.z);
+  const abende = tage.map(d => ({ d, z: S.feierabend[tagKey(d)] })).filter(x => x.z && !freierTag(x.d));   // freie Tage stehen unten als Notiz
   const gefuehlt = Object.keys(WAHL).some(art => tage.some(d => (S[art] || {})[tagKey(d)]));
 
   const teile = [];
@@ -635,7 +674,7 @@ function renderWoche() {
         ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
         <button type="button" class="btn-klein filter-alle${alleAn() ? ' an' : ''}" data-filter="alle" aria-pressed="${alleAn()}">Alle</button></div>
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
-      <p class="tag-legende">Länge = Dauer · Strich = Feierabend</p>
+      <p class="tag-legende">Länge = Dauer · Schleier = Arbeit · Strich = Ende</p>
       <p class="tag-legende leise">Mehr sehen: antippen · zwei Finger · lange drücken</p></div>`);
 
 
@@ -705,7 +744,9 @@ function renderWoche() {
     rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Feierabend</span>${abendMini(abende)}<span class="rahmen-kurz">${kurz}</span></div>`);
   }
   // Arbeit an freien Tagen: nur eine kleine Notiz, keine Summe
-  const freiArbeit = tage.filter(d => (S.arbeit || {})[tagKey(d)]).map(d => { const w = S.arbeit[tagKey(d)]; return `<span class="nowrap">${TAGE_KURZ[d.getDay()]} · ${w === 'etwas' ? 'etwas gearbeitet' : WAHL_TEXT('arbeit', w)}</span>`; });
+  const FREI_TEXT = { etwas: 'etwas gearbeitet', halb: 'halber Tag', normal: 'ganzer Tag', viel: 'viel gearbeitet' };
+  const freiArbeit = tage.filter(freierTag).map(d => { const k = tagKey(d); return { d, w: (S.arbeitStufe || {})[k] || (arbeitBloecke(k).length ? 'etwas' : '') }; })
+    .filter(x => x.w).map(({ d, w }) => `<span class="nowrap">${TAGE_KURZ[d.getDay()]} · ${FREI_TEXT[w] || w}</span>`);
   if (freiArbeit.length) rahmen.push(`<div class="rahmen-zeile"><span class="rahmen-name">Arbeit am freien Tag</span><span class="rahmen-notiz breit">${freiArbeit.join(', ')}</span></div>`);
   gefuehltZeile('essen');
   gefuehltZeile('trinken');
@@ -846,7 +887,19 @@ function tagKarte(taps, tage, opt = {}) {
   const stunde = d => { const h = d.getHours() + d.getMinutes() / 60; return h < WECHSEL_H() ? h + 24 : h; };
   const tagIndex = d => Math.round((logTag(d) - tage[0]) / 86400000);
   const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => { const h = zuMin(x.z) / 60; return { i: x.i, h: h < WECHSEL_H() ? h + 24 : h }; });
-  const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h)];
+  // Arbeit: Blöcke mit Start als warmer Schleier (der heute laufende Block bis jetzt)
+  const ab = [];
+  tage.forEach((d, i) => {
+    const k = tagKey(d), bl = (S.arbeitZeit || {})[k] || [];
+    bl.forEach((b, j) => {
+      if (!b.von) return;
+      let h0 = zeitH(b.von), h1 = b.bis ? zeitH(b.bis) : (k === tagKey(logTag()) ? stunde(new Date()) : null);
+      if (h1 == null) return;
+      if (h1 < h0) [h0, h1] = [h1, h0];
+      ab.push({ i, h0, h1, ende: !!b.bis && j < bl.length - 1 });
+    });
+  });
+  const alle = [...pts.map(p => stunde(p.d)), ...fa.map(f => f.h), ...ab.flatMap(a => [a.h0, a.h1])];
   const hMin = Math.min(7, Math.floor(Math.min(...alle, 24)) - 1), hMax = Math.max(23, Math.ceil(Math.max(...alle, 0)) + 1);   // ab 24 = nach Mitternacht
   const spalte = (W - L - R) / 7;
   const x = i => L + (i + 0.5) * spalte, y = h => T + (h - hMin) / (hMax - hMin) * (H - T - B);
@@ -869,6 +922,9 @@ function tagKarte(taps, tage, opt = {}) {
     if (!st) return '';
     return `<rect x="${(x(i) - spalte * 0.32).toFixed(1)}" y="${T}" width="${(spalte * 0.64).toFixed(1)}" height="${H - T - B}" rx="14" fill="url(#schleier-${art})" opacity="${(st * 0.09).toFixed(3)}" filter="url(#schleier-weich)" class="tag-schleier"/>`;
   }).join('');
+  const arbeitSchleier = ab.map(a => `<rect x="${(x(a.i) - spalte * 0.34).toFixed(1)}" y="${y(a.h0).toFixed(1)}" width="${(spalte * 0.68).toFixed(1)}" height="${Math.max(2, y(a.h1) - y(a.h0)).toFixed(1)}" rx="5" class="tag-arbeit" filter="url(#arbeit-weich)"/>`).join('')
+    + ab.map(a => `<line x1="${(x(a.i) - spalte * 0.32).toFixed(1)}" x2="${(x(a.i) + spalte * 0.32).toFixed(1)}" y1="${y(a.h0).toFixed(1)}" y2="${y(a.h0).toFixed(1)}" class="tag-arbeitbeginn"/>`
+      + (a.ende ? `<line x1="${(x(a.i) - spalte * 0.32).toFixed(1)}" x2="${(x(a.i) + spalte * 0.32).toFixed(1)}" y1="${y(a.h1).toFixed(1)}" y2="${y(a.h1).toFixed(1)}" class="tag-arbeitpause"/>` : '')).join('');
   const striche = fa.map(f => `<line x1="${(x(f.i) - spalte * 0.32).toFixed(1)}" x2="${(x(f.i) + spalte * 0.32).toFixed(1)}" y1="${y(f.h).toFixed(1)}" y2="${y(f.h).toFixed(1)}" class="tag-feierabend"/>`).join('');
   // gleiche Breite für alle, die Länge folgt der Dauer: lange Momente überdecken kurze nicht mehr
   const RANG = { akt: 0, mich: 1, reg: 2 };
@@ -892,8 +948,8 @@ function tagKarte(taps, tage, opt = {}) {
   const kerne = glow.map(g => `<circle cx="${g.cx.toFixed(1)}" cy="${g.cy.toFixed(1)}" r="${g.gew === 'stark' ? 2 : g.gew === 'mehr' ? 1.6 : 1.3}" class="tag-kern ${g.licht ? 'licht' : g.art}"${blass && !g.licht ? ' opacity="0.3"' : ''}/>`).join('');
   const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" data-w="${W}" data-h="${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
-    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}<filter id="schleier-weich" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="5"/></filter>${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
-    ${schleier}${achsen}${striche}${schein}${kerne}</svg>`;
+    <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}<filter id="schleier-weich" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="5"/></filter><filter id="arbeit-weich" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
+    ${schleier}${arbeitSchleier}${achsen}${striche}${schein}${kerne}</svg>`;
 }
 
 // Hineinzoomen mit zwei Fingern: die Karte wird als Vektor neu gezeichnet (bleibt scharf),
@@ -1429,7 +1485,7 @@ function verbinden() {
       if (!el || (e.key !== 'Enter' && e.key !== ' ')) return;
       e.preventDefault();
       if (el.dataset.mid) { if (e.shiftKey) zuruecknehmen(el.dataset.mid); else zaehlen(el.dataset.mid); }
-      else if (S.feierabend[heuteKey()] || heuteVersatz) feierabendSheet(); else feierabendJetzt();
+      else if (heuteVersatz) arbeitSheet(); else arbeitTippen();
     });
   }
   sonder.addEventListener('click', e => {
@@ -1499,7 +1555,7 @@ function verbinden() {
   $('#btn-alles-loeschen').onclick = () => {
     sheet('Alle Einträge löschen', `<p class="card-text">Gezählte Momente, Feierabende und Schlaf-Einträge werden von diesem Gerät gelöscht. Die Momente selbst und die Einstellungen bleiben. Das lässt sich nicht rückgängig machen.</p>
       <div class="btn-reihe"><button class="btn-primary" id="del-ja" type="button">Einträge löschen</button><button class="btn-leise" id="del-nein" type="button">Abbrechen</button></div>`);
-    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; S.essen = {}; S.trinken = {}; S.arbeit = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
+    $('#del-ja').onclick = () => { S.taps = []; S.feierabend = {}; S.schlaf = {}; S.essen = {}; S.trinken = {}; S.arbeit = {}; S.arbeitStufe = {}; S.arbeitZeit = {}; speichern(); sheetZu(); renderAlles(); toast('Einträge gelöscht'); };
     $('#del-nein').onclick = sheetZu;
   };
 
@@ -1552,6 +1608,14 @@ function zustandAus(alt) {
     delete z.untergruppen;
     for (const m of z.momente) delete m.unter;
     z.stand = 5;
+  }
+  if (!(alt.stand >= 6)) {
+    // Stand 6: eine Skala für alle Tage. leicht → halb; freie Tage: etwas · halb bleiben, ganz → normal
+    const st = z.arbeitStufe = { ...(z.arbeitStufe || {}) };
+    for (const [k, v] of Object.entries(st)) if (v === 'leicht') st[k] = 'halb';
+    for (const [k, v] of Object.entries(z.arbeit || {})) st[k] = v === 'ganz' ? 'normal' : v;
+    z.arbeit = {}; z.arbeitZeit ||= {};
+    z.stand = 6;
   }
   korridorPruefen(z.einstellungen);
   return z;

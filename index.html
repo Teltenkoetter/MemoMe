@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
   <title>MemoMe</title>
-  <link rel="stylesheet" href="style.css?v=48">
+  <link rel="stylesheet" href="style.css?v=49">
 </head>
 <body>
 
@@ -80,7 +80,7 @@
 
       <div class="card">
         <div class="card-header"><h2>Arbeitstage &amp; Feierabend</h2></div>
-        <p class="card-text">Auf Heute zeigt die Spalte „Arbeit“ an Arbeitstagen, wann die Arbeit endete. An freien Tagen fragt sie nur, ob und wie viel: Ohne Wahl ist der Tag frei.</p>
+        <p class="card-text">Auf Heute startet und beendet die Spalte „Arbeit“ den Arbeitstag, gern in mehreren Blöcken. Lange drücken: Zeiten ändern und wählen, wie der Tag war (etwas · halb · normal · viel). An freien Tagen zählt Arbeit nur, wenn du sie einträgst.</p>
         <div class="tage-wahl" id="arbeitstage" role="group" aria-label="Arbeitstage"></div>
         <div class="form-group" style="margin-top:1rem"><label for="arbeit-gewicht">Arbeit in der Balance</label>
           <div class="regler-reihe"><span>weniger Einfluss</span><input type="range" id="arbeit-gewicht" min="1" max="6" step="0.5"><span>mehr Einfluss</span></div>
@@ -167,8 +167,8 @@
             <div class="hz"><span class="hz-i" data-i="runden" data-ton="reg"></span><div class="hz-t"><strong>Runden</strong> — erneut tippen, solange die Zeit läuft → eine längere Runde · 3 × 15 min = 45 min · 1×</div></div>
             <div class="hz"><span class="hz-i" data-i="rahmen" data-ton=""></span><div class="hz-t"><strong>Rahmen des Tages</strong> — Schlaf · Arbeit · Essen · Trinken · nur gefühlt · erneut tippen hebt die Wahl auf</div></div>
             <div class="hz"><span class="hz-i" data-i="schlaf" data-ton="reg"></span><div class="hz-t"><strong>Schlaf</strong> — morgens, für die Nacht davor · erholt · mittel · kurz</div></div>
-            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeit</strong> — Arbeitstag: „Ende tippen“ → Uhrzeit · halten → anpassen, Tag war leicht · normal · viel (ohne Wahl normal)</div></div>
-            <div class="hz"><span class="hz-i" data-i="frei" data-ton="akt"></span><div class="hz-t"><strong>Freier Tag</strong> — etwas (1–2 h) · halber Tag · ganzer Tag · ohne Wahl frei · nicht in der Balance</div></div>
+            <div class="hz"><span class="hz-i" data-i="feierabend" data-ton="akt"></span><div class="hz-t"><strong>Arbeit</strong> — tippen → Start · nochmal → Ende · wieder tippen → neuer Block · halten → Zeiten ändern, Tag war etwas · halb · normal · viel (Arbeitstag ohne Wahl normal) · Stunden zählen nie mit</div></div>
+            <div class="hz"><span class="hz-i" data-i="frei" data-ton="akt"></span><div class="hz-t"><strong>Freier Tag</strong> — ohne Eintrag frei · Arbeit eintragen → zählt (ohne Wahl als „etwas“)</div></div>
             <div class="hz"><span class="hz-i" data-i="essen" data-ton=""></span><div class="hz-t"><strong>Essen</strong> — frisch · gemischt · gegönnt (Genuss, kein Ausrutscher)</div></div>
             <div class="hz"><span class="hz-i" data-i="trinken" data-ton=""></span><div class="hz-t"><strong>Trinken</strong> — reichlich · mittel · wenig · Wasser, Tee &amp; Co.</div></div>
             <div class="hz"><span class="hz-i" data-i="herz" data-ton=""></span><div class="hz-t"><strong>Herz</strong> — Angebot für andere</div></div>
@@ -236,6 +236,6 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-btn" type="button" class="hidden">Rückgängig</button></div>
 
-  <script src="app.js?v=48"></script>
+  <script src="app.js?v=49"></script>
 </body>
 </html>
