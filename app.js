@@ -190,6 +190,16 @@ function kw(d) {
   return Math.ceil(((t - j) / 86400000 + 1) / 7);
 }
 
+// Einstieg: der früheste Tag mit irgendeinem Eintrag (oder das gespeicherte Startdatum). Davor gibt es keine Wochen.
+function einstiegTag() {
+  let t = S.seit ? new Date(S.seit + 'T12:00').getTime() : Date.now();
+  for (const x of S.taps) if (x.ts < t) t = x.ts;
+  for (const art of ['feierabend', 'schlaf', 'essen', 'trinken', 'arbeit', 'arbeitStufe'])
+    for (const k of Object.keys(S[art] || {})) { const d = new Date(k + 'T12:00').getTime(); if (d < t) t = d; }
+  return new Date(t - WECHSEL_H() * 3600000);
+}
+const minWocheVersatz = () => Math.min(0, Math.round((wocheStart(einstiegTag()).getTime() - wocheStart(new Date()).getTime()) / (7 * 86400000)));
+
 function tapsZwischen(von, bis) {
   const h = WECHSEL_H() * 3600000, a = von.getTime() + h, b = bis.getTime() + h;   // Tage laufen bis zum Tageswechsel
   return S.taps.filter(t => t.ts >= a && t.ts < b && moment(t.mid));
@@ -543,14 +553,62 @@ function druckBewegt(e) { if (druck && Math.hypot(e.clientX - druck.x, e.clientY
 
 // ── WOCHE ──────────────────────────────────────────────
 let wocheVersatz = 0;
+// Blättern mit kurzem Gleiten: die alte Woche schiebt sich hinaus, die neue kommt von der anderen Seite
+function wocheGehe(r, schon = 0) {
+  const ziel = wocheVersatz + r, inh = $('#woche-inhalt');
+  if (ziel > 0 || ziel < minWocheVersatz()) { inh.style.transition = 'transform .25s ease'; inh.style.transform = ''; inh.style.opacity = ''; return; }
+  const w = innerWidth;
+  inh.style.transition = 'transform .18s ease-in, opacity .18s ease-in';
+  inh.style.transform = `translateX(${r < 0 ? w * 0.6 : -w * 0.6}px)`; inh.style.opacity = '0';
+  setTimeout(() => {
+    wocheVersatz = ziel; renderWoche();
+    inh.style.transition = 'none'; inh.style.transform = `translateX(${r < 0 ? -w * 0.3 : w * 0.3}px)`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      inh.style.transition = 'transform .24s ease-out, opacity .24s ease-out'; inh.style.transform = ''; inh.style.opacity = '';
+    }));
+  }, schon ? 120 : 170);
+}
+// Wischen nach links/rechts im Verlauf. Nicht auf der Nachtkarte (eigene Gesten) und nur bei klar waagrechter Bewegung.
+function wocheWischen() {
+  const v = $('#view-woche'), inh = $('#woche-inhalt'); let w = null;
+  v.addEventListener('touchstart', e => {
+    w = null;
+    if (e.touches.length !== 1 || e.target.closest('#tag-karte, input, textarea, select')) return;
+    w = { x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, an: false };
+  }, { passive: true });
+  v.addEventListener('touchmove', e => {
+    if (!w) return;
+    const dx = e.touches[0].clientX - w.x, dy = e.touches[0].clientY - w.y;
+    if (!w.an) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) >= Math.abs(dx)) { w = null; return; }   // senkrecht: normales Scrollen
+      if (Math.abs(dx) < 14 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      w.an = true;
+    }
+    const geht = dx > 0 ? wocheVersatz > minWocheVersatz() : wocheVersatz < 0;
+    w.dx = geht ? dx : dx * 0.2;   // am Rand nur leicht nachgeben
+    inh.style.transition = 'none'; inh.style.transform = `translateX(${w.dx}px)`;
+    inh.style.opacity = geht ? String(1 - Math.min(Math.abs(dx) / 700, 0.35)) : '';
+  }, { passive: true });
+  const ende = () => {
+    if (!w || !w.an) { w = null; return; }
+    const dx = w.dx; w = null;
+    if (Math.abs(dx) > 70) wocheGehe(dx > 0 ? -1 : 1, true);
+    else { inh.style.transition = 'transform .25s ease, opacity .25s ease'; inh.style.transform = ''; inh.style.opacity = ''; }
+  };
+  v.addEventListener('touchend', ende); v.addEventListener('touchcancel', ende);
+}
 function renderWoche() {
+  wocheVersatz = Math.max(minWocheVersatz(), Math.min(0, wocheVersatz));
+  document.body.classList.toggle('archiv', ansicht === 'woche' && wocheVersatz < 0);   // vergangene Woche: kühler Grund
+  $('#woche-heute').classList.toggle('hidden', wocheVersatz === 0);
+  $('#woche-zurueck').disabled = wocheVersatz <= minWocheVersatz();
   const start = wocheStart(new Date()); start.setDate(start.getDate() + wocheVersatz * 7);
   const ende = new Date(start); ende.setDate(ende.getDate() + 7);
   const letzter = new Date(ende); letzter.setDate(letzter.getDate() - 1);
   $('#woche-kw').textContent = `KW ${kw(start)}`;
   const f = { day: 'numeric', month: 'long' };
   const anf = start.getMonth() === letzter.getMonth() ? `${start.getDate()}.` : start.toLocaleDateString('de-DE', f);
-  $('#woche-spanne').textContent = `${anf} – ${letzter.toLocaleDateString('de-DE', f)}${wocheVersatz === 0 ? ' · diese Woche' : ''}`;
+  $('#woche-spanne').textContent = `${anf} – ${letzter.toLocaleDateString('de-DE', f)}${wocheVersatz === 0 ? ' · diese Woche' : wocheVersatz === -1 ? ' · letzte Woche' : ''}`;
   $('#woche-vor').disabled = wocheVersatz >= 0;
 
   const taps = tapsZwischen(start, ende);
@@ -1340,7 +1398,8 @@ function zeige(v) {
   if (v !== 'verwaltung') sortiermodus = false;
   if (v !== ansicht) { licht.clear(); heuteVersatz = 0; }   // Wechsel zwischen Heute und Verlauf: Scheinwerfer aus, Gruppen zu
   ansicht = v;
-  document.documentElement.classList.toggle('snap-heute', v === 'heute');   // Heute: schnelles Wischen hält an jeder Gruppe
+  document.documentElement.classList.toggle('snap-heute', v === 'heute');
+  if (v !== 'woche') document.body.classList.remove('archiv');   // Heute: schnelles Wischen hält an jeder Gruppe
   ['heute', 'woche', 'verwaltung'].forEach(n => $('#view-' + n).classList.toggle('hidden', n !== v));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   renderAlles();
@@ -1391,8 +1450,10 @@ function verbinden() {
   for (const id of ['#sheet', '#hilfe']) $(id).addEventListener('click', e => { if (e.target === $(id)) $(id).classList.add('hidden'); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { sheetZu(); $('#hilfe').classList.add('hidden'); } });
 
-  $('#woche-zurueck').onclick = () => { wocheVersatz--; renderWoche(); };
-  $('#woche-vor').onclick = () => { if (wocheVersatz < 0) { wocheVersatz++; renderWoche(); } };
+  $('#woche-zurueck').onclick = () => wocheGehe(-1);
+  $('#woche-vor').onclick = () => wocheGehe(1);
+  $('#woche-heute').onclick = () => { wocheVersatz = 0; renderWoche(); };
+  wocheWischen();
 
   $('#gm-liste').addEventListener('click', e => {
     const mh = e.target.closest('[data-m-hoch],[data-m-runter]');
@@ -1514,6 +1575,7 @@ function zeigeUpdateHinweis() {
 (async function start() {
   const gespeichert = await laden();
   if (gespeichert && gespeichert.version === 1) { S = zustandAus(gespeichert); speichern(); }
+  if (!S.seit) { S.seit = tagKey(einstiegTag()); speichern(); }   // erste Nutzung merken: ab hier gibt es Wochen
   gruppenAktualisieren();
   verbinden();
   zeige('heute');
