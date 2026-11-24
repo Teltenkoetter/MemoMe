@@ -213,8 +213,8 @@ function runden(taps) {
   const letzte = {}, aus = [];
   [...taps].sort((a, b) => a.ts - b.ts).forEach(t => {
     const r = letzte[t.mid], fenster = Math.max(t.min || 0, 3) * 60000;
-    if (r && t.ts - r.ts <= fenster) { r.ts = t.ts; r.min += t.min || 0; r.tipps++; return; }
-    aus.push(letzte[t.mid] = { mid: t.mid, ts: t.ts, min: t.min || 0, tipps: 1 });
+    if (r && t.ts - r.ts <= fenster) { r.ts = t.ts; r.min += t.min || 0; r.tipps++; r.ids.push(t.id); return; }
+    aus.push(letzte[t.mid] = { mid: t.mid, ts: t.ts, min: t.min || 0, tipps: 1, ids: [t.id] });
   });
   return aus;
 }
@@ -481,84 +481,99 @@ function momentZeitSheet(mid, startTag = 0) {
   const m = moment(mid); if (!m) return;
   const tagesm = istTagesmoment(m);
   const fak = EINHEIT[m.einheit === 'std' ? 'std' : 'min'][1], einh = fak === 60 ? 'Std' : 'min';
-  const jetzt = new Date(), hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  let tag = startTag, bearbeite = null;   // 0 = heute, 1 = gestern
+  const hhmm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  let tag = startTag, bearbeite = null;   // 0 = heute, 1 = gestern; bearbeite = eine Runde (mehrere Tipps)
   const tagBeginn = () => { const d = logTag(); d.setDate(d.getDate() - tag); return d; };
   const eintraege = () => { const a = tagBeginn(), b = new Date(a); b.setDate(b.getDate() + 1); return tapsZwischen(a, b).filter(t => t.mid === mid).sort((x, y) => x.ts - y.ts); };
+  // Angezeigt werden Runden wie auf der Kachel: viermal 30 min hintereinander = ein Eintrag mit 2 Std
+  const rundenListe = () => runden(eintraege());
+  const dauerMin = () => Math.max(0, Math.round((parseFloat(String($('#nz-dauer').value).replace(',', '.')) || 0) * fak));
+  // Chips für den Beginn: „gerade fertig“ = jetzt minus Dauer
+  const CHIPS = [['fertig', 'gerade fertig'], [60, 'vor 1 h'], [120, 'vor 2 h'], [180, 'vor 3 h']];
   sheet(m.name, `
     <div class="form-group"><label>Tag</label><div class="seg klein" id="nz-tag"><button type="button" data-wert="0" class="${tag ? '' : 'an'}">heute</button><button type="button" data-wert="1" class="${tag ? 'an' : ''}">gestern</button></div></div>
-    ${tagesm ? '' : `<div class="form-group"><label>Nachtragen · Ende</label>
-      <div class="chip-reihe" id="nz-chips">${[[0, 'jetzt'], [30, 'vor 30 min'], [60, 'vor 1 h'], [120, 'vor 2 h']].map(([v, t]) => `<button type="button" class="btn-klein${v ? '' : ' an'}" data-vor="${v}">${t}</button>`).join('')}</div>
+    ${tagesm ? '' : `<div class="form-group"><label>Nachtragen · Beginn</label>
+      <div class="chip-reihe" id="nz-chips">${CHIPS.map(([v, t]) => `<button type="button" class="btn-klein" data-vor="${v}">${t}</button>`).join('')}</div>
       <div class="form-reihe" style="margin-top:0.55rem">
-        <div class="form-group"><label for="nz-zeit">Uhrzeit</label><input type="time" id="nz-zeit" value="${hhmm(jetzt)}"></div>
+        <div class="form-group"><label for="nz-zeit">Beginn</label><input type="time" id="nz-zeit"></div>
         <div class="form-group"><label for="nz-dauer">Dauer (${einh})</label><input type="number" id="nz-dauer" min="0" step="any" inputmode="decimal" value="${+((m.dauer || 0) / fak).toFixed(2)}"></div>
       </div></div>`}
     <div class="btn-reihe"><button class="btn-primary" id="nz-ok" type="button">${tagesm ? 'Diesen Tag eintragen' : 'Nachtragen'}</button></div>
     <div class="label" id="nz-titel" style="margin-top:1.1rem">Heute bisher</div>
     <div class="eintrag-liste" id="nz-liste"></div>
-    <button class="btn-leise" id="nz-zurueck" type="button">Letzten zurücknehmen</button>`);
+    <button class="btn-leise" id="nz-zurueck" type="button">Letzten Tipp zurücknehmen</button>`);
+  let chip = 'fertig';
+  const knopf = () => { if (!tagesm) $('#nz-ok').textContent = `${bearbeite ? 'Änderung speichern' : 'Nachtragen'} · ab ${$('#nz-zeit').value}`; };
+  const chipsZeigen = () => document.querySelectorAll('#nz-chips [data-vor]').forEach(x => x.classList.toggle('an', x.dataset.vor === String(chip)));
+  const beginnSetzen = (blitz = false) => {
+    if (tagesm || chip == null) return;
+    const z = $('#nz-zeit'), vor = chip === 'fertig' ? dauerMin() : +chip;
+    z.value = hhmm(new Date(Date.now() - vor * 60000)); chipsZeigen(); knopf();
+    if (blitz) { z.classList.remove('blitz'); void z.offsetWidth; z.classList.add('blitz'); }
+  };
   const formZuruecksetzen = () => {
     bearbeite = null; $('#nz-ok').textContent = tagesm ? 'Diesen Tag eintragen' : 'Nachtragen';
-    if (!tagesm) { $('#nz-zeit').value = hhmm(new Date()); $('#nz-dauer').value = +((m.dauer || 0) / fak).toFixed(2); document.querySelectorAll('#nz-chips [data-vor]').forEach(x => x.classList.toggle('an', x.dataset.vor === '0')); }
+    if (!tagesm) { $('#nz-dauer').value = +((m.dauer || 0) / fak).toFixed(2); chip = 'fertig'; beginnSetzen(); }
   };
   const liste = () => {
-    const e = eintraege();
+    const r = rundenListe();
     $('#nz-titel').textContent = tag ? 'Gestern' : 'Heute bisher';
-    $('#nz-liste').innerHTML = e.length ? e.map(t => {
+    $('#nz-liste').innerHTML = r.length ? r.map((t, n) => {
       const von = new Date(t.ts - (t.min || 0) * 60000), bis = new Date(t.ts);
       const zeit = tagesm ? 'ganzer Tag' : `${t.min ? hhmm(von) + '–' : ''}${hhmm(bis)}${t.min ? ' · ' + fmtDauer(t.min) : ''}`;
-      return `<div class="eintrag${bearbeite === t.id ? ' an' : ''}"><button type="button" class="eintrag-zeit" data-aendern="${t.id}"${tagesm ? ' disabled' : ''}>${zeit}</button>
-        <button type="button" class="eintrag-weg" data-weg="${t.id}" aria-label="Eintrag ${zeit} entfernen">✕</button></div>`;
+      return `<div class="eintrag${bearbeite === n ? ' an' : ''}"><button type="button" class="eintrag-zeit" data-aendern="${n}"${tagesm ? ' disabled' : ''}>${zeit}</button>
+        <button type="button" class="eintrag-weg" data-weg="${n}" aria-label="Eintrag ${zeit} entfernen">✕</button></div>`;
     }).join('') : '<p class="form-hinweis">Noch nichts.</p>';
-    $('#nz-zurueck').classList.toggle('hidden', !e.length);
+    $('#nz-zurueck').classList.toggle('hidden', !r.length);
     document.querySelectorAll('#nz-liste [data-aendern]').forEach(b => b.onclick = () => {
-      const t = S.taps.find(x => x.id === b.dataset.aendern); if (!t) return;
-      bearbeite = t.id; $('#nz-zeit').value = hhmm(new Date(t.ts)); $('#nz-dauer').value = +((t.min || 0) / fak).toFixed(2);
-      $('#nz-ok').textContent = 'Änderung speichern'; document.querySelectorAll('#nz-chips [data-vor]').forEach(x => x.classList.remove('an')); liste();
+      const t = rundenListe()[+b.dataset.aendern]; if (!t) return;
+      bearbeite = +b.dataset.aendern; chip = null; chipsZeigen();
+      $('#nz-zeit').value = hhmm(new Date(t.ts - (t.min || 0) * 60000)); $('#nz-dauer').value = +((t.min || 0) / fak).toFixed(2);
+      knopf(); liste();
     });
-    document.querySelectorAll('#nz-liste [data-weg]').forEach(b => b.onclick = () => entfernen(b.dataset.weg));
+    document.querySelectorAll('#nz-liste [data-weg]').forEach(b => b.onclick = () => { const t = rundenListe()[+b.dataset.weg]; if (t) entfernen(t.ids); });
   };
-  const entfernen = id => {
-    const i = S.taps.findIndex(t => t.id === id); if (i < 0) return;
-    const [weg] = S.taps.splice(i, 1); speichern(); renderHeute(); if (bearbeite === id) formZuruecksetzen(); liste();
-    toast(`${m.name}: Eintrag entfernt`, () => { S.taps.splice(i, 0, weg); speichern(); renderHeute(); if ($('#nz-liste')) liste(); toast('Wiederhergestellt'); });
+  // eine Runde (alle ihre Tipps) entfernen; Rückgängig stellt sie wieder her
+  const entfernen = ids => {
+    const weg = S.taps.filter(t => ids.includes(t.id)); if (!weg.length) return;
+    S.taps = S.taps.filter(t => !ids.includes(t.id)); speichern(); renderHeute(); formZuruecksetzen(); liste();
+    toast(`${m.name}: Eintrag entfernt`, () => { S.taps.push(...weg); speichern(); renderHeute(); if ($('#nz-liste')) liste(); toast('Wiederhergestellt'); });
   };
   document.querySelectorAll('#nz-tag button').forEach(b => b.onclick = () => {
     tag = +b.dataset.wert; document.querySelectorAll('#nz-tag button').forEach(x => x.classList.toggle('an', x === b));
     formZuruecksetzen(); liste();
   });
-  // Chips: sichtbar wählen und die Uhrzeit kurz aufleuchten lassen, damit klar ist, was passiert
-  const chipsAn = b => document.querySelectorAll('#nz-chips [data-vor]').forEach(x => x.classList.toggle('an', x === b));
-  document.querySelectorAll('#nz-chips [data-vor]').forEach(b => b.onclick = () => {
-    const z = $('#nz-zeit'); z.value = hhmm(new Date(Date.now() - b.dataset.vor * 60000)); chipsAn(b);
-    z.classList.remove('blitz'); void z.offsetWidth; z.classList.add('blitz');
-    $('#nz-ok').textContent = `${bearbeite ? 'Änderung speichern' : 'Nachtragen'} · ${z.value}`;
-  });
-  if (!tagesm) $('#nz-zeit').addEventListener('input', () => { chipsAn(null); $('#nz-ok').textContent = `${bearbeite ? 'Änderung speichern' : 'Nachtragen'} · ${$('#nz-zeit').value}`; });
+  document.querySelectorAll('#nz-chips [data-vor]').forEach(b => b.onclick = () => { chip = b.dataset.vor === 'fertig' ? 'fertig' : +b.dataset.vor; beginnSetzen(true); });
+  if (!tagesm) {
+    $('#nz-zeit').addEventListener('input', () => { chip = null; chipsZeigen(); knopf(); });
+    $('#nz-dauer').addEventListener('input', () => { if (chip === 'fertig') beginnSetzen(); });   // „gerade fertig“ folgt der Dauer
+  }
   $('#nz-ok').onclick = () => {
     let ts, min;
     if (tagesm) {
       if (eintraege().length) { toast(`${m.name} ist an diesem Tag schon eingetragen`); return; }
       const d = tagBeginn(); d.setHours(12); ts = d.getTime(); min = m.dauer || 1440;
     } else {
+      min = dauerMin();
       const [h, mi] = ($('#nz-zeit').value || hhmm(new Date())).split(':').map(Number);
       const d = tagBeginn(); d.setHours(h, mi, 0, 0);
       if (h < WECHSEL_H()) d.setDate(d.getDate() + 1);   // 0:30 gehört noch zu diesem Abend
-      ts = d.getTime();
-      min = Math.max(0, Math.round((parseFloat(String($('#nz-dauer').value).replace(',', '.')) || 0) * fak));
+      ts = d.getTime() + min * 60000;   // gespeichert wird wie beim Tippen das Ende
     }
-    if (bearbeite) {
-      const t = S.taps.find(x => x.id === bearbeite); const alt = { ...t };
-      Object.assign(t, { ts, min }); speichern(); renderHeute(); sheetZu();
-      toast(`${m.name}: geändert`, () => { Object.assign(t, alt); speichern(); renderHeute(); toast('Wiederhergestellt'); });
+    if (bearbeite != null) {
+      const r = rundenListe()[bearbeite]; if (!r) return;
+      const alt = S.taps.filter(t => r.ids.includes(t.id)), neu = { id: uid(), mid, ts, min };
+      S.taps = S.taps.filter(t => !r.ids.includes(t.id)); S.taps.push(neu);   // die Runde wird ein Eintrag
+      speichern(); renderHeute(); sheetZu();
+      toast(`${m.name}: geändert`, () => { S.taps = S.taps.filter(t => t.id !== neu.id); S.taps.push(...alt); speichern(); renderHeute(); toast('Wiederhergestellt'); });
       return;
     }
     const neu = { id: uid(), mid, ts, min };
     S.taps.push(neu); speichern(); renderHeute(); sheetZu();
-    toast(`${m.name} nachgetragen${tagesm ? '' : ' · ' + hhmm(new Date(ts))}`, () => { S.taps = S.taps.filter(t => t.id !== neu.id); speichern(); renderHeute(); toast('Zurückgenommen'); });
+    toast(`${m.name} nachgetragen${tagesm ? '' : ' · ab ' + hhmm(new Date(ts - min * 60000))}`, () => { S.taps = S.taps.filter(t => t.id !== neu.id); speichern(); renderHeute(); toast('Zurückgenommen'); });
   };
-  $('#nz-zurueck').onclick = () => { const e = eintraege(); if (e.length) entfernen(e.reduce((a, b) => (a.ts > b.ts ? a : b)).id); };
-  liste();
+  $('#nz-zurueck').onclick = () => { const e = eintraege(); if (e.length) entfernen([e[e.length - 1].id]); };
+  beginnSetzen(); liste();
 }
 
 // Tippen und langer Druck
