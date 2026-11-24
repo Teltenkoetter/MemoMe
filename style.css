@@ -278,8 +278,21 @@ html.snap-heute body::after {
 .woche-heute { margin-top: 0.3rem; background: none; border: 0; padding: 0.15rem 0.4rem; font: inherit; font-size: 0.75rem; color: var(--text-dim); cursor: pointer; }
 #woche-inhalt { will-change: transform; touch-action: pan-y pinch-zoom; }
 /* Vergangene Woche: Grund etwas kühler und dunkler, wie ein Blatt im Archiv; keine Wertung */
-body.archiv { --bg: #1b1c20; --bg-grad: radial-gradient(ellipse at 50% 0%, #26272d 0%, #1b1c20 60%); }
-body.archiv header { background: rgba(27,28,32,0.6); }
+/* Archiv: Grund deutlich heller, Signale in Archivgrau (140/140/140), Farben verblasst wie ein altes Foto */
+body.archiv { --bg: #26272c; --bg-grad: radial-gradient(ellipse at 50% 0%, #303137 0%, #26272c 60%); --archiv: rgb(140,140,140); }
+body.archiv header { background: rgba(38,39,44,0.7); }
+body.archiv #woche-inhalt { filter: saturate(0.4); }
+body.archiv #woche-inhalt .card { border-color: rgba(140,140,140,0.35); }
+.archiv-band {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  margin: 0.2rem 0 0; padding: 0.45rem 0.8rem; border-radius: 12px;
+  background: rgba(140,140,140,0.16); border: 1px solid rgba(140,140,140,0.55);
+  color: rgb(190,190,190); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em;
+}
+.archiv-band.hidden { display: none; }
+.schloss { width: 0.95em; height: 0.95em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.12em; margin-right: 0.25em; }
+.card.gesperrt .seg button:disabled { cursor: default; opacity: 0.75; }
+.abschluss-satz-fest { margin: 0.2rem 0 0; padding: 0.6rem 0.8rem; border-left: 2px solid rgba(140,140,140,0.7); color: var(--text-dim); font-style: italic; line-height: 1.45; }
 body { transition: background-color .3s ease; }
 .btn-rund {
   width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;

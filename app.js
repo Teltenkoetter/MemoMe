@@ -592,6 +592,7 @@ function druckBewegt(e) { if (druck && Math.hypot(e.clientX - druck.x, e.clientY
 
 // ── WOCHE ──────────────────────────────────────────────
 let wocheVersatz = 0;
+const SCHLOSS = '<svg class="schloss" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>';
 // Blättern mit kurzem Gleiten: die alte Woche schiebt sich hinaus, die neue kommt von der anderen Seite
 function wocheGehe(r, schon = 0) {
   const ziel = wocheVersatz + r, inh = $('#woche-inhalt');
@@ -638,7 +639,14 @@ function wocheWischen() {
 }
 function renderWoche() {
   wocheVersatz = Math.max(minWocheVersatz(), Math.min(0, wocheVersatz));
-  document.body.classList.toggle('archiv', ansicht === 'woche' && wocheVersatz < 0);   // vergangene Woche: kühler Grund
+  document.body.classList.toggle('archiv', ansicht === 'woche' && wocheVersatz < 0);   // vergangene Woche: Archiv-Look
+  const gesperrt = wocheVersatz <= -2;   // nur die letzte Woche bleibt änderbar, ältere sind abgeschlossen
+  const band = $('#archiv-band');
+  if (band) {
+    band.classList.toggle('hidden', wocheVersatz >= 0);
+    band.innerHTML = gesperrt ? `${SCHLOSS}<span>Archiv · abgeschlossen</span>` : '<span>Archiv · letzte Woche, noch änderbar</span>';
+  }
+  const wochenende = [0, 6].includes(new Date().getDay());
   $('#woche-heute').classList.toggle('hidden', wocheVersatz === 0);
   $('#woche-zurueck').disabled = wocheVersatz <= minWocheVersatz();
   const start = wocheStart(new Date()); start.setDate(start.getDate() + wocheVersatz * 7);
@@ -755,11 +763,14 @@ function renderWoche() {
   // Woche abschließen: der eine Ort zum Nachdenken. Angebote nur, wenn es diese Woche welche gab.
   const angebote = S.momente.filter(m => m.angebot && taps.some(t => t.mid === m.id));
   const seg = (mid, feld, optionen) => `<div class="seg klein" data-mid="${esc(mid)}" data-feld="${feld}">${optionen.map(([w, t]) =>
-    `<button type="button" data-wert="${w}" class="${notiz.angebote?.[mid]?.[feld] === w ? 'an' : ''}">${t}</button>`).join('')}</div>`;
+    `<button type="button" data-wert="${w}" class="${notiz.angebote?.[mid]?.[feld] === w ? 'an' : ''}"${gesperrt ? ' disabled' : ''}>${t}</button>`).join('')}</div>`;
   const tagesM = S.momente.find(m => istTagesmoment(m) && tage.some(d => tagMit(m.id, d)));
   const frage = tagesM ? `Was möchtest du von „${esc(tagesM.name)}“ in die nächsten Tage mitnehmen?` : REFLEXION[kw(start) % REFLEXION.length];
-  teile.push(`<div class="card"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
-      <span class="gruppe-name">Woche abschließen</span><span class="rahmen-kurz" id="abschluss-stand">${notiz.abgeschlossen ? 'abgeschlossen' : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
+  // Sichtbar: in dieser Woche nur am Wochenende, in der letzten Woche immer (änderbar), davor nur lesend und nur mit Inhalt
+  const hatNotiz = !!(notiz.satz || notiz.abgeschlossen || Object.values(notiz.angebote || {}).some(a => a && (a.an || a.mir)));
+  const zeigeAbschluss = wocheVersatz === -1 || (wocheVersatz === 0 && wochenende) || (gesperrt && hatNotiz);
+  if (zeigeAbschluss) teile.push(`<div class="card${gesperrt ? ' gesperrt' : ''}"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
+      <span class="gruppe-name">${gesperrt ? 'Wochenabschluss' : 'Woche abschließen'}</span><span class="rahmen-kurz" id="abschluss-stand">${gesperrt ? SCHLOSS : ''}${notiz.abgeschlossen ? 'abgeschlossen' : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
     <div class="abschluss-inhalt">
       ${angebote.length ? `<div class="label">Angebote</div>${angebote.map(m => `<div class="angebot" data-angebot="${esc(m.id)}">
         <div class="angebot-name">${herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an))} ${esc(m.name)}</div>
@@ -767,14 +778,14 @@ function renderWoche() {
         <div class="angebot-frage">Hat es mir auch etwas gegeben?</div>${seg(m.id, 'mir', [['wenig', 'wenig'], ['etwas', 'etwas'], ['viel', 'viel']])}
       </div>`).join('')}` : ''}
       <div class="label">Eine Frage</div>
-      <p class="reflexion">${frage}</p>
-      <textarea id="abschluss-satz" rows="3" maxlength="400" placeholder="Wenn du magst, ein Satz. Kann auch leer bleiben.">${esc(notiz.satz || '')}</textarea>
-      <button class="btn-primary" id="btn-abschluss" type="button">${notiz.abgeschlossen ? 'Gespeichert' : 'Woche abschließen'}</button>
+      <p class="reflexion">${gesperrt && notiz.frage ? notiz.frage : frage}</p>
+      ${gesperrt ? (notiz.satz ? `<p class="abschluss-satz-fest">${esc(notiz.satz)}</p>` : '') : `<textarea id="abschluss-satz" rows="3" maxlength="400" placeholder="Wenn du magst, ein Satz. Kann auch leer bleiben.">${esc(notiz.satz || '')}</textarea>
+      <button class="btn-primary" id="btn-abschluss" type="button">${notiz.abgeschlossen ? 'Gespeichert' : 'Woche abschließen'}</button>`}
     </div></details></div>`);
 
   // Rückschau: die eigenen Sätze aus „Woche abschließen“, neueste zuerst. Wochen ohne Satz fehlen einfach.
   const saetze = Object.entries(S.wochen || {}).filter(([, n]) => n.satz).map(([k, n]) => ({ k, n, st: n.start || wocheAusKey(k) })).sort((a, b) => b.st - a.st);
-  if (saetze.length) teile.push(`<div class="card"><details class="wgruppe rueckschau"><summary class="gruppe-zeile rueck-zeile">
+  if (saetze.length && (wocheVersatz < 0 || wochenende)) teile.push(`<div class="card"><details class="wgruppe rueckschau"><summary class="gruppe-zeile rueck-zeile">
       <span class="gruppe-name">Rückschau<span class="gruppe-anzahl">${saetze.length === 1 ? 'ein Satz' : saetze.length + ' Sätze'}</span></span><span class="auf" aria-hidden="true">›</span></summary>
     <div class="rueckschau-liste">${saetze.map(({ k, n, st }) => {
       const a = new Date(st), e = new Date(st); e.setDate(e.getDate() + 6);
