@@ -769,23 +769,33 @@ function renderWoche() {
   // Sichtbar: in dieser Woche nur am Wochenende, in der letzten Woche immer (änderbar), davor nur lesend und nur mit Inhalt
   const hatNotiz = !!(notiz.satz || notiz.abgeschlossen || Object.values(notiz.angebote || {}).some(a => a && (a.an || a.mir)));
   const zeigeAbschluss = wocheVersatz === -1 || (wocheVersatz === 0 && wochenende) || (gesperrt && hatNotiz);
-  if (zeigeAbschluss) teile.push(`<div class="card${gesperrt ? ' gesperrt' : ''}"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
-      <span class="gruppe-name">${gesperrt ? 'Wochenabschluss' : 'Woche abschließen'}</span><span class="rahmen-kurz" id="abschluss-stand">${gesperrt ? SCHLOSS : ''}${notiz.abgeschlossen ? 'abgeschlossen' : ''}</span><span class="auf" aria-hidden="true">›</span></summary>
-    <div class="abschluss-inhalt">
+  // Ergebnis als Text: was festgehalten wurde, gleich sichtbar; Ändern öffnet die Eingaben darunter
+  const AN_TEXT = { offen: 'offen', angekommen: 'angekommen', getragen: 'hat getragen' };
+  const ergZeilen = Object.entries(notiz.angebote || {}).filter(([mid, x]) => x && (x.an || x.mir) && moment(mid)).map(([mid, x]) =>
+    `<div class="erg-zeile">${herzHTML(['angekommen', 'getragen'].includes(x.an))}<span class="erg-name">${esc(moment(mid).name)}:</span><span class="erg-wert">${[x.an && AN_TEXT[x.an], x.mir && 'für mich ' + x.mir].filter(Boolean).join(' · ')}</span></div>`).join('');
+  const ergebnis = `${ergZeilen}${notiz.satz ? `<div class="erg-frage">${notiz.frage || frage}</div><p class="abschluss-satz-fest">${esc(notiz.satz)}</p>` : ''}`;
+  const eingaben = `<div class="abschluss-inhalt">
       ${angebote.length ? `<div class="label">Angebote</div>${angebote.map(m => `<div class="angebot" data-angebot="${esc(m.id)}">
         <div class="angebot-name">${herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an))} ${esc(m.name)}</div>
         <div class="angebot-frage">Wie kam es an?</div>${seg(m.id, 'an', [['offen', 'offen'], ['angekommen', 'angekommen'], ['getragen', 'hat getragen']])}
         <div class="angebot-frage">Hat es mir auch etwas gegeben?</div>${seg(m.id, 'mir', [['wenig', 'wenig'], ['etwas', 'etwas'], ['viel', 'viel']])}
       </div>`).join('')}` : ''}
       <div class="label">Eine Frage</div>
-      <p class="reflexion">${gesperrt && notiz.frage ? notiz.frage : frage}</p>
-      ${gesperrt ? (notiz.satz ? `<p class="abschluss-satz-fest">${esc(notiz.satz)}</p>` : '') : `<textarea id="abschluss-satz" rows="3" maxlength="400" placeholder="Wenn du magst, ein Satz. Kann auch leer bleiben.">${esc(notiz.satz || '')}</textarea>
-      <button class="btn-primary" id="btn-abschluss" type="button">${notiz.abgeschlossen ? 'Gespeichert' : 'Woche abschließen'}</button>`}
-    </div></details></div>`);
+      <p class="reflexion">${notiz.frage || frage}</p>
+      <textarea id="abschluss-satz" rows="3" maxlength="400" placeholder="Wenn du magst, ein Satz. Kann auch leer bleiben.">${esc(notiz.satz || '')}</textarea>
+      <button class="btn-primary" id="btn-abschluss" type="button">${hatNotiz ? 'Speichern' : 'Woche abschließen'}</button>
+    </div>`;
+  if (zeigeAbschluss) {
+    if (hatNotiz) teile.push(`<div class="card abschluss-karte${gesperrt ? ' gesperrt' : ''}"><div class="card-header"><h2>${notiz.abgeschlossen ? 'Woche abgeschlossen' : 'Wochenabschluss'}</h2>${gesperrt ? `<span class="rahmen-kurz rechts">${SCHLOSS}</span>` : ''}</div>
+      <div class="abschluss-ergebnis">${ergebnis || '<p class="leer-text">Ohne Notiz abgeschlossen.</p>'}</div>
+      ${gesperrt ? '' : `<details class="wgruppe abschluss aendern"><summary class="gruppe-zeile rueck-zeile"><span class="gruppe-name">Ändern</span><span></span><span class="auf" aria-hidden="true">›</span></summary>${eingaben}</details>`}</div>`);
+    else teile.push(`<div class="card"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
+      <span class="gruppe-name">Woche abschließen</span><span></span><span class="auf" aria-hidden="true">›</span></summary>${eingaben}</details></div>`);
+  }
 
   // Rückschau: die eigenen Sätze aus „Woche abschließen“, neueste zuerst. Wochen ohne Satz fehlen einfach.
   const saetze = Object.entries(S.wochen || {}).filter(([, n]) => n.satz).map(([k, n]) => ({ k, n, st: n.start || wocheAusKey(k) })).sort((a, b) => b.st - a.st);
-  if (saetze.length && (wocheVersatz < 0 || wochenende)) teile.push(`<div class="card"><details class="wgruppe rueckschau"><summary class="gruppe-zeile rueck-zeile">
+  if (saetze.length && (wocheVersatz < 0 || wochenende)) teile.push(`<div class="card"><details class="wgruppe rueckschau" open><summary class="gruppe-zeile rueck-zeile">
       <span class="gruppe-name">Rückschau<span class="gruppe-anzahl">${saetze.length === 1 ? 'ein Satz' : saetze.length + ' Sätze'}</span></span><span class="auf" aria-hidden="true">›</span></summary>
     <div class="rueckschau-liste">${saetze.map(({ k, n, st }) => {
       const a = new Date(st), e = new Date(st); e.setDate(e.getDate() + 6);
@@ -844,10 +854,9 @@ function renderWoche() {
   if (satz) satz.oninput = () => { const n = notizSchreiben(); n.satz = satz.value.trim() || undefined; n.frage = frage; n.start = start.getTime(); speichern(); };
   const btnAb = $('#btn-abschluss');
   if (btnAb) btnAb.onclick = () => {
-    notizSchreiben().abgeschlossen = Date.now(); speichern();
-    btnAb.textContent = 'Gespeichert'; $('#abschluss-stand').textContent = 'abgeschlossen';
-    btnAb.closest('details').open = false;
-    toast('Woche abgeschlossen. Es ist nichts mehr offen.');
+    const n = notizSchreiben(), erstes = !n.abgeschlossen;
+    n.abgeschlossen ||= Date.now(); speichern(); renderWoche();
+    toast(erstes ? 'Woche abgeschlossen. Es ist nichts mehr offen.' : 'Gespeichert');
   };
   // „▸ Alle“: öffnet bzw. schließt alle Zeilen einer Karte; passt sich an, wenn Zeilen einzeln geöffnet werden
   document.querySelectorAll('#woche-inhalt .btn-alle').forEach(btn => {
