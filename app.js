@@ -823,7 +823,7 @@ function renderWoche() {
   const karteNeu = () => { const s = $('#tag-karte .tag-svg'); if (s) { s.outerHTML = tagKarte(taps, tage); $('#tag-karte')._wolken = tagWolken; $('#tag-karte')._setzen?.(); } };
   document.querySelectorAll('#woche-inhalt [data-filter]').forEach(btn => btn.onclick = () => {
     const f = btn.dataset.filter;
-    if (f === 'alle') Object.assign(heatFilter, alleAn() ? HEAT_START : { erholsam: true, fuermich: true, aktiv: true });   // nochmal: zurück zum Anfang
+    if (f === 'alle') Object.assign(heatFilter, { erholsam: true, fuermich: true, aktiv: true });   // „Alle“ zeigt wieder alles
     else heatFilter[f] = !heatFilter[f];
     document.querySelectorAll('#woche-inhalt [data-filter]').forEach(b => {
       const an = b.dataset.filter === 'alle' ? alleAn() : heatFilter[b.dataset.filter];
@@ -874,7 +874,7 @@ function renderWoche() {
 }
 
 // ── Über den Tag ──
-const HEAT_START = { erholsam: true, fuermich: true, aktiv: false };
+const HEAT_START = { erholsam: true, fuermich: true, aktiv: true };   // alles sichtbar; ausblenden per Tipp
 const heatFilter = { ...HEAT_START };
 const alleAn = () => heatFilter.erholsam && heatFilter.fuermich && heatFilter.aktiv;
 // Scheinwerfer: hervorgehobene Momente (nur bis zum nächsten Wechsel zwischen Heute und Verlauf)
@@ -1192,7 +1192,7 @@ function tagVollbild(taps, tage, titel) {
   v.querySelector('.tag-filter').onclick = e => {
     const b = e.target.closest('[data-vfilter]'); if (!b) return;
     const f = b.dataset.vfilter;
-    if (f === 'alle') Object.assign(heatFilter, alleAn() ? HEAT_START : { erholsam: true, fuermich: true, aktiv: true });
+    if (f === 'alle') Object.assign(heatFilter, { erholsam: true, fuermich: true, aktiv: true });
     else heatFilter[f] = !heatFilter[f];
     v.querySelector('.tag-filter').innerHTML = filterKnoepfe();
     zeichnen();
@@ -1454,15 +1454,22 @@ function gruppeSheet(id) {
 function gespeichertNeu() { gruppenAktualisieren(); speichern(); renderAlles(); }
 
 // ── Sheet, Toast, Navigation ───────────────────────────
-function sheet(titel, html) { $('#sheet-titel').textContent = titel; $('#sheet-body').innerHTML = html; $('#sheet').classList.remove('hidden'); }
-function sheetZu() { $('#sheet').classList.add('hidden'); }
+function sheet(titel, html) { $('#sheet-titel').textContent = titel; $('#sheet-body').innerHTML = html; $('#sheet').classList.remove('hidden'); fensterOffen(); }
+function sheetZu() { $('#sheet').classList.add('hidden'); fensterOffen(); }
+// Solange ein Fenster offen ist, steht die Seite dahinter still (kein Einrasten, kein Scrollen).
+// Sonst springt sie auf dem iPhone beim Ein- und Ausfahren der Tastatur hin und her, das Bild flackert.
+function fensterOffen() {
+  const offen = !$('#sheet').classList.contains('hidden') || !$('#hilfe').classList.contains('hidden');
+  document.documentElement.classList.toggle('fenster-offen', offen);
+}
 
 let toastTimer = null;
 function toast(text, rueckgaengig) {
   $('#toast-text').textContent = text;
   const btn = $('#toast-btn');
   btn.classList.toggle('hidden', !rueckgaengig);
-  btn.onclick = rueckgaengig ? () => { rueckgaengig(); } : null;
+  // Rückgängig: danach auch den Verlauf neu zeichnen, falls er gerade offen ist
+  btn.onclick = rueckgaengig ? () => { rueckgaengig(); if (ansicht === 'woche') renderWoche(); } : null;
   $('#toast').classList.remove('hidden');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $('#toast').classList.add('hidden'), rueckgaengig ? 5000 : 2200);
@@ -1523,7 +1530,10 @@ function verbinden() {
   $('#btn-info').onclick = () => $('#hilfe').classList.remove('hidden');
   $('#hilfe-zu').onclick = () => $('#hilfe').classList.add('hidden');
   $('#sheet-zu').onclick = sheetZu;
-  for (const id of ['#sheet', '#hilfe']) $(id).addEventListener('click', e => { if (e.target === $(id)) $(id).classList.add('hidden'); });
+  for (const id of ['#sheet', '#hilfe']) {
+    $(id).addEventListener('click', e => { if (e.target === $(id)) $(id).classList.add('hidden'); });
+    new MutationObserver(fensterOffen).observe($(id), { attributes: true, attributeFilter: ['class'] });   // jedes Öffnen und Schließen
+  }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { sheetZu(); $('#hilfe').classList.add('hidden'); } });
 
   $('#woche-zurueck').onclick = () => wocheGehe(-1);
