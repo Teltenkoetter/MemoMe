@@ -694,11 +694,12 @@ function renderWoche() {
   // Über den Tag: wann die Momente lagen (Leuchtpunkte, Größe = Dauer, Strich = Feierabend)
   if (taps.length) teile.push(`<div class="card"><div class="card-header"><h2>Über den Tag</h2><button type="button" class="btn-klein rechts btn-voll" id="tag-voll-auf" aria-label="Über den Tag im Vollbild">⤢</button></div>
       <div class="tag-filter" role="group" aria-label="Momente zeigen">
-        ${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
+        ${FILTER_ARTEN.map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-filter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
         <button type="button" class="btn-klein filter-alle${alleAn() ? ' an' : ''}" data-filter="alle" aria-pressed="${alleAn()}">Alle</button></div>
       <div id="tag-karte">${tagKarte(taps, tage)}</div>
       <p class="tag-legende">Länge = Dauer · Schleier = Arbeit · Strich = Ende</p>
       <p class="tag-legende leise">Mehr sehen: antippen · zwei Finger · lange drücken</p></div>`);
+  const nachTag = teile.length;   // im Archiv steht „Was bleibt“ gleich hier
 
 
   if (taps.length) {
@@ -785,15 +786,17 @@ function renderWoche() {
   const hatNotiz = !!(notiz.satz || notiz.abgeschlossen || Object.values(notiz.angebote || {}).some(a => a && (a.an || a.mir)));
   const zeigeAbschluss = wocheVersatz < 0 || (wocheVersatz === 0 && wochenende);
   // Ergebnis als Text: was festgehalten wurde, gleich sichtbar; Ändern öffnet die Eingaben darunter
-  const AN_TEXT = { offen: 'offen', angekommen: 'angekommen', getragen: 'hat getragen' };
+  const AN_TEXT = { offen: 'weiß nicht', angekommen: 'kam an', getragen: 'kam gut an' };
+  const MIR_TEXT = { wenig: 'kaum etwas gegeben', etwas: 'etwas gegeben', viel: 'viel gegeben' };
   const ergZeilen = Object.entries(notiz.angebote || {}).filter(([mid, x]) => x && (x.an || x.mir) && moment(mid)).map(([mid, x]) =>
-    `<div class="erg-zeile">${herzHTML(['angekommen', 'getragen'].includes(x.an))}<span class="erg-name">${esc(moment(mid).name)}:</span><span class="erg-wert">${[x.an && AN_TEXT[x.an], x.mir && 'für mich ' + x.mir].filter(Boolean).join(' · ')}</span></div>`).join('');
+    `<div class="erg-zeile">${herzHTML(['angekommen', 'getragen'].includes(x.an))}<span class="erg-name">${esc(moment(mid).name)}</span>${GRUPPEN[moment(mid).gruppe] ? `<span class="erg-gruppe">· ${esc(GRUPPEN[moment(mid).gruppe])}</span>` : ''}
+      ${x.an ? `<div class="erg-wert">bei den anderen: ${AN_TEXT[x.an]}</div>` : ''}${x.mir ? `<div class="erg-wert">für mich: hat ${MIR_TEXT[x.mir]}</div>` : ''}</div>`).join('');
   const ergebnis = `${ergZeilen}${notiz.satz ? `<div class="erg-frage">${notiz.frage || frage}</div><p class="abschluss-satz-fest">${esc(notiz.satz)}</p>` : ''}`;
   const eingaben = `<div class="abschluss-inhalt">
-      ${angebote.length ? `<div class="label">Angebote</div>${angebote.map(m => `<div class="angebot" data-angebot="${esc(m.id)}">
-        <div class="angebot-name">${herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an))} ${esc(m.name)}</div>
-        <div class="angebot-frage">Wie kam es an?</div>${seg(m.id, 'an', [['offen', 'offen'], ['angekommen', 'angekommen'], ['getragen', 'hat getragen']])}
-        <div class="angebot-frage">Hat es mir auch etwas gegeben?</div>${seg(m.id, 'mir', [['wenig', 'wenig'], ['etwas', 'etwas'], ['viel', 'viel']])}
+      ${angebote.length ? `<div class="label">Angebote</div><p class="angebot-intro">Dinge, die du für andere tust. Hier nur kurz, wie es sich angefühlt hat.</p>${angebote.map(m => `<div class="angebot" data-angebot="${esc(m.id)}">
+        <div class="angebot-name">${herzHTML(['angekommen', 'getragen'].includes(notiz.angebote?.[m.id]?.an))} ${esc(m.name)}${GRUPPEN[m.gruppe] ? `<span class="erg-gruppe">· ${esc(GRUPPEN[m.gruppe])}</span>` : ''}</div>
+        <div class="angebot-frage">Wie kam es bei den anderen an?</div>${seg(m.id, 'an', [['offen', 'weiß nicht'], ['angekommen', 'kam an'], ['getragen', 'kam gut an']])}
+        <div class="angebot-frage">Was hat es dir gegeben?</div>${seg(m.id, 'mir', [['wenig', 'kaum'], ['etwas', 'etwas'], ['viel', 'viel']])}
       </div>`).join('')}` : ''}
       <div class="label">Eine Frage</div>
       <p class="reflexion">${notiz.frage || frage}</p>
@@ -801,9 +804,12 @@ function renderWoche() {
       <button class="btn-primary" id="btn-abschluss" type="button">${hatNotiz ? 'Speichern' : 'Woche abschließen'}</button>
     </div>`;
   if (zeigeAbschluss) {
-    if (hatNotiz) teile.push(`<div class="card abschluss-karte"><div class="card-header"><h2>${notiz.abgeschlossen ? 'Woche abgeschlossen' : 'Wochenabschluss'}</h2></div>
+    const archiv = wocheVersatz < 0;
+    const titel = archiv ? 'Was bleibt' : notiz.abgeschlossen ? 'Woche abgeschlossen' : 'Wochenabschluss';
+    const karte = `<div class="card abschluss-karte"><div class="card-header"><h2>${titel}</h2></div>
       <div class="abschluss-ergebnis">${ergebnis || '<p class="leer-text">Ohne Notiz abgeschlossen.</p>'}</div>
-      <details class="wgruppe abschluss aendern"><summary class="gruppe-zeile rueck-zeile"><span class="gruppe-name">Ändern</span><span></span><span class="auf" aria-hidden="true">›</span></summary>${eingaben}</details></div>`);
+      <details class="wgruppe abschluss aendern"><summary class="gruppe-zeile rueck-zeile"><span class="gruppe-name">Ändern</span><span></span><span class="auf" aria-hidden="true">›</span></summary>${eingaben}</details></div>`;
+    if (hatNotiz) archiv ? teile.splice(nachTag, 0, karte) : teile.push(karte);
     else teile.push(`<div class="card"><details class="wgruppe abschluss"><summary class="gruppe-zeile rueck-zeile">
       <span class="gruppe-name">Woche abschließen</span><span></span><span class="auf" aria-hidden="true">›</span></summary>${eingaben}</details></div>`);
   }
@@ -839,8 +845,7 @@ function renderWoche() {
   const karteNeu = () => { const s = $('#tag-karte .tag-svg'); if (s) { s.outerHTML = tagKarte(taps, tage); $('#tag-karte')._wolken = tagWolken; $('#tag-karte')._setzen?.(); } };
   document.querySelectorAll('#woche-inhalt [data-filter]').forEach(btn => btn.onclick = () => {
     const f = btn.dataset.filter;
-    if (f === 'alle') Object.assign(heatFilter, { erholsam: true, fuermich: true, aktiv: true });   // „Alle“ zeigt wieder alles
-    else heatFilter[f] = !heatFilter[f];
+    filterSetzen(f);
     document.querySelectorAll('#woche-inhalt [data-filter]').forEach(b => {
       const an = b.dataset.filter === 'alle' ? alleAn() : heatFilter[b.dataset.filter];
       b.classList.toggle('an', an); b.setAttribute('aria-pressed', an);
@@ -890,9 +895,13 @@ function renderWoche() {
 }
 
 // ── Über den Tag ──
-const HEAT_START = { erholsam: true, fuermich: true, aktiv: true };   // alles sichtbar; ausblenden per Tipp
+const HEAT_START = { erholsam: true, fuermich: true, aktiv: true, arbeit: true };   // alles sichtbar; ausblenden per Tipp
 const heatFilter = { ...HEAT_START };
-const alleAn = () => heatFilter.erholsam && heatFilter.fuermich && heatFilter.aktiv;
+const FILTER_ARTEN = [['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt'], ['arbeit', 'Arbeit', 'arb']];
+const alleAn = () => FILTER_ARTEN.every(([k]) => heatFilter[k]);
+const keinFilter = () => !FILTER_ARTEN.some(([k]) => heatFilter[k]);
+// „Alle“ ist ein Schalter: alles an → alles aus, sonst alles an
+const filterSetzen = f => { if (f === 'alle') { const an = !alleAn(); FILTER_ARTEN.forEach(([k]) => { heatFilter[k] = an; }); } else heatFilter[f] = !heatFilter[f]; };
 // Scheinwerfer: hervorgehobene Momente (nur bis zum nächsten Wechsel zwischen Heute und Verlauf)
 const licht = new Set();
 // Bedeutung eines Moments: verändert nur das Aussehen (Breite und Leuchten), nie Balance, Anzahl oder Richtwert
@@ -922,10 +931,10 @@ function tagKarte(taps, tage, opt = {}) {
   // nach Mitternacht bis zum Tageswechsel: 24, 25, 26 … in derselben Spalte
   const stunde = d => { const h = d.getHours() + d.getMinutes() / 60; return h < WECHSEL_H() ? h + 24 : h; };
   const tagIndex = d => Math.round((logTag(d) - tage[0]) / 86400000);
-  const fa = tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => { const h = zuMin(x.z) / 60; return { i: x.i, h: h < WECHSEL_H() ? h + 24 : h }; });
+  const fa = !heatFilter.arbeit ? [] : tage.map((d, i) => ({ i, z: S.feierabend[tagKey(d)] })).filter(x => x.z).map(x => { const h = zuMin(x.z) / 60; return { i: x.i, h: h < WECHSEL_H() ? h + 24 : h }; });
   // Arbeit: Blöcke mit Start als warmer Schleier (der heute laufende Block bis jetzt)
   const ab = [];
-  tage.forEach((d, i) => {
+  if (heatFilter.arbeit) tage.forEach((d, i) => {
     const k = tagKey(d), bl = (S.arbeitZeit || {})[k] || [];
     bl.forEach((b, j) => {
       if (!b.von) return;
@@ -985,7 +994,7 @@ function tagKarte(taps, tage, opt = {}) {
   const verlauf = (art, rgb) => `<radialGradient id="wolke-${art}"><stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.8 : 0.55}"/><stop offset="0.45" stop-color="rgb(${rgb})" stop-opacity="${art === 'mich' || art === 'licht' ? 0.38 : 0.25}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient>`;
   return `<svg class="tag-svg" viewBox="0 0 ${W} ${H}" data-w="${W}" data-h="${H}" role="img" aria-label="Wann die Momente dieser Woche lagen, ${pts.length} Momente">
     <defs>${Object.entries(WOLKE_RGB).map(([a, r]) => verlauf(a, r)).join('')}${verlauf('licht', LICHT_RGB)}<filter id="schleier-weich" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="5"/></filter><filter id="arbeit-weich" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>${Object.entries(WOLKE_RGB).map(([a, r]) => `<linearGradient id="schleier-${a}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgb(${r})" stop-opacity="0"/><stop offset="0.18" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="0.82" stop-color="rgb(${r})" stop-opacity="1"/><stop offset="1" stop-color="rgb(${r})" stop-opacity="0"/></linearGradient>`).join('')}</defs>
-    ${schleier}${arbeitSchleier}${achsen}${striche}${schein}${kerne}</svg>`;
+    ${schleier}${arbeitSchleier}${achsen}${striche}${schein}${kerne}${keinFilter() && !licht.size ? `<text x="${(W / 2).toFixed(1)}" y="${(H / 2).toFixed(1)}" text-anchor="middle" class="tag-leer">Alles ausgeblendet · Alle antippen</text>` : ''}</svg>`;
 }
 
 // Hineinzoomen mit zwei Fingern: die Karte wird als Vektor neu gezeichnet (bleibt scharf),
@@ -1166,7 +1175,7 @@ function tagKarteGesten(box, opt = {}) {
 function tagVollbild(taps, tage, titel) {
   const v = document.createElement('div');
   v.id = 'tag-voll'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-modal', 'true'); v.setAttribute('aria-label', 'Über den Tag, Vollbild');
-  const filterKnoepfe = () => `${[['erholsam', 'erholsam', 'reg'], ['fuermich', 'für mich', 'mich'], ['aktiv', 'aktiv', 'akt']].map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-vfilter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
+  const filterKnoepfe = () => `${FILTER_ARTEN.map(([k, t, c]) => `<button type="button" class="btn-klein filter-${c}${heatFilter[k] ? ' an' : ''}" data-vfilter="${k}" aria-pressed="${heatFilter[k]}">${t}</button>`).join('')}
     <button type="button" class="btn-klein filter-alle${alleAn() ? ' an' : ''}" data-vfilter="alle" aria-pressed="${alleAn()}">Alle</button>`;
   v.innerHTML = `<div class="voll-kopf"><div><h2>Über den Tag</h2><div class="voll-sub">${esc(titel)}</div></div>
       <button class="btn-modal-close" id="voll-zu" type="button" aria-label="Schließen">✕</button></div>
@@ -1208,8 +1217,7 @@ function tagVollbild(taps, tage, titel) {
   v.querySelector('.tag-filter').onclick = e => {
     const b = e.target.closest('[data-vfilter]'); if (!b) return;
     const f = b.dataset.vfilter;
-    if (f === 'alle') Object.assign(heatFilter, { erholsam: true, fuermich: true, aktiv: true });
-    else heatFilter[f] = !heatFilter[f];
+    filterSetzen(f);
     v.querySelector('.tag-filter').innerHTML = filterKnoepfe();
     zeichnen();
   };

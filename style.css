@@ -663,6 +663,8 @@ select:disabled { opacity: 0.45; }
 .tag-filter .filter-mich::before { background: var(--reg); }
 .tag-filter .filter-akt::before  { background: var(--akt); }
 .tag-filter .filter-alle::before { display: none; }
+.tag-filter .filter-arb::before  { background: rgba(217,163,106,0.6); border-radius: 2px; width: 9px; height: 6px; }
+.tag-leer { fill: var(--hint); font-size: 11px; }
 .schalter-liste { display: flex; flex-direction: column; gap: 0.7rem; }
 
 /* Arbeitstage und Arbeit an freien Tagen */
@@ -759,7 +761,10 @@ html.voll-offen, html.voll-offen body { overflow: hidden; }
 .erg-zeile { font-size: 0.92rem; line-height: 1.45; }
 .erg-zeile .herz-wrap { display: inline-flex; vertical-align: -0.15em; margin: 0 0.35rem 0 0; }
 .erg-name { font-weight: 600; margin-right: 0.3rem; }
-.erg-wert { color: var(--text-dim); }
+.erg-zeile + .erg-zeile { margin-top: 0.5rem; }
+.erg-gruppe { font-weight: 400; color: var(--hint); font-size: 0.85em; margin-left: 0.3rem; }
+.erg-wert { color: var(--text-dim); font-size: 0.86rem; padding-left: 1.55rem; }
+.angebot-intro { font-size: 0.8rem; color: var(--hint); margin: 0.1rem 0 0.2rem; line-height: 1.4; }
 .erg-frage { font-family: var(--serif); font-style: italic; font-size: 1.05rem; color: var(--text-dim); margin-top: 0.35rem; }
 .abschluss-karte .abschluss.aendern { margin-top: 0.6rem; border-top: 1px solid var(--border); }
 .abschluss-karte .abschluss.aendern .gruppe-name { font-size: 0.85rem; color: var(--text-dim); font-weight: 600; }
