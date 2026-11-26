@@ -492,18 +492,19 @@ function momentZeitSheet(mid, startTag = 0) {
   const CHIPS = [['fertig', 'gerade fertig'], [60, 'vor 1 h'], [120, 'vor 2 h'], [180, 'vor 3 h']];
   sheet(m.name, `
     <div class="form-group"><label>Tag</label><div class="seg klein" id="nz-tag"><button type="button" data-wert="0" class="${tag ? '' : 'an'}">heute</button><button type="button" data-wert="1" class="${tag ? 'an' : ''}">gestern</button></div></div>
-    ${tagesm ? '' : `<div class="form-group"><label>Nachtragen · Beginn</label>
+    ${tagesm ? '' : `<div class="form-group" id="nz-form"><label id="nz-modus">Nachtragen · Beginn</label>
       <div class="chip-reihe" id="nz-chips">${CHIPS.map(([v, t]) => `<button type="button" class="btn-klein" data-vor="${v}">${t}</button>`).join('')}</div>
       <div class="form-reihe" style="margin-top:0.55rem">
         <div class="form-group"><label for="nz-zeit">Beginn</label><input type="time" id="nz-zeit"></div>
         <div class="form-group"><label for="nz-dauer">Dauer (${einh})</label><input type="number" id="nz-dauer" min="0" step="any" inputmode="decimal" value="${+((m.dauer || 0) / fak).toFixed(2)}"></div>
       </div></div>`}
     <div class="btn-reihe"><button class="btn-primary" id="nz-ok" type="button">${tagesm ? 'Diesen Tag eintragen' : 'Nachtragen'}</button></div>
+    <button class="btn-leise hidden" id="nz-abbruch" type="button">Korrektur abbrechen · neu nachtragen</button>
     <div class="label" id="nz-titel" style="margin-top:1.1rem">Heute bisher</div>
     <div class="eintrag-liste" id="nz-liste"></div>
     <button class="btn-leise" id="nz-zurueck" type="button">Letzten Tipp zurücknehmen</button>`);
   let chip = 'fertig';
-  const knopf = () => { if (!tagesm) $('#nz-ok').textContent = `${bearbeite ? 'Änderung speichern' : 'Nachtragen'} · ab ${$('#nz-zeit').value}`; };
+  const knopf = () => { if (!tagesm) $('#nz-ok').textContent = `${bearbeite != null ? 'Änderung speichern' : 'Nachtragen'} · ab ${$('#nz-zeit').value}`; };
   const chipsZeigen = () => document.querySelectorAll('#nz-chips [data-vor]').forEach(x => x.classList.toggle('an', x.dataset.vor === String(chip)));
   const beginnSetzen = (blitz = false) => {
     if (tagesm || chip == null) return;
@@ -511,8 +512,16 @@ function momentZeitSheet(mid, startTag = 0) {
     z.value = hhmm(new Date(Date.now() - vor * 60000)); chipsZeigen(); knopf();
     if (blitz) { z.classList.remove('blitz'); void z.offsetWidth; z.classList.add('blitz'); }
   };
+  // Korrektur: ein vorhandener Eintrag wird geändert, statt einen neuen anzulegen
+  const modusZeigen = () => {
+    if (tagesm) return;
+    const r = bearbeite != null && rundenListe()[bearbeite];
+    $('#nz-modus').textContent = r ? `Korrektur · ${r.min ? hhmm(new Date(r.ts - r.min * 60000)) + '–' : ''}${hhmm(new Date(r.ts))}` : 'Nachtragen · Beginn';
+    $('#nz-form').classList.toggle('korrektur', !!r);
+    $('#nz-abbruch').classList.toggle('hidden', !r);
+  };
   const formZuruecksetzen = () => {
-    bearbeite = null; $('#nz-ok').textContent = tagesm ? 'Diesen Tag eintragen' : 'Nachtragen';
+    bearbeite = null; $('#nz-ok').textContent = tagesm ? 'Diesen Tag eintragen' : 'Nachtragen'; modusZeigen();
     if (!tagesm) { $('#nz-dauer').value = +((m.dauer || 0) / fak).toFixed(2); chip = 'fertig'; beginnSetzen(); }
   };
   const liste = () => {
@@ -522,6 +531,7 @@ function momentZeitSheet(mid, startTag = 0) {
       const von = new Date(t.ts - (t.min || 0) * 60000), bis = new Date(t.ts);
       const zeit = tagesm ? 'ganzer Tag' : `${t.min ? hhmm(von) + '–' : ''}${hhmm(bis)}${t.min ? ' · ' + fmtDauer(t.min) : ''}`;
       return `<div class="eintrag${bearbeite === n ? ' an' : ''}"><button type="button" class="eintrag-zeit" data-aendern="${n}"${tagesm ? ' disabled' : ''}>${zeit}</button>
+        ${tagesm ? '' : `<button type="button" class="eintrag-korr" data-aendern="${n}" aria-label="Eintrag ${zeit} korrigieren">${bearbeite === n ? 'wird geändert' : 'Korrigieren'}</button>`}
         <button type="button" class="eintrag-weg" data-weg="${n}" aria-label="Eintrag ${zeit} entfernen">✕</button></div>`;
     }).join('') : '<p class="form-hinweis">Noch nichts.</p>';
     $('#nz-zurueck').classList.toggle('hidden', !r.length);
@@ -529,7 +539,9 @@ function momentZeitSheet(mid, startTag = 0) {
       const t = rundenListe()[+b.dataset.aendern]; if (!t) return;
       bearbeite = +b.dataset.aendern; chip = null; chipsZeigen();
       $('#nz-zeit').value = hhmm(new Date(t.ts - (t.min || 0) * 60000)); $('#nz-dauer').value = +((t.min || 0) / fak).toFixed(2);
-      knopf(); liste();
+      knopf(); liste(); modusZeigen();
+      const z = $('#nz-zeit'); z.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      z.classList.remove('blitz'); void z.offsetWidth; z.classList.add('blitz');
     });
     document.querySelectorAll('#nz-liste [data-weg]').forEach(b => b.onclick = () => { const t = rundenListe()[+b.dataset.weg]; if (t) entfernen(t.ids); });
   };
@@ -572,6 +584,7 @@ function momentZeitSheet(mid, startTag = 0) {
     S.taps.push(neu); speichern(); renderHeute(); sheetZu();
     toast(`${m.name} nachgetragen${tagesm ? '' : ' · ab ' + hhmm(new Date(ts - min * 60000))}`, () => { S.taps = S.taps.filter(t => t.id !== neu.id); speichern(); renderHeute(); toast('Zurückgenommen'); });
   };
+  $('#nz-abbruch').onclick = () => { formZuruecksetzen(); liste(); };
   $('#nz-zurueck').onclick = () => { const e = eintraege(); if (e.length) entfernen([e[e.length - 1].id]); };
   beginnSetzen(); liste();
 }

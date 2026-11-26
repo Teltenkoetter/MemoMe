@@ -709,6 +709,10 @@ input.blitz { animation: blitz 0.7s ease-out; }
 .eintrag-zeit { flex: 1; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.8rem; color: var(--text); font: inherit; font-size: 0.9rem; font-variant-numeric: tabular-nums; cursor: pointer; }
 .eintrag-zeit:disabled { cursor: default; }
 .eintrag.an .eintrag-zeit { border-color: rgba(var(--reg-rgb), 0.55); background: rgba(var(--reg-rgb), 0.12); }
+.eintrag-korr { background: none; border: 1px solid var(--border); border-radius: 999px; color: var(--text-dim); font: inherit; font-size: 0.78rem; padding: 0.45rem 0.7rem; cursor: pointer; white-space: nowrap; }
+.eintrag.an .eintrag-korr { color: rgb(var(--reg-rgb)); border-color: rgba(var(--reg-rgb), 0.55); }
+#nz-form.korrektur > label { color: rgb(var(--reg-rgb)); }
+#nz-abbruch { margin-top: 0.3rem; }
 .eintrag-weg { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: none; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 0.85rem; }
 /* Heute: Datum antippbar (gestern ansehen) */
 button.tag-datum { background: none; border: 0; padding: 0; color: var(--text); text-align: left; cursor: pointer; }
