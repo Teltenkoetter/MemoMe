@@ -312,6 +312,11 @@ body { transition: background-color .3s ease; }
 .summe-wert { font-size: 0.82rem; color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
 .summe-wert strong { font-family: var(--serif); font-weight: 400; font-size: 1.15rem; color: var(--text); margin-right: 0.15rem; }
 .summe .richtband { grid-column: 2 / 4; margin-top: 0.45rem; }
+.summe.still .summe-name { font-weight: 400; color: var(--text-dim); }
+.summe.still .summe-symbol { opacity: 0.55; }
+.summe.still .summe-wert { font-size: 0.76rem; color: var(--hint); }
+.summe:not(.still) + .summe.still { border-top: 1px dashed var(--border); padding-top: 0.5rem; margin-top: 0.15rem; }
+.wgruppe.still .gruppe-name { color: var(--text-dim); font-weight: 500; }
 
 /* Richtwert als sanftes Band: eine weiche Zone, ein Punkt. Keine Zahl, keine Lücke. */
 .richtband { position: relative; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.04); }

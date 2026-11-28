@@ -721,6 +721,11 @@ function renderWoche() {
     // gleiche Ordnung wie auf Heute: Gruppen in ihrer Reihenfolge, darin die Momente in ihrer Reihenfolge
     const zeile = m => {
       const p = pm[m.id];
+      // nicht vorgekommen: leise dabei, ohne Null und ohne Lücke – Stoff für die Wochenreflexion
+      if (!p) return `<div class="summe still">
+        <button type="button" class="summe-symbol" data-licht="${esc(m.id)}" aria-pressed="false" aria-label="${esc(m.name)}">${symbolHTML(m) || '<span class="summe-punkt"></span>'}</button>
+        <span class="summe-name">${esc(m.name)}${m.angebot ? herzHTML(false, ' summe-herz') : ''}</span>
+        <span class="summe-wert">diese Woche nicht</span></div>`;
       const rgb = m.modus === 'akt' ? 'var(--akt-rgb)' : 'var(--reg-rgb)';
       let band = '';
       if (m.etwa) {
@@ -750,11 +755,16 @@ function renderWoche() {
     }
     const maxG = Math.max(1, ...Object.values(pg).map(e => e.akt + e.reg));
     // Gruppen in der eingestellten Reihenfolge, geschlossen; darin die Momente in ihrer Reihenfolge
-    const gz = [...Object.keys(GRUPPEN), ''].filter(g => pg[g]).map(g => {
-      const e = pg[g], breite = e.akt + e.reg ? Math.max(6, (e.akt + e.reg) / maxG * 100) : 0;
-      const liste = S.momente.filter(m => pm[m.id] && (g ? m.gruppe === g : !GRUPPEN[m.gruppe]));
-      return `<details class="wgruppe"><summary class="gruppe-zeile">
-        <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}<span class="gruppe-anzahl">${liste.length === 1 ? '1 Moment' : liste.length + ' Momente'}</span></span>
+    // alle Momente, auch die, die diese Woche nicht vorkamen (leise, ohne Wertung)
+    const inGruppe = (m, g) => g ? m.gruppe === g : !GRUPPEN[m.gruppe];
+    const gz = [...Object.keys(GRUPPEN), ''].filter(g => pg[g] || S.momente.some(m => inGruppe(m, g))).map(g => {
+      const e = pg[g] || { akt: 0, reg: 0, min: 0 }, breite = e.akt + e.reg ? Math.max(6, (e.akt + e.reg) / maxG * 100) : 0;
+      const alle = S.momente.filter(m => inGruppe(m, g));
+      const liste = [...alle.filter(m => pm[m.id]), ...alle.filter(m => !pm[m.id])];   // Vorgekommene zuerst, die übrigen darunter
+      const da = alle.filter(m => pm[m.id]).length, nicht = alle.length - da;
+      const anzahl = da ? `${da === 1 ? '1 Moment' : da + ' Momente'}${nicht ? ` · ${nicht} nicht dabei` : ''}` : 'nicht dabei';
+      return `<details class="wgruppe${da ? '' : ' still'}"><summary class="gruppe-zeile">
+        <span class="gruppe-name">${esc(g ? GRUPPEN[g] : 'Ohne Gruppe')}<span class="gruppe-anzahl">${anzahl}</span></span>
         <span class="gruppe-spur"><span class="gruppe-fuell" style="width:${breite}%" role="img" aria-label="${e.akt > e.reg ? 'eher aktiv' : e.reg > e.akt ? 'eher regenerativ' : 'ausgeglichen'}">
           <span class="teil-akt" style="flex-grow:${e.akt}"></span><span class="teil-reg" style="flex-grow:${e.reg}"></span></span></span>
         <span class="gruppe-wert">${e.min ? fmtDauer(e.min) : ''}</span><span class="auf" aria-hidden="true">›</span></summary>

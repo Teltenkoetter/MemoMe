@@ -1,5 +1,5 @@
-const CACHE = 'memome-v58';
-const SHELL = ['./', './index.html', './style.css?v=58', './app.js?v=58', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './fonts/InstrumentSerif-italic-latin-ext.woff2', './fonts/InstrumentSerif-italic-latin.woff2', './fonts/InstrumentSerif-normal-latin-ext.woff2', './fonts/InstrumentSerif-normal-latin.woff2', './fonts/Inter-normal-latin-ext.woff2', './fonts/Inter-normal-latin.woff2'];
+const CACHE = 'memome-v59';
+const SHELL = ['./', './index.html', './style.css?v=59', './app.js?v=59', './manifest.json', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './fonts/InstrumentSerif-italic-latin-ext.woff2', './fonts/InstrumentSerif-italic-latin.woff2', './fonts/InstrumentSerif-normal-latin-ext.woff2', './fonts/InstrumentSerif-normal-latin.woff2', './fonts/Inter-normal-latin-ext.woff2', './fonts/Inter-normal-latin.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))));
